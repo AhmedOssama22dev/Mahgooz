@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import time, timedelta
 from pathlib import Path
 import os
 
@@ -141,3 +141,44 @@ DJANGO_MCP_GLOBAL_SERVER_CONFIG = {
 }
 
 DJANGO_MCP_ENDPOINT = "mcp"
+
+
+def _int_env(name, default):
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    return int(raw)
+
+
+# Booking rules: hours 08:00–22:00, last bookable start 21:00 (60-minute slots).
+# One booking may cover multiple hours on the same court and date.
+BOOKING_OPERATING_START = time(8, 0)
+BOOKING_OPERATING_END = time(22, 0)
+BOOKING_SLOT_DURATION_MINUTES = 60
+BOOKING_WINDOW_DAYS = _int_env("BOOKING_WINDOW_DAYS", 14)
+HOLD_TTL_MINUTES = _int_env("HOLD_TTL_MINUTES", 10)
+HOLD_TTL = timedelta(minutes=HOLD_TTL_MINUTES)
+
+BOOKING_PRICE_BANDS = (
+    {
+        "period": "morning",
+        "start": time(8, 0),
+        "end": time(12, 0),
+        "price_egp": 200,
+        "label": "Morning available",
+    },
+    {
+        "period": "afternoon",
+        "start": time(12, 0),
+        "end": time(17, 0),
+        "price_egp": 280,
+        "label": "",
+    },
+    {
+        "period": "evening",
+        "start": time(17, 0),
+        "end": time(22, 0),
+        "price_egp": 350,
+        "label": "",
+    },
+)
