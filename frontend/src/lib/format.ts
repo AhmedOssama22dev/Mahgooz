@@ -46,7 +46,7 @@ export function formatSlotRange(start: Date, end: Date): string {
     minute: '2-digit',
     hour12: false,
   }
-  return `${start.toLocaleTimeString('en-GB', opts)}–${end.toLocaleTimeString('en-GB', opts)}`
+  return `${start.toLocaleTimeString('en-GB', opts)} – ${end.toLocaleTimeString('en-GB', opts)}`
 }
 
 export function formatBookingDay(date: Date): string {

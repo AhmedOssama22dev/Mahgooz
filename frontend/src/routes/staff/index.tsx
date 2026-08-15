@@ -1,6 +1,7 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
+import { StaffQrScanner } from '@/components/qr-scanner'
 import { ArrivalCard } from '@/components/staff-ops'
 import { StaffShell } from '@/components/staff-shell'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,7 @@ import { $api } from '@/lib/api/client'
 import { clearStaffSession } from '@/lib/api/auth'
 import { parseSlotStart, todayKey } from '@/lib/format'
 import { requireStaff } from '@/lib/guards'
+import { MxIcon, ScanLinear } from '@/lib/icons'
 import { staffKind } from '@/lib/slot-states'
 
 export const Route = createFileRoute('/staff/')({
@@ -22,6 +24,7 @@ export const Route = createFileRoute('/staff/')({
 function StaffLookupPage() {
   const navigate = useNavigate()
   const [code, setCode] = useState('')
+  const [scanning, setScanning] = useState(false)
   const today = todayKey()
   const list = $api.useQuery('get', '/staff/bookings', {
     params: { query: { date: today } },
@@ -69,7 +72,7 @@ function StaffLookupPage() {
         <section className="flex flex-col gap-4">
           <h1 className="font-display text-2xl font-bold">Look up a booking</h1>
           <form className="flex flex-col gap-3" onSubmit={search}>
-            <Label htmlFor="code">Enter code</Label>
+            <Label htmlFor="code">Enter code or scan QR</Label>
             <Input
               id="code"
               autoFocus
@@ -80,6 +83,25 @@ function StaffLookupPage() {
             />
             <Button type="submit">Search</Button>
           </form>
+          <p className="text-center text-sm text-muted-foreground">or</p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setScanning(true)}
+          >
+            <MxIcon icon={ScanLinear} size={20} />
+            Open camera scanner
+          </Button>
+          <StaffQrScanner
+            open={scanning}
+            onOpenChange={setScanning}
+            onDetect={(scanned) => {
+              void navigate({
+                to: '/staff/pass/$code',
+                params: { code: scanned },
+              })
+            }}
+          />
           <Button variant="outline" asChild>
             <Link to="/staff/bookings">View today&apos;s bookings →</Link>
           </Button>

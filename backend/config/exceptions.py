@@ -46,7 +46,10 @@ def api_exception_handler(exc, context):
 
     response = drf_exception_handler(exc, context)
     if response is None:
-        return None
+        return Response(
+            envelope("INTERNAL_ERROR", "Unexpected server error"),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
     if isinstance(exc, ValidationError):
         return Response(
@@ -75,6 +78,11 @@ def api_exception_handler(exc, context):
         return Response(envelope("NOT_FOUND", message), status=status.HTTP_404_NOT_FOUND)
 
     data = response.data
+    if response.status_code >= 500:
+        return Response(
+            envelope("INTERNAL_ERROR", "Unexpected server error"),
+            status=response.status_code,
+        )
     if isinstance(data, dict) and "detail" in data:
         message = str(data["detail"])
     else:

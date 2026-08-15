@@ -23,8 +23,7 @@ export const Route = createFileRoute('/')({
   component: LandingPage,
 })
 
-const HERO_IMAGE =
-  'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1200&q=80'
+const HERO_IMAGE = '/hero-padel.jpg'
 
 const STEPS: {
   step: number
@@ -83,34 +82,21 @@ function LandingPage() {
 
   return (
     <CustomerLayout width="wide" showBookCta>
-      <section className="grid items-stretch gap-6 md:grid-cols-2">
-        <div className="relative overflow-hidden rounded-[16px]">
-          <img
-            src={HERO_IMAGE}
-            alt="Padel court at golden hour"
-            className="aspect-[4/3] w-full object-cover md:aspect-[4/3] md:min-h-[280px]"
-          />
-          <div className="hero-scrim absolute inset-0" />
-          <div className="absolute inset-0 flex flex-col justify-end p-6 text-[#f4f7f5] md:hidden">
-            <h1 className="font-display text-[32px] leading-[1.15] font-bold">
-              Book. Pay. Play.
-            </h1>
-            <p className="mt-2 text-base text-white/90">
-              Sheikh Zayed • 2 courts
-            </p>
-            <Button className="mt-6 w-full" size="lg" asChild>
-              <Link to="/book">Book a court</Link>
-            </Button>
-          </div>
-        </div>
-        <div className="hidden flex-col justify-center gap-4 md:flex">
-          <h1 className="font-display text-5xl leading-[1.1] font-bold">
+      <section className="relative overflow-hidden rounded-[16px]">
+        <img
+          src={HERO_IMAGE}
+          alt="Players on a blue padel court"
+          className="aspect-4/3 w-full object-cover md:aspect-21/9 md:min-h-80"
+        />
+        <div className="hero-scrim absolute inset-0" />
+        <div className="absolute inset-0 flex flex-col justify-end p-6 text-[#f4f7f5] md:p-10">
+          <h1 className="font-display text-[32px] leading-[1.15] font-bold md:text-5xl">
             Book. Pay. Play.
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="mt-2 text-base text-white/90 md:text-lg">
             Sheikh Zayed • 2 courts
           </p>
-          <Button className="w-fit" size="lg" asChild>
+          <Button className="mt-6 w-full md:w-fit" size="lg" asChild>
             <Link to="/book">Book a court</Link>
           </Button>
         </div>
@@ -125,12 +111,12 @@ function LandingPage() {
                 <span className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
                   {step}
                 </span>
-                <div className="mt-3 flex size-10 items-center justify-center text-primary">
+                <div className="mt-3 flex items-center justify-center gap-2 text-primary">
                   <MxIcon icon={icon} size={24} />
+                  <p className="font-display text-[17px] leading-snug font-semibold text-foreground">
+                    {title}
+                  </p>
                 </div>
-                <p className="mt-2 font-display text-[17px] leading-snug font-semibold">
-                  {title}
-                </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {description}
                 </p>
