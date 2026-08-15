@@ -8,7 +8,7 @@ Padel court booking app for Mostafa's two courts in Sheikh Zayed, Egypt.
 
 - **Backend:** Django + Django REST Framework (`backend/`)
 - **Frontend:** React + TypeScript + shadcn/ui
-- **Auth:** phone + password (Egyptian mobile `01xxxxxxxxx`)
+- **Auth:** phone + password (Egyptian mobile `01xxxxxxxxx`); role `customer` or `staff`
 - **Payments:** Paymob Intention API + Unified Checkout + HMAC webhooks
 - **MCP:** django-mcp-server (`mcp_server`) — live docs via `.cursor/skills/django-mcp-server/`
 

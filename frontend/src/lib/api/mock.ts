@@ -69,7 +69,19 @@ const COURTS = [COURT_1, COURT_2]
 
 const ACCESS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access'
 const REFRESH = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh'
-const STAFF = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.staff'
+
+const CUSTOMER_USER = {
+  id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
+  name: 'Ahmed Hassan',
+  phone: '01012345678',
+  role: 'customer' as const,
+}
+const STAFF_USER = {
+  id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  name: 'Mostafa',
+  phone: '01000000000',
+  role: 'staff' as const,
+}
 
 const PRICE: Record<Period, { price_egp: number; price_cents: number }> = {
   morning: { price_egp: 200, price_cents: 20000 },
@@ -92,7 +104,6 @@ const ROUTES: Array<{ method: string; pattern: string }> = [
   { method: 'POST', pattern: '/bookings/{booking_id}/checkout' },
   { method: 'GET', pattern: '/bookings/{booking_id}/status' },
   { method: 'GET', pattern: '/bookings' },
-  { method: 'POST', pattern: '/staff/login' },
   { method: 'GET', pattern: '/staff/bookings' },
   { method: 'POST', pattern: '/staff/passes/{booking_code}/redeem' },
   { method: 'GET', pattern: '/staff/passes/{booking_code}' },
@@ -103,11 +114,7 @@ let user = seedUser()
 let bookings = new Map<string, Booking>()
 
 function seedUser() {
-  return {
-    id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
-    name: 'Ahmed Hassan',
-    phone: '01012345678',
-  }
+  return { ...CUSTOMER_USER }
 }
 
 function hhmm(hour: number) {
@@ -434,15 +441,19 @@ function handleRoute(
   }
 
   if (pattern === '/auth/register') {
-    const name = str(body.name, user.name)
-    const phone = str(body.phone, user.phone)
-    user = { ...user, name, phone }
+    const name = str(body.name, CUSTOMER_USER.name)
+    const phone = str(body.phone, CUSTOMER_USER.phone)
+    user = { ...CUSTOMER_USER, name, phone, role: 'customer' }
     return ok(tokens(), 201)
   }
 
   if (pattern === '/auth/login') {
     const phone = str(body.phone)
-    if (phone) user = { ...user, phone }
+    if (phone === STAFF_USER.phone) {
+      user = { ...STAFF_USER }
+    } else if (phone) {
+      user = { ...CUSTOMER_USER, phone }
+    }
     return ok(tokens())
   }
 
@@ -544,15 +555,6 @@ function handleRoute(
       booking_code: b.booking_code,
       pass_url: b.booking_code ? `/pass/${b.booking_code}` : null,
       hold_expires_at: b.hold_expires_at,
-    })
-  }
-
-  if (pattern === '/staff/login') {
-    return ok({
-      access: STAFF,
-      token_type: 'Bearer',
-      role: 'staff',
-      expires_in: 43200,
     })
   }
 

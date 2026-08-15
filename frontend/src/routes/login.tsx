@@ -13,7 +13,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { $api } from '@/lib/api/client'
-import { getAccessToken, saveAuthTokens } from '@/lib/api/auth'
+import {
+  defaultHomePath,
+  getAccessToken,
+  getSessionUser,
+  parseRole,
+  saveAuthTokens,
+} from '@/lib/api/auth'
 import { loginSchema } from '@/lib/schemas'
 import { apiErrorMessage, safeRedirect } from '@/lib/utils'
 
@@ -27,7 +33,12 @@ export const Route = createFileRoute('/login')({
   }),
   beforeLoad: ({ search }) => {
     if (getAccessToken()) {
-      throw redirect({ to: safeRedirect(search.redirect, '/book') })
+      throw redirect({
+        to: safeRedirect(
+          search.redirect,
+          defaultHomePath(getSessionUser()?.role),
+        ),
+      })
     }
   },
   component: LoginPage,
@@ -61,7 +72,9 @@ function LoginPage() {
     try {
       const data = await login.mutateAsync({ body: parsed.data })
       saveAuthTokens(data)
-      await navigate({ to: safeRedirect(next, '/book') })
+      await navigate({
+        to: safeRedirect(next, defaultHomePath(parseRole(data.user?.role))),
+      })
     } catch (err) {
       toast.error(apiErrorMessage(err, 'Phone or password is incorrect'))
     }

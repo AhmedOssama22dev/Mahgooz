@@ -189,10 +189,10 @@ function LandingPage() {
             </a>
           </p>
           <Link
-            to="/staff/login"
+            to="/staff"
             className="text-xs text-muted-foreground underline-offset-4 hover:underline"
           >
-            Staff login
+            Staff
           </Link>
         </div>
       </footer>

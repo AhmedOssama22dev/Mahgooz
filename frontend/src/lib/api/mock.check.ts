@@ -121,8 +121,13 @@ check(pass.status === 200, 'public pass')
 const seedPass = call('GET', '/passes/MGZ-7F42K').body as { status: string }
 check(seedPass.status === 'confirmed', 'seeded pass')
 
-const staff = call('POST', '/staff/login', { body: { pin: '1234' } })
-check(staff.status === 200, 'staff login')
+const staff = call('POST', '/auth/login', {
+  body: { phone: '01000000000', password: 'staffpass' },
+})
+check(
+  (staff.body as { user: { role: string } }).user.role === 'staff',
+  'staff login role',
+)
 const redeem = call('POST', '/staff/passes/MGZ-7F42K/redeem', authed)
 check(redeem.status === 200, 'redeem')
 check(

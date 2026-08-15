@@ -10,9 +10,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from config.exceptions import APIError
 
 from .models import User
-from .permissions import IsCustomer
 from .serializers import LoginSerializer, RefreshSerializer, RegisterSerializer
-from .tokens import access_token_payload, issue_customer_tokens, user_payload
+from .tokens import access_token_payload, issue_tokens, role_for, user_payload
 
 
 class RegisterView(APIView):
@@ -41,7 +40,7 @@ class RegisterView(APIView):
                 "An account with this phone already exists.",
                 status.HTTP_409_CONFLICT,
             )
-        return Response(issue_customer_tokens(user), status=status.HTTP_201_CREATED)
+        return Response(issue_tokens(user), status=status.HTTP_201_CREATED)
 
 
 class LoginView(APIView):
@@ -62,7 +61,7 @@ class LoginView(APIView):
                 "Phone or password is incorrect.",
                 status.HTTP_401_UNAUTHORIZED,
             )
-        return Response(issue_customer_tokens(user))
+        return Response(issue_tokens(user))
 
 
 class RefreshView(APIView):
@@ -75,7 +74,9 @@ class RefreshView(APIView):
         try:
             refresh = RefreshToken(serializer.validated_data["refresh"])
             access = refresh.access_token
-            access["role"] = refresh.get("role", "customer")
+            user_id = refresh.get("user_id")
+            user = User.objects.filter(pk=user_id).first() if user_id else None
+            access["role"] = role_for(user) if user else refresh.get("role", "customer")
         except (TokenError, InvalidToken):
             raise APIError(
                 "UNAUTHENTICATED",
@@ -86,7 +87,7 @@ class RefreshView(APIView):
 
 
 class MeView(APIView):
-    permission_classes = [IsAuthenticated, IsCustomer]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         return Response(user_payload(request.user))

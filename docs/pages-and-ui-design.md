@@ -16,8 +16,8 @@
 | Location | Sheikh Zayed, Egypt |
 | Owner persona | Mostafa — runs bookings manually on WhatsApp today |
 | Customer flow | Log in → Pick slot → Pay (Paymob) → Get pass → View in `/bookings` |
-| Staff flow | Look up pass → Verify paid → Redeem once |
-| Customer auth | **Yes — simple phone + password login** (Django) |
+| Staff flow | Same login → Look up pass → Verify paid → Redeem once |
+| Auth | **Phone + password** for everyone; `role` is `customer` or `staff` |
 
 ### Problems this UI solves
 
@@ -118,6 +118,7 @@ Both share identical layout and copy; dark inverts surfaces and may show subtle 
 | Identifier | **Egyptian mobile number** (`01xxxxxxxxx`) | Matches how Mostafa's customers already book on WhatsApp |
 | Password | User-chosen, min 6 chars | No SMS OTP cost/complexity during the buildathon |
 | Login required to book? | **Yes** — `/book` is auth-protected | Clean `user_id` on every booking; no guest-merge logic |
+| Staff vs customer | **Same `/login`** | Role (`customer` / `staff`) is the only difference |
 | Pass URL `/pass/{code}` | Still public (shareable) | Customer can open pass from SMS/bookmark; staff QR still works |
 
 **Not using:** Google OAuth, email magic links, or SMS OTP for MVP — all add setup time without helping the core mechanic.
@@ -139,6 +140,7 @@ Auth (customer)
 | `phone` | Unique, normalized `01xxxxxxxxx` |
 | `password` | Hashed |
 | `email` | Optional/nullable — not required for MVP |
+| `role` | `customer` (default) or `staff` — public register always creates customers; staff is granted in Django admin |
 
 ### Booking ownership rule
 
@@ -148,15 +150,15 @@ When Paymob webhook confirms payment → set `booking.user_id` from the authenti
 
 ## 4. Page inventory
 
-Minimum pages to ship the challenge. **14 customer/staff screens + 2 system endpoints** (webhook is not a UI page).
+Minimum pages to ship the challenge. **13 customer/staff screens + 2 system endpoints** (webhook is not a UI page).
 
 ```
 Public
 ├── /                     Landing (works logged in or out)
 
-Auth (customer)
-├── /login                Phone + password
-├── /register             Create account
+Auth
+├── /login                Phone + password (customers and staff)
+├── /register             Create customer account
 
 Customer (auth required except pass link)
 ├── /book                 Booking wizard (date → court → slot → pay)
@@ -165,8 +167,7 @@ Customer (auth required except pass link)
 ├── /bookings             My bookings list ← NEW
 ├── /pass/{code}          Booking pass (QR + code) — public URL
 
-Staff (separate PIN gate, not customer auth)
-├── /staff/login          4-digit PIN
+Staff (`role: staff` — same login, extra routes)
 ├── /staff                Lookup home (search by code)
 ├── /staff/bookings       Today's bookings — admin list (who's coming / checked in)
 ├── /staff/pass/{code}    Pass detail + redeem
@@ -235,7 +236,7 @@ System (no UI)
 | Account menu (logged in) | **My bookings** → `/bookings`, **Log out** |
 | Morning CTA | Links to `/book?period=morning` (pre-filters date picker to today/tomorrow AM) |
 | Slot availability teaser | Optional — requires lightweight public API; omit if not ready |
-| Staff link | Small footer link `/staff` — not prominent |
+| Staff link | Small footer link `/staff` — not prominent; same login, staff role required |
 
 #### Desktop (1440px)
 
@@ -252,7 +253,7 @@ Full-width marketing layout — **not** a narrow phone column. Max content ~1200
 │  How it works — 3 columns: Pick slot | Pay | Pass                        │
 │  Morning promo banner (orange) · Today availability: Court 1 | Court 2   │
 ├──────────────────────────────────────────────────────────────────────────┤
-│ Footer: location · WhatsApp · Staff login                                │
+│ Footer: location · WhatsApp · Staff                                      │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -592,30 +593,17 @@ The customer's proof of payment. This is the **Redeem** target.
 
 ---
 
-### 5.9 Staff PIN login — `/staff/login`
+### 5.9 Staff access — same `/login`
 
-Separate from customer auth. **4-digit PIN** in env (buildathon-simple). Session cookie after success.
+Staff use the **same phone + password login** as customers. Public register always creates `role: customer`. Grant staff in Django admin (`is_staff`) or `python manage.py seed_staff`.
 
-```
-┌─────────────────────────────┐
-│ Mahgouz Staff             │
-├─────────────────────────────┤
-│ Enter PIN                   │
-│   [ • ] [ • ] [ • ] [ • ]   │
-│   [ 1 ] [ 2 ] [ 3 ]         │
-│   [ 4 ] [ 5 ] [ 6 ]         │
-│   [ 7 ] [ 8 ] [ 9 ]         │
-│   [ ← ] [ 0 ] [ ✓ ]         │
-└─────────────────────────────┘
-```
-
-Wrong PIN → shake + "Incorrect PIN". Success → `/staff/bookings` (default) or `/staff`.
+After login, staff land on `/staff/bookings`. Customer tokens cannot open staff routes (redirect home). `/staff/login` redirects to `/login?redirect=/staff/bookings` so old bookmarks still work.
 
 ---
 
 ### 5.10 Staff lookup — `/staff`
 
-After PIN gate. Search-first; full schedule on `/staff/bookings`.
+After login as staff. Search-first; full schedule on `/staff/bookings`.
 
 ```
 ┌─────────────────────────────┐
@@ -750,7 +738,6 @@ Max content width **~1200px**. Same light/dark tokens as mobile — only layout 
 | `/book/failed` | Centered error card + Try another slot / Back home |
 | `/bookings` | Two sections (Upcoming \| Past); table or 2-col card grid; + Book in header |
 | `/pass/{code}` | Centered pass card, large QR, print-friendly; optional sidebar with details |
-| `/staff/login` | Centered PIN pad (~360px), minimal chrome |
 | `/staff` | Wide search bar + Scan QR; right sidebar: next 3 arrivals; link to full list |
 | `/staff/bookings` | **Full ops dashboard** — stats row, filters, data table (see §5.11) |
 | `/staff/pass/{code}` | Two columns: booking details (left) · status banner + Redeem (right) |
@@ -980,10 +967,9 @@ Actual numbers live in Django settings/DB — UI reads from API as `{ period, pr
 | `Book/Failed.tsx` | `GET /book/failed` | **Required** | `reason?` |
 | `Bookings/Index.tsx` | `GET /bookings` | **Required** | `upcoming[]`, `past[]` |
 | `Pass/Show.tsx` | `GET /pass/{code}` | Public | `pass`, `isOwner` |
-| `Staff/Login.tsx` | `GET /staff/login` | Staff gate | — |
-| `Staff/Lookup.tsx` | `GET /staff` | Staff gate | `nextArrivals[]` |
-| `Staff/Bookings.tsx` | `GET /staff/bookings` | Staff gate | `bookings[]`, `stats`, `filters` |
-| `Staff/PassShow.tsx` | `GET /staff/pass/{code}` | Staff gate | `pass`, `canRedeem` |
+| `Staff/Lookup.tsx` | `GET /staff` | Staff role | `nextArrivals[]` |
+| `Staff/Bookings.tsx` | `GET /staff/bookings` | Staff role | `bookings[]`, `stats`, `filters` |
+| `Staff/PassShow.tsx` | `GET /staff/pass/{code}` | Staff role | `pass`, `canRedeem` |
 
 JSON endpoints (Django REST API):
 

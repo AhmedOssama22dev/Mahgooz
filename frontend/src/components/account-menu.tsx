@@ -10,6 +10,7 @@ import {
 
 type AccountMenuProps = {
   name?: string
+  isStaff?: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
   onLogout: () => void
@@ -18,6 +19,7 @@ type AccountMenuProps = {
 /** Header / bottom-nav account sheet: My bookings + Log out. */
 export function AccountMenu({
   name,
+  isStaff = false,
   open,
   onOpenChange,
   onLogout,
@@ -34,6 +36,13 @@ export function AccountMenu({
               My bookings
             </Link>
           </Button>
+          {isStaff ? (
+            <Button variant="outline" asChild>
+              <Link to="/staff/bookings" onClick={() => onOpenChange(false)}>
+                Staff desk
+              </Link>
+            </Button>
+          ) : null}
           <Button variant="ghost" onClick={onLogout}>
             Log out
           </Button>

@@ -9,21 +9,20 @@ check(tokenKindForPath('/slots') === null, 'slots are public')
 check(tokenKindForPath('/passes/{booking_code}') === null, 'public pass')
 check(tokenKindForPath('/auth/login') === null, 'login is public')
 check(tokenKindForPath('/auth/refresh') === null, 'refresh is public')
-check(tokenKindForPath('/staff/login') === null, 'staff login is public')
 check(tokenKindForPath('/webhooks/paymob') === null, 'webhook is public')
 
-check(tokenKindForPath('/auth/me') === 'customer', 'me needs customer jwt')
-check(tokenKindForPath('/bookings') === 'customer', 'bookings list')
-check(tokenKindForPath('/bookings/{booking_id}') === 'customer', 'booking by id')
-check(tokenKindForPath('/bookings/hold') === 'customer', 'hold')
+check(tokenKindForPath('/auth/me') === 'session', 'me needs jwt')
+check(tokenKindForPath('/bookings') === 'session', 'bookings list')
+check(tokenKindForPath('/bookings/{booking_id}') === 'session', 'booking by id')
+check(tokenKindForPath('/bookings/hold') === 'session', 'hold')
 
-check(tokenKindForPath('/staff/bookings') === 'staff', 'staff bookings')
+check(tokenKindForPath('/staff/bookings') === 'session', 'staff bookings')
 check(
-  tokenKindForPath('/staff/passes/{booking_code}') === 'staff',
+  tokenKindForPath('/staff/passes/{booking_code}') === 'session',
   'staff pass lookup',
 )
 check(
-  tokenKindForPath('/staff/passes/{booking_code}/redeem') === 'staff',
+  tokenKindForPath('/staff/passes/{booking_code}/redeem') === 'session',
   'redeem',
 )
 

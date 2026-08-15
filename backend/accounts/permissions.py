@@ -2,24 +2,15 @@ from rest_framework.permissions import BasePermission
 
 
 class IsCustomer(BasePermission):
+    """Any logged-in account may book — staff share the same login."""
+
     def has_permission(self, request, view):
-        if not request.user or not request.user.is_authenticated:
-            return False
-        token = getattr(request, "auth", None)
-        if token is not None and hasattr(token, "get"):
-            role = token.get("role")
-            if role is not None and role != "customer":
-                return False
-        return True
+        return bool(request.user and request.user.is_authenticated)
 
 
 class IsStaff(BasePermission):
-    message = "Staff token required."
+    message = "Staff role required."
 
     def has_permission(self, request, view):
-        if not request.user or not request.user.is_authenticated:
-            return False
-        token = getattr(request, "auth", None)
-        if token is None or not hasattr(token, "get"):
-            return False
-        return token.get("role") == "staff"
+        user = request.user
+        return bool(user and user.is_authenticated and getattr(user, "is_staff", False))

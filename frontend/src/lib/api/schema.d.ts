@@ -433,7 +433,7 @@ export interface paths {
         put?: never;
         /**
          * Register
-         * @description Create a customer account. Phone is the unique identifier (`01xxxxxxxxx`, 11 digits). Password min 6 characters.
+         * @description Create a customer account. Phone is the unique identifier (`01xxxxxxxxx`, 11 digits). Password min 6 characters. Always `role: customer`.
          *
          *     On success, tokens are returned so the client can book immediately.
          */
@@ -477,7 +477,8 @@ export interface paths {
                          *       "user": {
                          *         "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
                          *         "name": "Ahmed Hassan",
-                         *         "phone": "01012345678"
+                         *         "phone": "01012345678",
+                         *         "role": "customer"
                          *       }
                          *     }
                          */
@@ -491,6 +492,8 @@ export interface paths {
                                 name?: string;
                                 /** Format: utc-millisec */
                                 phone?: string;
+                                /** @enum {string} */
+                                role?: "customer" | "staff";
                             };
                         };
                     };
@@ -553,7 +556,7 @@ export interface paths {
         put?: never;
         /**
          * Login
-         * @description Phone + password → JWT access and refresh. Saves tokens into collection variables.
+         * @description Phone + password → JWT access and refresh. Same endpoint for customers and staff; `user.role` is the only difference.
          */
         post: {
             parameters: {
@@ -593,7 +596,8 @@ export interface paths {
                          *       "user": {
                          *         "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
                          *         "name": "Ahmed Hassan",
-                         *         "phone": "01012345678"
+                         *         "phone": "01012345678",
+                         *         "role": "customer"
                          *       }
                          *     }
                          */
@@ -607,6 +611,8 @@ export interface paths {
                                 name?: string;
                                 /** Format: utc-millisec */
                                 phone?: string;
+                                /** @enum {string} */
+                                role?: "customer" | "staff";
                             };
                         };
                     };
@@ -763,7 +769,7 @@ export interface paths {
         };
         /**
          * Me
-         * @description Current customer profile. Requires customer JWT.
+         * @description Current profile. Requires a JWT. Includes `role` (`customer` or `staff`).
          */
         get: {
             parameters: {
@@ -787,7 +793,8 @@ export interface paths {
                          * @example {
                          *       "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
                          *       "name": "Ahmed Hassan",
-                         *       "phone": "01012345678"
+                         *       "phone": "01012345678",
+                         *       "role": "customer"
                          *     }
                          */
                         "application/json": {
@@ -795,6 +802,8 @@ export interface paths {
                             name?: string;
                             /** Format: utc-millisec */
                             phone?: string;
+                            /** @enum {string} */
+                            role?: "customer" | "staff";
                         };
                     };
                 };
@@ -1655,122 +1664,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/staff/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Staff login
-         * @description Staff gate: 4-digit PIN from `STAFF_PIN` env. Returns a staff JWT (not a customer token). No staff user table in MVP.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    /**
-                     * @example {
-                     *       "pin": "1234"
-                     *     }
-                     */
-                    "application/json": {
-                        /** Format: utc-millisec */
-                        pin?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 200 OK — staff token */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.staff",
-                         *       "token_type": "Bearer",
-                         *       "role": "staff",
-                         *       "expires_in": 43200
-                         *     }
-                         */
-                        "application/json": {
-                            access?: string;
-                            token_type?: string;
-                            role?: string;
-                            expires_in?: number;
-                        };
-                    };
-                };
-                /** @description 400 Bad Request — missing pin */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_ERROR",
-                         *         "message": "Invalid request body",
-                         *         "details": {
-                         *           "pin": [
-                         *             "This field is required."
-                         *           ]
-                         *         }
-                         *       }
-                         *     }
-                         */
-                        "application/json": {
-                            error?: {
-                                code?: string;
-                                message?: string;
-                                details?: {
-                                    pin?: string[];
-                                };
-                            };
-                        };
-                    };
-                };
-                /** @description 401 Unauthorized — wrong pin */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INVALID_PIN",
-                         *         "message": "Staff PIN is incorrect."
-                         *       }
-                         *     }
-                         */
-                        "application/json": {
-                            error?: {
-                                code?: string;
-                                message?: string;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/staff/bookings": {
         parameters: {
             query?: never;
@@ -1789,7 +1682,7 @@ export interface paths {
                     date?: string;
                 };
                 header?: {
-                    /** @example Bearer {{staff_token}} */
+                    /** @example Bearer {{access_token}} */
                     Authorization?: string;
                 };
                 path?: never;
@@ -1893,7 +1786,7 @@ export interface paths {
             parameters: {
                 query?: never;
                 header?: {
-                    /** @example Bearer {{staff_token}} */
+                    /** @example Bearer {{access_token}} */
                     Authorization?: string;
                 };
                 path: {
@@ -2031,7 +1924,7 @@ export interface paths {
             parameters: {
                 query?: never;
                 header?: {
-                    /** @example Bearer {{staff_token}} */
+                    /** @example Bearer {{access_token}} */
                     Authorization?: string;
                 };
                 path: {

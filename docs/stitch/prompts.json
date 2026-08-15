@@ -108,15 +108,6 @@
       "desktopDark": "Same desktop pass dark mode."
     },
     {
-      "id": "staff-login",
-      "route": "/staff/login",
-      "audience": "staff",
-      "mobileLight": "Staff login /staff/login: Mahgouz Staff, 4-digit PIN pad dots, Enter PIN, minimal utilitarian.",
-      "mobileDark": "Same staff login dark mode.",
-      "desktopLight": "Desktop staff login: centered PIN pad, Mahgouz Staff title.",
-      "desktopDark": "Same desktop staff login dark mode."
-    },
-    {
       "id": "staff-bookings",
       "route": "/staff/bookings",
       "audience": "staff",

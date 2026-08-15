@@ -1,14 +1,16 @@
-export type TokenKind = 'customer' | 'staff'
+export type TokenKind = 'session'
+export type UserRole = 'customer' | 'staff'
 
-export type CustomerUser = {
+export type AuthUser = {
   id?: string
   name: string
   phone: string
+  role: UserRole
 }
 
 const ACCESS_KEY = 'mahgouz-access-token'
 const REFRESH_KEY = 'mahgouz-refresh-token'
-const STAFF_KEY = 'mahgouz-staff-token'
+const LEGACY_STAFF_KEY = 'mahgouz-staff-token'
 const USER_KEY = 'mahgouz-user'
 const SESSION_EVENT = 'mahgouz-session'
 
@@ -19,7 +21,6 @@ const PUBLIC_EXACT = new Set([
   '/auth/register',
   '/auth/login',
   '/auth/refresh',
-  '/staff/login',
 ])
 
 /** Which JWT (if any) a generated OpenAPI path needs. `schemaPath` keeps `{params}`. */
@@ -27,8 +28,7 @@ export function tokenKindForPath(schemaPath: string): TokenKind | null {
   if (PUBLIC_EXACT.has(schemaPath)) return null
   if (schemaPath.startsWith('/passes/')) return null
   if (schemaPath.startsWith('/webhooks/')) return null
-  if (schemaPath.startsWith('/staff/')) return 'staff'
-  return 'customer'
+  return 'session'
 }
 
 function read(key: string): string | undefined {
@@ -42,10 +42,6 @@ export function getAccessToken(): string | undefined {
 
 export function getRefreshToken(): string | undefined {
   return read(REFRESH_KEY)
-}
-
-export function getStaffToken(): string | undefined {
-  return read(STAFF_KEY)
 }
 
 function emitSession() {
@@ -65,30 +61,33 @@ export function subscribeSession(onChange: () => void) {
 export function sessionSnapshot() {
   return JSON.stringify({
     access: getAccessToken() ?? null,
-    staff: getStaffToken() ?? null,
-    user: getCustomerUser() ?? null,
+    user: getSessionUser() ?? null,
   })
 }
 
-export function setCustomerSession(tokens: {
+export function parseRole(value: unknown): UserRole {
+  return value === 'staff' ? 'staff' : 'customer'
+}
+
+export function defaultHomePath(role?: UserRole) {
+  return role === 'staff' ? '/staff/bookings' : '/book'
+}
+
+export function setSession(tokens: {
   access: string
   refresh: string
-  user?: CustomerUser
+  user?: AuthUser
 }) {
   localStorage.setItem(ACCESS_KEY, tokens.access)
   localStorage.setItem(REFRESH_KEY, tokens.refresh)
   if (tokens.user) {
     localStorage.setItem(USER_KEY, JSON.stringify(tokens.user))
   }
+  localStorage.removeItem(LEGACY_STAFF_KEY)
   emitSession()
 }
 
-export function setStaffSession(access: string) {
-  localStorage.setItem(STAFF_KEY, access)
-  emitSession()
-}
-
-export function getCustomerUser(): CustomerUser | undefined {
+export function getSessionUser(): AuthUser | undefined {
   const raw = read(USER_KEY)
   if (!raw) return undefined
   try {
@@ -101,7 +100,13 @@ export function getCustomerUser(): CustomerUser | undefined {
       typeof parsed.name === 'string' &&
       typeof parsed.phone === 'string'
     ) {
-      return parsed as CustomerUser
+      const record = parsed as { id?: string; name: string; phone: string; role?: unknown }
+      return {
+        id: record.id,
+        name: record.name,
+        phone: record.phone,
+        role: parseRole(record.role),
+      }
     }
   } catch {
     return undefined
@@ -109,39 +114,38 @@ export function getCustomerUser(): CustomerUser | undefined {
   return undefined
 }
 
-export function clearCustomerSession() {
+export function clearSession() {
   localStorage.removeItem(ACCESS_KEY)
   localStorage.removeItem(REFRESH_KEY)
   localStorage.removeItem(USER_KEY)
-  emitSession()
-}
-
-export function clearStaffSession() {
-  localStorage.removeItem(STAFF_KEY)
+  localStorage.removeItem(LEGACY_STAFF_KEY)
   emitSession()
 }
 
 export function tokenForPath(schemaPath: string): string | undefined {
-  const kind = tokenKindForPath(schemaPath)
-  if (kind === 'staff') return getStaffToken()
-  if (kind === 'customer') return getAccessToken()
+  if (tokenKindForPath(schemaPath) === 'session') return getAccessToken()
   return undefined
 }
 
 export function saveAuthTokens(data: {
   access?: string
   refresh?: string
-  user?: { id?: string; name?: string; phone?: string }
+  user?: { id?: string; name?: string; phone?: string; role?: string }
 }) {
   if (!data.access || !data.refresh) {
     throw new Error('Login did not return tokens')
   }
-  setCustomerSession({
+  setSession({
     access: data.access,
     refresh: data.refresh,
     user:
       data.user?.name && data.user.phone
-        ? { id: data.user.id, name: data.user.name, phone: data.user.phone }
+        ? {
+            id: data.user.id,
+            name: data.user.name,
+            phone: data.user.phone,
+            role: parseRole(data.user.role),
+          }
         : undefined,
   })
 }
