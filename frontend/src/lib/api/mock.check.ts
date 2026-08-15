@@ -128,6 +128,12 @@ check(
   (staff.body as { user: { role: string } }).user.role === 'staff',
   'staff login role',
 )
+const staffToday = call('GET', '/staff/bookings', authed)
+check(
+  Array.isArray((staffToday.body as { bookings: unknown[] }).bookings) &&
+    (staffToday.body as { bookings: unknown[] }).bookings.length >= 1,
+  'staff bookings for today',
+)
 const redeem = call('POST', '/staff/passes/MGZ-7F42K/redeem', authed)
 check(redeem.status === 200, 'redeem')
 check(

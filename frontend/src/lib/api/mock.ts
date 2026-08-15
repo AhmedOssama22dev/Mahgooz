@@ -354,7 +354,7 @@ function seedBookings() {
     id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
     status: 'confirmed',
     court: { id: COURT_1.id, name: COURT_1.name },
-    date: '2026-08-20',
+    date: todayCairo(),
     start_times: ['18:00'],
     start_time: '18:00',
     end_time: '19:00',
