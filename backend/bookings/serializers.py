@@ -87,6 +87,10 @@ class SlotQuerySerializer(serializers.Serializer):
     court_id = serializers.UUIDField()
 
 
+class StaffDateQuerySerializer(serializers.Serializer):
+    date = serializers.DateField(required=False)
+
+
 def serialize_slot(slot):
     pricing = price_for_start_time(slot.start_time)
     return {
@@ -101,7 +105,7 @@ def serialize_slot(slot):
 
 
 def _booking_slots(booking):
-    return [serialize_slot(slot) for slot in booking.slots.select_related("court").all()]
+    return [serialize_slot(slot) for slot in booking_slots_list(booking)]
 
 
 class BookingScheduleMixin:
@@ -327,6 +331,7 @@ class StaffBookingListItemSerializer(serializers.ModelSerializer):
     court_name = serializers.SerializerMethodField()
     start_time = serializers.SerializerMethodField()
     end_time = serializers.SerializerMethodField()
+    slots = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
@@ -338,6 +343,7 @@ class StaffBookingListItemSerializer(serializers.ModelSerializer):
             "end_time",
             "booker_name",
             "redeemed_at",
+            "slots",
         )
 
     def _first_last(self, booking):
@@ -354,3 +360,6 @@ class StaffBookingListItemSerializer(serializers.ModelSerializer):
     def get_end_time(self, booking):
         _, last = self._first_last(booking)
         return format_hhmm(end_time_for(last.start_time)) if last else None
+
+    def get_slots(self, booking):
+        return _booking_slots(booking)

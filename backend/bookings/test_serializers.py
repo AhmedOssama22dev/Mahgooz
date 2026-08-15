@@ -10,6 +10,7 @@ from bookings.serializers import (
     CustomerBookingListItemSerializer,
     CustomerBookingSerializer,
     PublicPassSerializer,
+    StaffBookingListItemSerializer,
     StaffPassSerializer,
 )
 from bookings.seed import seed_courts
@@ -154,6 +155,16 @@ class SerializerAudienceTests(TestCase):
         self.assertNotIn("paymob_intention_id", data)
         self.assertFalse(data["can_redeem"])
         self.assertEqual(len(data["slots"]), 2)
+
+    def test_staff_list_item_includes_all_child_slots(self):
+        data = StaffBookingListItemSerializer(self.booking).data
+        self.assertEqual(data["court_name"], "Court 1")
+        self.assertEqual(data["start_time"], "18:00")
+        self.assertEqual(data["end_time"], "20:00")
+        self.assertEqual(len(data["slots"]), 2)
+        self.assertEqual(data["slots"][0]["start_time"], "18:00")
+        self.assertEqual(data["slots"][1]["start_time"], "19:00")
+        self.assertEqual(data["booking_code"], "MGZ-7F42K")
 
     def test_list_item_uses_first_and_last_hours(self):
         data = CustomerBookingListItemSerializer(self.booking).data
