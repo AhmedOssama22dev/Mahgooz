@@ -5,7 +5,16 @@ import type { Middleware } from 'openapi-fetch'
 import { tokenForPath } from './auth.ts'
 import type { paths } from './schema'
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
+function resolveBaseUrl(): string {
+  const raw = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/api/v1'
+  // Dev stays same-origin so Vite can mock or proxy to the backend.
+  if (import.meta.env.DEV && /^https?:\/\//.test(raw)) {
+    return new URL(raw).pathname.replace(/\/$/, '') || '/api/v1'
+  }
+  return raw
+}
+
+const baseUrl = resolveBaseUrl()
 
 const authMiddleware: Middleware = {
   onRequest({ request, schemaPath }) {

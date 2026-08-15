@@ -37,7 +37,9 @@ export function AppShell({
       <div
         className={cn(
           'mx-auto flex min-h-screen flex-col',
-          width === 'narrow' ? 'max-w-[480px]' : 'max-w-[480px] md:max-w-5xl',
+          width === 'narrow'
+            ? 'max-w-[480px]'
+            : 'max-w-[480px] md:max-w-[1200px]',
           className,
         )}
       >
@@ -81,7 +83,12 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div className={cn('flex items-center gap-3', className)}>
-      <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-muted-foreground"
+        asChild
+      >
         <Link to={backTo}>{backLabel}</Link>
       </Button>
       <h1 className="font-display text-xl font-semibold">{title}</h1>
