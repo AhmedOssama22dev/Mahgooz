@@ -12,8 +12,7 @@ def _apply_schema_on_boot():
     if not os.environ.get("RAILWAY_ENVIRONMENT"):
         return
     django.setup()
-    call_command("migrate", interactive=False, verbosity=1)
-    call_command("seed_courts", verbosity=1)
+    call_command("ensure_schema")
 
 
 _apply_schema_on_boot()
