@@ -1,7 +1,7 @@
 # Mahgouz — Pages & UI Design Spec
 
 > **Product:** Reserve & Redeem padel court booking for Mostafa's two courts in Sheikh Zayed  
-> **Stack (later):** Laravel + Inertia + React  
+> **Stack:** Django + DRF + React  
 > **Scope of this doc:** Pages, UI, flows, branding — no backend implementation yet  
 > **Core mechanic:** Pay → Reserve → Redeem
 
@@ -17,7 +17,7 @@
 | Owner persona | Mostafa — runs bookings manually on WhatsApp today |
 | Customer flow | Log in → Pick slot → Pay (Paymob) → Get pass → View in `/bookings` |
 | Staff flow | Look up pass → Verify paid → Redeem once |
-| Customer auth | **Yes — simple phone + password login** (Laravel Breeze) |
+| Customer auth | **Yes — simple phone + password login** (Django) |
 
 ### Problems this UI solves
 
@@ -110,11 +110,11 @@ Both share identical layout and copy; dark inverts surfaces and may show subtle 
 
 **Yes.** Use simple login so every paid booking belongs to a user and `/bookings` works without hacks.
 
-### Recommended approach: phone + password (Laravel Breeze)
+### Recommended approach: phone + password (Django)
 
 | Decision | Choice | Why |
 |----------|--------|-----|
-| Auth stack | **Laravel Breeze + Inertia React** | Ships login/register/forgot-password in ~5 min |
+| Auth stack | **Django session auth + React** | Phone + password; unique `phone` on the user |
 | Identifier | **Egyptian mobile number** (`01xxxxxxxxx`) | Matches how Mostafa's customers already book on WhatsApp |
 | Password | User-chosen, min 6 chars | No SMS OTP cost/complexity during the buildathon |
 | Login required to book? | **Yes** — `/book` is auth-protected | Clean `user_id` on every booking; no guest-merge logic |
@@ -321,7 +321,7 @@ After register → redirect to `/book` (or back to intended URL).
 
 **Requires login.** Middleware: `auth`.
 
-Single page, **4 steps** as a progress bar — no multi-route wizard (keeps Inertia simple).
+Single page, **4 steps** as a progress bar — no multi-route wizard.
 
 ```
 Step 1 ── Step 2 ── Step 3 ── Step 4
@@ -868,20 +868,20 @@ stateDiagram-v2
 
 | Package | Purpose | Why this one |
 |---------|---------|--------------|
-| **Laravel Breeze (Inertia + React)** | Login, register, sessions | Official, minimal, ~30 min to adapt for phone login |
+| **Django auth** | Login, register, sessions | Phone + password; unique index on `users.phone` |
 
-After install: replace email field with `phone` on Register/Login pages; add unique index on `users.phone`.
+Use `phone` on Register/Login instead of email.
 
-### UI foundation (Laravel + Inertia + React)
+### UI foundation (React)
 
 | Package | Purpose | Why this one |
 |---------|---------|--------------|
-| **Tailwind CSS v4** | Styling | Default in modern Laravel Breeze/Jetstream Inertia stacks |
+| **Tailwind CSS v4** | Styling | Fast, mobile-first |
 | **shadcn/ui** | Buttons, cards, inputs, toast, dialog | Copy-paste components, mobile-friendly, no heavy runtime |
 | **Lucide React** | Icons | Pairs with shadcn |
 | **class-variance-authority + clsx** | Variant styling | shadcn dependency |
 
-Install shadcn via their CLI after Inertia React is scaffolded.
+Install shadcn via their CLI after the React app is scaffolded.
 
 ### Date & calendar
 
@@ -924,7 +924,7 @@ See Paymob skill: `~/.cursor/skills/paymob-integration/`
 | Package | Purpose |
 |---------|---------|
 | **react-hook-form** + **zod** | Client validation on confirm step |
-| Laravel Form Requests | Server validation on hold/pay/redeem |
+| Django serializers / validators | Server validation on hold/pay/redeem |
 
 ### Polling / realtime
 
@@ -964,14 +964,14 @@ Show price **on the slot grid** so morning discount is obvious.
 | Afternoon | 12:00–17:00 | EGP 280 |
 | Evening | 17:00–22:00 | EGP 350 |
 
-Actual numbers live in Laravel config/DB — UI reads from API as `{ period, price_cents }`.
+Actual numbers live in Django settings/DB — UI reads from API as `{ period, price_cents }`.
 
 ---
 
-## 10. Inertia page map (for implementation later)
+## 10. React page map (for implementation later)
 
-| Inertia page component | Route | Auth | Props from Laravel |
-|------------------------|-------|------|-------------------|
+| React page | Route | Auth | Data from Django API |
+|------------|-------|------|----------------------|
 | `Landing.tsx` | `GET /` | Public | `todayAvailability`, `morningDeal`, `auth.user?` |
 | `Auth/Login.tsx` | `GET /login` | Guest | — |
 | `Auth/Register.tsx` | `GET /register` | Guest | — |
@@ -985,7 +985,7 @@ Actual numbers live in Laravel config/DB — UI reads from API as `{ period, pri
 | `Staff/Bookings.tsx` | `GET /staff/bookings` | Staff gate | `bookings[]`, `stats`, `filters` |
 | `Staff/PassShow.tsx` | `GET /staff/pass/{code}` | Staff gate | `pass`, `canRedeem` |
 
-JSON endpoints (same app, not Inertia):
+JSON endpoints (Django REST API):
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -1017,7 +1017,7 @@ Document these in `.env` so judges can ask and you can tune live.
 
 Ship in this order — each step is demo-able:
 
-1. **Laravel Breeze** + phone login/register  
+1. **Django auth** + phone login/register  
 2. **Landing** + auth-aware header  
 3. **Book wizard** Steps 1–3 with fake slot data (prove calendar UX)  
 4. **Hold/release API** + slot states on Step 3  
@@ -1045,7 +1045,7 @@ Ship in this order — each step is demo-able:
 ## 14. Quick reference — files to create (frontend)
 
 ```
-resources/js/
+frontend/src/
 ├── Pages/
 │   ├── Landing.tsx
 │   ├── Auth/

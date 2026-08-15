@@ -3,6 +3,16 @@
     "stitch": {
       "command": "bash",
       "args": [".cursor/run-stitch-mcp.sh"]
+    },
+    "django": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["${workspaceFolder}/backend/run_mcp.py"],
+      "env": {
+        "DJANGO_SETTINGS_MODULE": "config.settings",
+        "PYTHONPATH": "${workspaceFolder}/backend"
+      },
+      "envFile": "${workspaceFolder}/backend/.env"
     }
   }
 }

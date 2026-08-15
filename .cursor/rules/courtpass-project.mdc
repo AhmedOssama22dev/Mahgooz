@@ -1,0 +1,25 @@
+---
+description: CourtPass / Mahgooz project context and conventions
+alwaysApply: true
+---
+
+# CourtPass (Mahgooz)
+
+Padel court booking: Pay → Reserve → Redeem. Two courts in Sheikh Zayed, Egypt.
+
+## Before coding
+
+1. Read `docs/pages-and-ui-design.md` for pages, UI spec, and MVP build order
+2. For Paymob work, use the project skill at `.cursor/skills/paymob-integration/SKILL.md`
+3. For Django MCP tools, use `.cursor/skills/django-mcp-server/SKILL.md` (fetch live README)
+
+## Stack
+
+Django + DRF + React + TypeScript + shadcn/ui. Auth via phone + password. MCP via django-mcp-server.
+
+## Rules
+
+- Mobile-first (390px), min 44×44px touch targets
+- Slot hold TTL: 10 min; webhook confirms payment, not redirect
+- Egyptian mobile format: `01xxxxxxxxx`
+- Keep scope tight — see AGENTS.md scope guard

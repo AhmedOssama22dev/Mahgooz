@@ -1,0 +1,10 @@
+{
+  "files.associations": {
+    "*.mdc": "markdown"
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/vendor": true,
+    "**/.venv": true
+  }
+}
