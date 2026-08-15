@@ -25,7 +25,7 @@ abstract class MahgoozApi {
     required String accessToken,
     required String courtId,
     required String date,
-    required String startTime,
+    required List<String> startTimes,
     required List<String> attendeeNames,
   });
 

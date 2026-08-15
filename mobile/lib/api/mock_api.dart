@@ -330,7 +330,7 @@ class MockApi implements MahgoozApi {
     required String accessToken,
     required String courtId,
     required String date,
-    required String startTime,
+    required List<String> startTimes,
     required List<String> attendeeNames,
   }) async {
     await ensureLoaded();
@@ -342,6 +342,13 @@ class MockApi implements MahgoozApi {
         message: 'Provide between 1 and 4 attendee names.',
       );
     }
+    if (startTimes.isEmpty || startTimes.length > 4) {
+      throw ApiException(
+        statusCode: 400,
+        code: 'VALIDATION_ERROR',
+        message: 'Hold 1 to 4 consecutive hours.',
+      );
+    }
     final court = _courts.firstWhere(
       (c) => c.id == courtId,
       orElse: () => throw ApiException(
@@ -350,32 +357,37 @@ class MockApi implements MahgoozApi {
         message: 'Court not found.',
       ),
     );
-    final key = _key(courtId, date, startTime);
-    final state = _slotState[key];
-    if (state == 'held' || state == 'booked') {
-      throw ApiException(
-        statusCode: 409,
-        code: 'SLOT_TAKEN',
-        message:
-            'This slot was just booked. Please choose another available slot.',
-      );
+    final sorted = [...startTimes]..sort();
+    var total = 0;
+    for (final startTime in sorted) {
+      final key = _key(courtId, date, startTime);
+      final state = _slotState[key];
+      if (state == 'held' || state == 'booked') {
+        throw ApiException(
+          statusCode: 409,
+          code: 'SLOT_TAKEN',
+          message:
+              'This slot was just booked. Please choose another available slot.',
+        );
+      }
+      final hour = int.parse(startTime.split(':').first);
+      total += priceForPeriod(periodForHour(hour));
     }
-    _slotState[key] = 'held';
-    final hour = int.parse(startTime.split(':').first);
-    final period = periodForHour(hour);
-    final price = priceForPeriod(period);
+    for (final startTime in sorted) {
+      _slotState[_key(courtId, date, startTime)] = 'held';
+    }
     final now = DateTime.now();
     final booking = Booking(
       id: _uuid.v4(),
       status: 'held',
       court: court,
       date: date,
-      startTime: startTime,
-      endTime: addHour(startTime),
+      startTime: sorted.first,
+      endTime: addHour(sorted.last),
       bookerName: user.user.name,
       attendeeNames: attendeeNames,
-      priceEgp: price,
-      priceCents: price * 100,
+      priceEgp: total,
+      priceCents: total * 100,
       holdExpiresAt: now.add(AppConfig.holdTtl),
       createdAt: now,
     );

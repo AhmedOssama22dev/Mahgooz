@@ -2,6 +2,13 @@ from datetime import time, timedelta
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 import os
+import warnings
+
+# django-mcp-server / pydantic_settings: unresolved `lifespan` forward ref.
+warnings.filterwarnings(
+    "ignore",
+    message=r".*Field 'lifespan' has an incomplete definition.*",
+)
 
 from dotenv import load_dotenv
 

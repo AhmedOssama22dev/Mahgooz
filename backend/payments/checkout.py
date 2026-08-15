@@ -1,11 +1,14 @@
 from django.conf import settings
 from django.db import transaction
+import logging
 
 from bookings import errors
 from bookings.expiry import expire_elapsed_holds
 from bookings.models import Booking
 from bookings.policies import assert_transition, cairo_now, can_checkout, format_hhmm
 from payments.client import PaymobClient, PaymobClientError
+
+logger = logging.getLogger("payments.paymob")
 
 CURRENCY = "EGP"
 PLACEHOLDER_ADDRESS = "NA"
@@ -29,6 +32,12 @@ def start_checkout(*, user, booking_id, now=None, client=None):
         _assert_checkout_allowed(booking, user=user, now=now)
         paymob = client or PaymobClient()
         if not paymob.is_configured():
+            logger.warning(
+                "Paymob not configured: secret_key=%s public_key=%s integration_id=%s",
+                bool(paymob.secret_key),
+                bool(paymob.public_key),
+                paymob.card_integration_id(),
+            )
             errors.paymob_error()
         payload = build_intention_payload(
             booking,
@@ -37,7 +46,8 @@ def start_checkout(*, user, booking_id, now=None, client=None):
         )
         try:
             intention = paymob.create_intention(payload)
-        except PaymobClientError:
+        except PaymobClientError as exc:
+            logger.warning("Paymob checkout failed for booking %s: %s", booking.id, exc)
             errors.paymob_error()
         if booking.status != Booking.Status.PENDING_PAYMENT:
             assert_transition(booking, Booking.Status.PENDING_PAYMENT)

@@ -21,6 +21,9 @@ class PaymobWebhookView(APIView):
             )
         return super().handle_exception(exc)
 
+    def get(self, _request):
+        return Response({"status": "ok"})
+
     def post(self, request):
         received_hmac = request.query_params.get("hmac") or ""
         body = request.data

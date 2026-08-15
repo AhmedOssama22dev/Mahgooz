@@ -26,7 +26,7 @@ class _BookScreenState extends State<BookScreen> {
   List<Court> _courts = const [];
   Court? _court;
   SlotGrid? _grid;
-  Slot? _slot;
+  final List<Slot> _selected = [];
   Booking? _hold;
   bool _loading = false;
   bool _paying = false;
@@ -96,12 +96,44 @@ class _BookScreenState extends State<BookScreen> {
     }
   }
 
-  Future<void> _selectSlot(Slot slot) async {
+  void _toggleSlot(Slot slot) {
+    if (!slot.isOpen) return;
+    setState(() {
+      final already = _selected.any((s) => s.startTime == slot.startTime);
+      if (already) {
+        _selected.removeWhere((s) => s.startTime == slot.startTime);
+        return;
+      }
+      final next = [..._selected, slot];
+      if (next.length <= 4 && _isConsecutive(next)) {
+        _selected
+          ..clear()
+          ..addAll(next);
+      } else {
+        _selected
+          ..clear()
+          ..add(slot);
+      }
+    });
+  }
+
+  bool _isConsecutive(List<Slot> slots) {
+    if (slots.isEmpty) return true;
+    final hours = slots.map((s) => int.parse(s.startTime.split(':').first)).toList()
+      ..sort();
+    for (var i = 1; i < hours.length; i++) {
+      if (hours[i] != hours[i - 1] + 1) return false;
+    }
+    return true;
+  }
+
+  Future<void> _holdSelected() async {
     final session = context.read<SessionController>();
     if (session.user == null) {
       context.push('/login?next=/book');
       return;
     }
+    if (_selected.isEmpty || _court == null) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -115,17 +147,16 @@ class _BookScreenState extends State<BookScreen> {
           );
         } catch (_) {}
       }
-      final names = [session.user!.name];
+      final times = _selected.map((s) => s.startTime).toList()..sort();
       final booking = await session.api.hold(
         accessToken: session.accessToken!,
         courtId: _court!.id,
         date: formatIso(_date),
-        startTime: slot.startTime,
-        attendeeNames: names,
+        startTimes: times,
+        attendeeNames: [session.user!.name],
       );
       if (!mounted) return;
       setState(() {
-        _slot = slot;
         _hold = booking;
         _step = 4;
       });
@@ -157,7 +188,7 @@ class _BookScreenState extends State<BookScreen> {
     if (!mounted) return;
     setState(() {
       _hold = null;
-      _slot = null;
+      _selected.clear();
       _step = 3;
     });
     await _loadSlots();
@@ -297,6 +328,7 @@ class _BookScreenState extends State<BookScreen> {
             onTap: () async {
               setState(() {
                 _court = court;
+                _selected.clear();
                 _step = 3;
               });
               await _loadSlots();
@@ -354,60 +386,85 @@ class _BookScreenState extends State<BookScreen> {
   }
 
   Widget _slotStep() {
-    if (_loading || _grid == null) {
+    if (_grid == null) {
       return const Center(child: CircularProgressIndicator());
     }
     final groups = <String, List<Slot>>{};
     for (final slot in _grid!.slots) {
       groups.putIfAbsent(slot.period, () => []).add(slot);
     }
-    return ListView(
+    final selectedHours = _selected.length;
+    final selectedTotal = _selected.fold<int>(0, (sum, slot) => sum + slot.priceEgp);
+    return Column(
       children: [
-        Text(
-          '${_court?.name} · ${formatDay(_date)}',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 16),
-        for (final period in ['morning', 'afternoon', 'evening'])
-          if (groups[period] != null) ...[
-            Row(
-              children: [
-                Text(
-                  periodLabel(period),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const Spacer(),
-                Text(
-                  formatEgp(groups[period]!.first.priceEgp),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final slot in groups[period]!)
-                  SlotChip(
-                    time: slot.startTime,
-                    state: slot.state,
-                    selected: _slot?.startTime == slot.startTime,
-                    onTap: slot.isOpen ? () => _selectSlot(slot) : null,
+        Expanded(
+          child: ListView(
+            children: [
+              Text(
+                '${_court?.name} · ${formatDay(_date)}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Tap consecutive hours — up to 4.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              for (final period in ['morning', 'afternoon', 'evening'])
+                if (groups[period] != null) ...[
+                  Row(
+                    children: [
+                      Text(
+                        periodLabel(period),
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const Spacer(),
+                      Text(
+                        formatEgp(groups[period]!.first.priceEgp),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
                   ),
-              ],
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final slot in groups[period]!)
+                        SlotChip(
+                          time: slot.startTime,
+                          state: slot.state,
+                          selected: _selected.any(
+                            (s) => s.startTime == slot.startTime,
+                          ),
+                          onTap: slot.isOpen ? () => _toggleSlot(slot) : null,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              Text(
+                'Legend: green open · yellow paying · grey taken',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => setState(() => _step = 2),
+                child: const Text('← Courts'),
+              ),
+            ],
+          ),
+        ),
+        if (_selected.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 12),
+            child: PrimaryButton(
+              label:
+                  'Hold $selectedHours hr${selectedHours == 1 ? '' : 's'} · ${formatEgp(selectedTotal)}',
+              loading: _loading,
+              onPressed: _holdSelected,
             ),
-            const SizedBox(height: 20),
-          ],
-        Text(
-          'Legend: green open · yellow paying · grey taken',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 12),
-        TextButton(
-          onPressed: () => setState(() => _step = 2),
-          child: const Text('← Courts'),
-        ),
+          ),
       ],
     );
   }
@@ -434,7 +491,9 @@ class _BookScreenState extends State<BookScreen> {
               Text(
                 '${formatDay(DateTime.parse(booking.date))} · ${booking.startTime}–${booking.endTime}',
               ),
-              const Text('1 hour'),
+              Text(
+                '${booking.durationHours} hour${booking.durationHours == 1 ? '' : 's'}',
+              ),
               const Divider(height: 24),
               Row(
                 children: [

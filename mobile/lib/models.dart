@@ -130,16 +130,16 @@ class BookingSummary {
   final String? period;
 
   factory BookingSummary.fromJson(Map<String, dynamic> json) => BookingSummary(
-    id: json['id'] as String,
-    status: json['status'] as String,
-    courtName: json['court_name'] as String,
-    date: json['date'] as String,
-    startTime: json['start_time'] as String,
-    endTime: json['end_time'] as String,
-    priceEgp: json['price_egp'] as int,
-    bookingCode: json['booking_code'] as String?,
-    period: json['period'] as String?,
-  );
+        id: json['id'] as String,
+        status: json['status'] as String,
+        courtName: json['court_name'] as String? ?? 'Court',
+        date: json['date'] as String? ?? '',
+        startTime: json['start_time'] as String? ?? '',
+        endTime: json['end_time'] as String? ?? '',
+        priceEgp: json['price_egp'] as int? ?? 0,
+        bookingCode: json['booking_code'] as String?,
+        period: json['period'] as String?,
+      );
 }
 
 class BookingList {
@@ -156,6 +156,41 @@ class BookingList {
         .map((e) => BookingSummary.fromJson(e as Map<String, dynamic>))
         .toList(),
   );
+}
+
+class BookedSlot {
+  const BookedSlot({
+    required this.court,
+    required this.date,
+    required this.startTime,
+    required this.endTime,
+    required this.priceEgp,
+    this.priceCents,
+    this.period,
+  });
+
+  final Court court;
+  final String date;
+  final String startTime;
+  final String endTime;
+  final int priceEgp;
+  final int? priceCents;
+  final String? period;
+
+  factory BookedSlot.fromJson(Map<String, dynamic> json) {
+    final courtJson = json['court'];
+    return BookedSlot(
+      court: courtJson is Map<String, dynamic>
+          ? Court.fromJson(courtJson)
+          : Court(id: '', name: json['court_name'] as String? ?? 'Court'),
+      date: json['date'] as String,
+      startTime: json['start_time'] as String,
+      endTime: json['end_time'] as String,
+      priceEgp: json['price_egp'] as int? ?? 0,
+      priceCents: json['price_cents'] as int?,
+      period: json['period'] as String?,
+    );
+  }
 }
 
 class Booking {
@@ -176,6 +211,7 @@ class Booking {
     this.redeemedAt,
     this.createdAt,
     this.paidAt,
+    this.slots = const [],
   });
 
   final String id;
@@ -194,26 +230,52 @@ class Booking {
   final DateTime? redeemedAt;
   final DateTime? createdAt;
   final DateTime? paidAt;
+  final List<BookedSlot> slots;
+
+  int get durationHours {
+    final start = int.tryParse(startTime.split(':').first) ?? 0;
+    final end = int.tryParse(endTime.split(':').first) ?? start + 1;
+    final hours = end - start;
+    return hours > 0 ? hours : 1;
+  }
 
   factory Booking.fromJson(Map<String, dynamic> json) {
+    final parsedSlots = <BookedSlot>[];
+    final rawSlots = json['slots'];
+    if (rawSlots is List) {
+      for (final item in rawSlots) {
+        if (item is Map<String, dynamic>) {
+          parsedSlots.add(BookedSlot.fromJson(item));
+        }
+      }
+      parsedSlots.sort((a, b) => a.startTime.compareTo(b.startTime));
+    }
+
+    final first = parsedSlots.isNotEmpty ? parsedSlots.first : null;
+    final last = parsedSlots.isNotEmpty ? parsedSlots.last : null;
     final courtJson = json['court'];
+    final court = first?.court ??
+        (courtJson is Map<String, dynamic>
+            ? Court.fromJson(courtJson)
+            : Court(id: '', name: json['court_name'] as String? ?? 'Court'));
+
     return Booking(
       id: json['id'] as String,
       status: json['status'] as String,
-      court: courtJson is Map<String, dynamic>
-          ? Court.fromJson(courtJson)
-          : Court(id: '', name: json['court_name'] as String? ?? 'Court'),
-      date: json['date'] as String,
-      startTime: json['start_time'] as String,
-      endTime: json['end_time'] as String,
+      court: court,
+      date: first?.date ?? json['date'] as String,
+      startTime: first?.startTime ?? json['start_time'] as String,
+      endTime: last?.endTime ?? json['end_time'] as String,
       bookerName: json['booker_name'] as String? ?? '',
       attendeeNames:
           (json['attendee_names'] as List?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],
-      priceEgp: json['price_egp'] as int,
-      priceCents: json['price_cents'] as int?,
+      priceEgp: json['total_price_egp'] as int? ??
+          json['price_egp'] as int? ??
+          parsedSlots.fold<int>(0, (sum, slot) => sum + slot.priceEgp),
+      priceCents: json['total_price_cents'] as int? ?? json['price_cents'] as int?,
       holdExpiresAt: json['hold_expires_at'] != null
           ? DateTime.parse(json['hold_expires_at'] as String)
           : null,
@@ -228,6 +290,7 @@ class Booking {
       paidAt: json['paid_at'] != null
           ? DateTime.parse(json['paid_at'] as String)
           : null,
+      slots: parsedSlots,
     );
   }
 }
@@ -312,28 +375,48 @@ class Pass {
   final bool? canRedeem;
   final int? paymobTransactionId;
 
-  factory Pass.fromJson(Map<String, dynamic> json) => Pass(
-    bookingCode: json['booking_code'] as String,
-    status: json['status'] as String,
-    court: Court.fromJson(json['court'] as Map<String, dynamic>),
-    date: json['date'] as String,
-    startTime: json['start_time'] as String,
-    endTime: json['end_time'] as String,
-    bookerName: json['booker_name'] as String,
-    attendeeNames: (json['attendee_names'] as List)
-        .map((e) => e.toString())
-        .toList(),
-    priceEgp: json['price_egp'] as int,
-    qrPayload:
-        json['qr_payload'] as String? ??
-        'https://mahgooz.app/pass/${json['booking_code']}',
-    redeemedAt: json['redeemed_at'] != null
-        ? DateTime.parse(json['redeemed_at'] as String)
-        : null,
-    bookerPhone: json['booker_phone'] as String?,
-    canRedeem: json['can_redeem'] as bool?,
-    paymobTransactionId: json['paymob_transaction_id'] as int?,
-  );
+  factory Pass.fromJson(Map<String, dynamic> json) {
+    final parsedSlots = <BookedSlot>[];
+    final rawSlots = json['slots'];
+    if (rawSlots is List) {
+      for (final item in rawSlots) {
+        if (item is Map<String, dynamic>) {
+          parsedSlots.add(BookedSlot.fromJson(item));
+        }
+      }
+      parsedSlots.sort((a, b) => a.startTime.compareTo(b.startTime));
+    }
+    final first = parsedSlots.isNotEmpty ? parsedSlots.first : null;
+    final last = parsedSlots.isNotEmpty ? parsedSlots.last : null;
+    final courtJson = json['court'];
+    return Pass(
+      bookingCode: json['booking_code'] as String,
+      status: json['status'] as String,
+      court: first?.court ??
+          (courtJson is Map<String, dynamic>
+              ? Court.fromJson(courtJson)
+              : const Court(id: '', name: 'Court')),
+      date: first?.date ?? json['date'] as String,
+      startTime: first?.startTime ?? json['start_time'] as String,
+      endTime: last?.endTime ?? json['end_time'] as String,
+      bookerName: json['booker_name'] as String,
+      attendeeNames: (json['attendee_names'] as List)
+          .map((e) => e.toString())
+          .toList(),
+      priceEgp: json['total_price_egp'] as int? ??
+          json['price_egp'] as int? ??
+          parsedSlots.fold<int>(0, (sum, slot) => sum + slot.priceEgp),
+      qrPayload:
+          json['qr_payload'] as String? ??
+          'https://mahgooz.app/pass/${json['booking_code']}',
+      redeemedAt: json['redeemed_at'] != null
+          ? DateTime.parse(json['redeemed_at'] as String)
+          : null,
+      bookerPhone: json['booker_phone'] as String?,
+      canRedeem: json['can_redeem'] as bool?,
+      paymobTransactionId: json['paymob_transaction_id'] as int?,
+    );
+  }
 }
 
 class StaffBooking {

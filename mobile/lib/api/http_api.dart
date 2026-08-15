@@ -152,7 +152,7 @@ class HttpApi implements MahgoozApi {
     required String accessToken,
     required String courtId,
     required String date,
-    required String startTime,
+    required List<String> startTimes,
     required List<String> attendeeNames,
   }) async {
     final data = await _send(
@@ -160,9 +160,14 @@ class HttpApi implements MahgoozApi {
       '/bookings/hold',
       token: accessToken,
       body: {
-        'court_id': courtId,
-        'date': date,
-        'start_time': startTime,
+        'slots': [
+          for (final startTime in startTimes)
+            {
+              'court_id': courtId,
+              'date': date,
+              'start_time': startTime,
+            },
+        ],
         'attendee_names': attendeeNames,
       },
       successMin: 200,
