@@ -155,6 +155,11 @@ class SerializerAudienceTests(TestCase):
         self.assertNotIn("paymob_intention_id", data)
         self.assertFalse(data["can_redeem"])
         self.assertEqual(len(data["slots"]), 2)
+        self.assertEqual(data["court"]["name"], "Court 1")
+        self.assertEqual(data["date"], "2026-08-20")
+        self.assertEqual(data["start_time"], "18:00")
+        self.assertEqual(data["end_time"], "20:00")
+        self.assertEqual(data["price_egp"], 700)
 
     def test_staff_list_item_includes_all_child_slots(self):
         data = StaffBookingListItemSerializer(self.booking).data

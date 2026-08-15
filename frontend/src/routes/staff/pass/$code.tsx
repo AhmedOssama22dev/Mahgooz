@@ -17,6 +17,7 @@ import {
   todayKey,
 } from '@/lib/format'
 import { requireStaff } from '@/lib/guards'
+import { staffPassSchedule } from '@/lib/staff-pass'
 import { apiStatusToUi } from '@/lib/slot-states'
 import { apiErrorMessage } from '@/lib/utils'
 
@@ -97,10 +98,17 @@ type StaffPass = {
   date?: string
   start_time?: string
   end_time?: string
+  slots?: Array<{
+    court?: { name?: string }
+    date?: string
+    start_time?: string
+    end_time?: string
+  }>
   booker_name?: string
   booker_phone?: string
   attendee_names?: string[]
   price_egp?: number
+  total_price_egp?: number
   paymob_transaction_id?: number
   redeemed_at?: unknown
 }
@@ -115,19 +123,25 @@ function PassDetail({
   redeeming: boolean
 }) {
   const status = apiStatusToUi(data.status)
-  const start = parseSlotStart(data.date ?? '', data.start_time ?? '00:00')
+  const schedule = staffPassSchedule(data)
+  const start = schedule
+    ? parseSlotStart(schedule.date, schedule.startTime)
+    : null
   const today = todayKey()
-  const wrongDay = Boolean(data.date && data.date !== today)
+  const wrongDay = Boolean(schedule?.date && schedule.date !== today)
   const redeemedAt =
     typeof data.redeemed_at === 'string' ? data.redeemed_at : undefined
   const players = data.attendee_names?.length ?? 1
   const canRedeem = Boolean(data.can_redeem) && !redeeming
+  const priceEgp = data.price_egp ?? data.total_price_egp
 
   let message: string | undefined
   if (status === 'pending_payment' || data.status === 'held') {
     message = 'Payment not confirmed yet'
-  } else if (wrongDay && data.date) {
-    message = `This pass is for ${formatBookingDay(parseSlotStart(data.date, '12:00'))}, not today`
+  } else if (wrongDay && schedule) {
+    message = `This pass is for ${formatBookingDay(
+      parseSlotStart(schedule.date, '12:00'),
+    )}, not today`
   }
 
   return (
@@ -140,19 +154,25 @@ function PassDetail({
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm">
           <p className="font-display text-lg font-semibold">
-            {data.court?.name ?? 'Court'}
+            {schedule?.courtName ?? data.court?.name ?? 'Court'}
           </p>
           <p>
-            {data.date === today ? 'Today' : formatBookingDay(start)} ·{' '}
-            {data.start_time}–{data.end_time}
+            {schedule
+              ? schedule.date === today
+                ? 'Today'
+                : start
+                  ? formatBookingDay(start)
+                  : schedule.date
+              : '—'}{' '}
+            · {schedule ? `${schedule.startTime}–${schedule.endTime}` : '—'}
           </p>
           <p>{data.booker_name}</p>
           <p className="text-muted-foreground">
             {data.booker_phone} · {players}{' '}
             {players === 1 ? 'player' : 'players'}
           </p>
-          {data.price_egp != null ? (
-            <p className="tabular-nums">{formatEgp(data.price_egp)}</p>
+          {priceEgp != null ? (
+            <p className="tabular-nums">{formatEgp(priceEgp)}</p>
           ) : null}
           {data.paymob_transaction_id ? (
             <p className="text-muted-foreground">

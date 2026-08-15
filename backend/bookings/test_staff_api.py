@@ -191,6 +191,10 @@ class StaffApiTests(APITestCase):
         self.assertEqual(body["booker_phone"], "01012345678")
         self.assertEqual(body["paymob_transaction_id"], "txn-289187034")
         self.assertEqual(len(body["slots"]), 2)
+        self.assertEqual(body["court"]["name"], "Court 1")
+        self.assertEqual(body["date"], self.today.isoformat())
+        self.assertEqual(body["start_time"], "18:00")
+        self.assertEqual(body["end_time"], "20:00")
 
     def test_lookup_redeemed_returns_200(self):
         booking = self._booking(

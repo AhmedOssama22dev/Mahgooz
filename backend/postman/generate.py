@@ -146,10 +146,16 @@ def staff_pass(**overrides):
         "booking_code": BOOKING_CODE,
         "status": "confirmed",
         "can_redeem": True,
+        "court": {"id": COURT_1, "name": "Court 1"},
+        "date": SLOT_DATE,
+        "start_times": ["18:00", "19:00"],
+        "start_time": "18:00",
+        "end_time": "20:00",
         "booker_name": "Ahmed Hassan",
         "booker_phone": "01012345678",
         "attendee_names": HOLD_ATTENDEES,
         "slots": TWO_SLOTS,
+        "price_egp": 700,
         "total_price_egp": 700,
         "total_price_cents": 70000,
         "paymob_transaction_id": "289187034",
@@ -292,14 +298,14 @@ Every request has saved **success and failure examples** in the Examples dropdow
 
 ## Slot rules
 - Two courts, 60-minute slots, 08:00–22:00, book 14 days ahead.
-- Hold TTL **10 minutes**. Abandoned / failed / expired holds free every child slot.
+- Hold TTL **20 minutes**. Abandoned / failed / expired holds free every child slot.
 - Unique active row per occupied hour: `court + date + start_time`.
 - Hold one or more hours on the **same court and date** via `slots[]`. Mixed courts/dates → `400 MIXED_SLOTS`. One conflict rolls back the whole hold → `409 SLOT_TAKEN`.
 - Pricing: morning EGP 200 (08–12), afternoon 280 (12–17), evening 350 (17–22).
 - A booking is **paid only** after a verified Paymob webhook, never after the redirect page.
 """
 
-HOLD_DESC = """Atomically hold one or more 60-minute slots for 10 minutes.
+HOLD_DESC = """Atomically hold one or more 60-minute slots for 20 minutes.
 
 Send a `slots[]` array. Every entry must share the same `court_id` and `date`, with distinct `start_time` values. Price is the sum of each hour's band.
 

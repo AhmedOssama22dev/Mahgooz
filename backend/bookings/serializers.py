@@ -245,7 +245,13 @@ class PublicPassSerializer(BookingScheduleMixin, serializers.ModelSerializer):
         )
 
 
-class StaffPassSerializer(serializers.ModelSerializer):
+class StaffPassSerializer(BookingScheduleMixin, serializers.ModelSerializer):
+    court = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
+    start_times = serializers.SerializerMethodField()
+    start_time = serializers.SerializerMethodField()
+    end_time = serializers.SerializerMethodField()
+    price_egp = serializers.IntegerField(source="total_price_egp")
     slots = serializers.SerializerMethodField()
     booker_phone = serializers.SerializerMethodField()
     can_redeem = serializers.SerializerMethodField()
@@ -256,10 +262,16 @@ class StaffPassSerializer(serializers.ModelSerializer):
             "booking_code",
             "status",
             "can_redeem",
+            "court",
+            "date",
+            "start_times",
+            "start_time",
+            "end_time",
             "booker_name",
             "booker_phone",
             "attendee_names",
             "slots",
+            "price_egp",
             "total_price_egp",
             "total_price_cents",
             "paymob_transaction_id",
