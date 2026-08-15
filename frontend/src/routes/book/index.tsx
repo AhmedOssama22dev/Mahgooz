@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { startOfDay } from 'date-fns'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { CustomerLayout } from '@/components/customer-layout'
@@ -31,6 +31,7 @@ import {
   addHours,
   periodFromHour,
   toggleConsecutiveHour,
+  uniqueSortedTimes,
 } from '@/lib/slot-states'
 import type { Period, SlotState } from '@/lib/slot-states'
 import { apiErrorMessage } from '@/lib/utils'
@@ -95,6 +96,19 @@ function BookPage() {
     { params: { query: { date: dateStr, court_id: courtId } } },
     { enabled: Boolean(courtId) && step >= 2 },
   )
+  const primedOwnHold = useRef<string | null>(null)
+
+  useEffect(() => {
+    const key = `${courtId ?? ''}:${dateStr}`
+    const mine = (slots.data?.slots ?? [])
+      .filter((slot) => slot.held_by_me)
+      .map((slot) => slot.start_time)
+      .filter((time): time is string => Boolean(time))
+    if (mine.length === 0) return
+    if (primedOwnHold.current === key) return
+    primedOwnHold.current = key
+    setSelectedTimes(uniqueSortedTimes(mine))
+  }, [courtId, dateStr, slots.data])
 
   const holdSlot = $api.useMutation('post', '/bookings/hold')
   const checkout = $api.useMutation('post', '/bookings/{booking_id}/checkout')
@@ -391,6 +405,7 @@ function bandsFromSlots(
     state?: string
     period?: string
     price_egp?: number
+    held_by_me?: boolean
   }>,
   selected: string[],
 ): SlotBand[] {
@@ -406,12 +421,16 @@ function bandsFromSlots(
       byPeriod.set(period, band)
     }
     const raw = slot.state
-    const state: SlotState =
+    const base: SlotState =
       raw === 'held' || raw === 'booked' || raw === 'available' ? raw : 'booked'
-    band.slots.push({
-      time,
-      state: picked.has(time) && state === 'available' ? 'selected' : state,
-    })
+    const mine = slot.held_by_me === true && base === 'held'
+    let state: SlotState = base
+    if (mine) {
+      state = picked.has(time) ? 'selected' : 'available'
+    } else if (picked.has(time) && base === 'available') {
+      state = 'selected'
+    }
+    band.slots.push({ time, state })
   }
   return (['morning', 'afternoon', 'evening'] as const)
     .map((period) => byPeriod.get(period))

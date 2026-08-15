@@ -108,6 +108,54 @@ class MockApi implements MahgoozApi {
   String _key(String courtId, String date, String start) =>
       '$courtId|$date|$start';
 
+  List<String> _bookingHourStarts(Booking booking) {
+    if (booking.slots.isNotEmpty) {
+      return booking.slots.map((slot) => slot.startTime).toList()..sort();
+    }
+    final start = int.parse(booking.startTime.split(':').first);
+    final end = int.parse(booking.endTime.split(':').first);
+    return [
+      for (var hour = start; hour < end; hour++)
+        '${hour.toString().padLeft(2, '0')}:00',
+    ];
+  }
+
+  void _releaseOwnUnpaidAt(String courtId, String date, String startTime) {
+    Booking? match;
+    for (final booking in _bookings.values) {
+      if (booking.court.id != courtId || booking.date != date) continue;
+      if (booking.status != 'held' && booking.status != 'pending_payment') {
+        continue;
+      }
+      if (_bookingHourStarts(booking).contains(startTime)) {
+        match = booking;
+        break;
+      }
+    }
+    if (match == null) {
+      throw ApiException(
+        statusCode: 409,
+        code: 'SLOT_TAKEN',
+        message:
+            'This slot was just booked. Please choose another available slot.',
+      );
+    }
+    for (final time in _bookingHourStarts(match)) {
+      _slotState.remove(_key(match.court.id, match.date, time));
+    }
+    _bookings[match.id] = Booking(
+      id: match.id,
+      status: 'cancelled',
+      court: match.court,
+      date: match.date,
+      startTime: match.startTime,
+      endTime: match.endTime,
+      bookerName: match.bookerName,
+      attendeeNames: match.attendeeNames,
+      priceEgp: match.priceEgp,
+    );
+  }
+
   _MockUser _requireUser(String token) {
     if (token.isEmpty) {
       throw ApiException(
@@ -156,6 +204,7 @@ class MockApi implements MahgoozApi {
   Future<SlotGrid> slots({
     required String date,
     required String courtId,
+    String? accessToken,
   }) async {
     await ensureLoaded();
     Court? court;
@@ -209,6 +258,7 @@ class MockApi implements MahgoozApi {
           priceEgp: price,
           priceCents: price * 100,
           label: period == 'morning' ? 'Morning available' : null,
+          heldByMe: accessToken != null && state == 'held',
         ),
       );
     }
@@ -358,17 +408,30 @@ class MockApi implements MahgoozApi {
       ),
     );
     final sorted = [...startTimes]..sort();
+    final existing = _bookings.values.where((b) {
+      if (b.court.id != courtId || b.date != date) return false;
+      if (b.status != 'held' && b.status != 'pending_payment') return false;
+      final times = _bookingHourStarts(b);
+      return times.length == sorted.length &&
+          times.every((t) => sorted.contains(t));
+    }).toList();
+    if (existing.isNotEmpty) {
+      return existing.first;
+    }
     var total = 0;
     for (final startTime in sorted) {
       final key = _key(courtId, date, startTime);
       final state = _slotState[key];
-      if (state == 'held' || state == 'booked') {
+      if (state == 'booked') {
         throw ApiException(
           statusCode: 409,
           code: 'SLOT_TAKEN',
           message:
               'This slot was just booked. Please choose another available slot.',
         );
+      }
+      if (state == 'held') {
+        _releaseOwnUnpaidAt(courtId, date, startTime);
       }
       final hour = int.parse(startTime.split(':').first);
       total += priceForPeriod(periodForHour(hour));

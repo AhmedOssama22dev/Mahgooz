@@ -331,6 +331,7 @@ def build_collection():
         "{{base_url}}/slots?date={{slot_date}}&court_id={{court_id}}",
         "Generated 08:00–21:00 grid for one court and date.\n\n"
         "**States:** `available` | `held` | `booked`. Held slots of other customers are never selectable.\n\n"
+        "If the request includes a customer JWT, that customer's own unpaid holds include `held_by_me: true` so they can resume checkout.\n\n"
         "Morning slots include `label: \"Morning available\"`.\n\n"
         "Book-ahead window: today through 14 days. Slot duration: 60 minutes.",
     )

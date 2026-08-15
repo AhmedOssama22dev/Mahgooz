@@ -5,7 +5,11 @@ abstract class MahgoozApi {
 
   Future<List<Court>> courts();
 
-  Future<SlotGrid> slots({required String date, required String courtId});
+  Future<SlotGrid> slots({
+    required String date,
+    required String courtId,
+    String? accessToken,
+  });
 
   Future<Pass> publicPass(String code);
 

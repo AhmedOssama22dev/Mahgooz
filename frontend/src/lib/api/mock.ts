@@ -181,6 +181,13 @@ function occupying(courtId: string, date: string, start: string) {
   )
 }
 
+function unpaidOccupying(courtId: string, date: string, start: string) {
+  const b = occupying(courtId, date, start)
+  if (!b) return undefined
+  if (b.status === 'held' || b.status === 'pending_payment') return b
+  return undefined
+}
+
 function parseHoldSlots(
   body: Record<string, unknown>,
 ): { court_id: string; date: string; start_times: string[] } | MockRes {
@@ -231,7 +238,7 @@ function slotState(courtId: string, date: string, start: string) {
   return 'booked'
 }
 
-function buildSlots(court: Court, date: string) {
+function buildSlots(court: Court, date: string, viewerAuthed = false) {
   const slots = []
   const hours = OPERATING_HOURS.end - OPERATING_HOURS.start
   for (let i = 0; i < hours; i++) {
@@ -247,6 +254,9 @@ function buildSlots(court: Court, date: string) {
       price_egp,
       price_cents,
       label: period === 'morning' ? 'Morning available' : null,
+      held_by_me: Boolean(
+        viewerAuthed && unpaidOccupying(court.id, date, start_time),
+      ),
     })
   }
   return slots
@@ -436,7 +446,7 @@ function handleRoute(
         close: hhmm(OPERATING_HOURS.end),
       },
       slot_minutes: SLOT_MINUTES,
-      slots: buildSlots(court, date),
+      slots: buildSlots(court, date, Boolean(req.authorization)),
     })
   }
 
@@ -475,9 +485,26 @@ function handleRoute(
     const court = courtById(parsed.court_id || undefined)
     const date = parsed.date
     const start_times = parsed.start_times
-    const taken = start_times.find((t) => occupying(court.id, date, t))
+    const occupiers = start_times.map((t) => occupying(court.id, date, t))
+    const unpaidMine = start_times.map((t) => unpaidOccupying(court.id, date, t))
+    const exact = unpaidMine[0]
+    const sameExactHold =
+      Boolean(exact) &&
+      unpaidMine.every((b) => b?.id === exact?.id) &&
+      exact &&
+      exact.start_times.length === start_times.length &&
+      exact.start_times.every((t) => start_times.includes(t))
+    if (sameExactHold && exact) {
+      return ok(customerDetail(exact), 201)
+    }
+    const taken = occupiers.find((b, i) => b && !unpaidMine[i])
     if (taken) {
       return err(409, 'SLOT_TAKEN', 'This slot is no longer available')
+    }
+    const overlappingOwn = unpaidMine.filter((b): b is Booking => Boolean(b))
+    for (const own of overlappingOwn) {
+      own.status = 'cancelled'
+      own.hold_expires_at = null
     }
     const attendees = strings(body.attendee_names)
     const now = new Date()

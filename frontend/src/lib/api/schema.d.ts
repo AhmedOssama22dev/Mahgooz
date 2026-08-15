@@ -282,6 +282,7 @@ export interface paths {
                                 price_egp?: number;
                                 price_cents?: number;
                                 label?: string;
+                                held_by_me?: boolean;
                             }[];
                         };
                     };

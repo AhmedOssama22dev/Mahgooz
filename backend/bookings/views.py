@@ -39,7 +39,6 @@ class CourtListView(APIView):
 
 
 class SlotListView(APIView):
-    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -54,7 +53,10 @@ class SlotListView(APIView):
         except Court.DoesNotExist:
             errors.not_found("Court not found.")
         expire_elapsed_holds()
-        return Response(SlotGridSerializer(build_slot_grid(court, slot_date)).data)
+        viewer = request.user if request.user.is_authenticated else None
+        return Response(
+            SlotGridSerializer(build_slot_grid(court, slot_date, user=viewer)).data
+        )
 
 
 class PublicPassView(APIView):

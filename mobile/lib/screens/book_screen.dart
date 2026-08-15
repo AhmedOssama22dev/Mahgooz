@@ -56,12 +56,16 @@ class _BookScreenState extends State<BookScreen> {
   }
 
   Future<void> _refreshAvailability() async {
-    final api = context.read<SessionController>().api;
+    final session = context.read<SessionController>();
     final date = formatIso(_date);
     final left = <String, int>{};
     for (final court in _courts) {
       try {
-        final grid = await api.slots(date: date, courtId: court.id);
+        final grid = await session.api.slots(
+          date: date,
+          courtId: court.id,
+          accessToken: session.accessToken,
+        );
         left[court.id] = grid.availableCount;
       } catch (_) {
         left[court.id] = 0;
@@ -82,12 +86,22 @@ class _BookScreenState extends State<BookScreen> {
       _error = null;
     });
     try {
-      final grid = await context.read<SessionController>().api.slots(
+      final session = context.read<SessionController>();
+      final grid = await session.api.slots(
         date: formatIso(_date),
         courtId: _court!.id,
+        accessToken: session.accessToken,
       );
       if (!mounted) return;
-      setState(() => _grid = grid);
+      final mine = grid.slots.where((slot) => slot.heldByMe).toList();
+      setState(() {
+        _grid = grid;
+        if (_selected.isEmpty && mine.isNotEmpty) {
+          _selected
+            ..clear()
+            ..addAll(mine);
+        }
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = e.toString());
@@ -433,7 +447,7 @@ class _BookScreenState extends State<BookScreen> {
                       for (final slot in groups[period]!)
                         SlotChip(
                           time: slot.startTime,
-                          state: slot.state,
+                          state: slot.heldByMe ? 'available' : slot.state,
                           selected: _selected.any(
                             (s) => s.startTime == slot.startTime,
                           ),

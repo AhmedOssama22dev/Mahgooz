@@ -87,10 +87,12 @@ class HttpApi implements MahgoozApi {
   Future<SlotGrid> slots({
     required String date,
     required String courtId,
+    String? accessToken,
   }) async {
     final data = await _send(
       'GET',
       '/slots',
+      token: accessToken,
       query: {'date': date, 'court_id': courtId},
     );
     return SlotGrid.fromJson(data as Map<String, dynamic>);

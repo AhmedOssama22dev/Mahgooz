@@ -16,19 +16,31 @@ def _grid_state(status):
     return "booked"
 
 
-def build_slot_grid(court, date):
+def build_slot_grid(court, date, user=None):
     occupied = {
-        slot.start_time: slot.booking.status
+        slot.start_time: slot
         for slot in BookingSlot.objects.filter(
             court=court,
             date=date,
             released_at__isnull=True,
         ).select_related("booking")
     }
+    viewer_id = (
+        user.id
+        if user is not None and getattr(user, "is_authenticated", False)
+        else None
+    )
     slots = []
     for start in start_time_grid():
         pricing = price_for_start_time(start)
-        status = occupied.get(start)
+        row = occupied.get(start)
+        status = row.booking.status if row is not None else None
+        held_by_me = (
+            viewer_id is not None
+            and row is not None
+            and row.booking.user_id == viewer_id
+            and status in HELD_STATUSES
+        )
         slots.append(
             {
                 "start_time": format_hhmm(start),
@@ -38,6 +50,7 @@ def build_slot_grid(court, date):
                 "price_egp": pricing["price_egp"],
                 "price_cents": pricing["price_cents"],
                 "label": pricing["label"] or None,
+                "held_by_me": held_by_me,
             }
         )
     return {

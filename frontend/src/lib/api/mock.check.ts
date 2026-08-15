@@ -73,7 +73,24 @@ const taken = call('POST', '/bookings/hold', {
   ...authed,
   body: holdBody(courts[0]!.id, '2026-08-21', ['18:00']),
 })
-check(taken.status === 409, 'second hold is slot taken')
+check(taken.status === 201, 'same user can resume own hold')
+check((taken.body as { id: string }).id === held.id, 'rehold keeps booking id')
+
+const gridMine = call('GET', '/slots', {
+  query: `date=2026-08-21&court_id=${courts[0]!.id}`,
+  ...authed,
+}).body as { slots: Array<{ start_time: string; state: string; held_by_me?: boolean }> }
+const mine18 = gridMine.slots.find((s) => s.start_time === '18:00')
+check(mine18?.state === 'held', 'own hold stays held for others')
+check(mine18?.held_by_me === true, 'holder is identified')
+
+const gridPublic = call('GET', '/slots', {
+  query: `date=2026-08-21&court_id=${courts[0]!.id}`,
+}).body as { slots: Array<{ start_time: string; held_by_me?: boolean }> }
+check(
+  gridPublic.slots.find((s) => s.start_time === '18:00')?.held_by_me !== true,
+  'anonymous grid does not claim the hold',
+)
 
 const two = call('POST', '/bookings/hold', {
   ...authed,
@@ -101,7 +118,11 @@ const overlap = call('POST', '/bookings/hold', {
   ...authed,
   body: holdBody(courts[0]!.id, '2026-08-21', ['21:00']),
 })
-check(overlap.status === 409, 'overlap on second hour of two-slot hold')
+check(overlap.status === 201, 'same user can replace overlapping hold')
+check(
+  (overlap.body as { start_times: string[] }).start_times.join() === '21:00',
+  'replaced hold is the new hour only',
+)
 
 const checkout = call('POST', `/bookings/${held.id}/checkout`, authed)
 check(checkout.status === 200, 'checkout')

@@ -124,6 +124,8 @@ export function clearSession() {
 
 export function tokenForPath(schemaPath: string): string | undefined {
   if (tokenKindForPath(schemaPath) === 'session') return getAccessToken()
+  // Public grid, but send JWT when logged in so own holds are identifiable.
+  if (schemaPath === '/slots') return getAccessToken()
   return undefined
 }
 

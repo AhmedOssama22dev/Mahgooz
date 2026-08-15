@@ -67,6 +67,7 @@ class SlotGridItemSerializer(serializers.Serializer):
     price_egp = serializers.IntegerField()
     price_cents = serializers.IntegerField()
     label = serializers.CharField(allow_null=True, allow_blank=True)
+    held_by_me = serializers.BooleanField()
 
 
 class OperatingHoursSerializer(serializers.Serializer):

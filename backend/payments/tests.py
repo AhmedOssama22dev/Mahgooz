@@ -183,6 +183,38 @@ class CheckoutApiTests(APITestCase):
         self.assertEqual(booking.paymob_intention_id, "pi_test_8f3a1c2e")
 
     @patch("payments.client.requests.Session.post")
+    def test_owner_can_checkout_after_reholding_own_slots(self, mock_post):
+        mock_post.return_value = _paymob_response()
+        first = create_hold(
+            user=self.user,
+            slots=[
+                {
+                    "court_id": str(self.court.id),
+                    "date": self.slot_date.isoformat(),
+                    "start_time": "18:00",
+                }
+            ],
+            attendee_names=["Ahmed Hassan"],
+        )
+        again = create_hold(
+            user=self.user,
+            slots=[
+                {
+                    "court_id": str(self.court.id),
+                    "date": self.slot_date.isoformat(),
+                    "start_time": "18:00",
+                }
+            ],
+            attendee_names=["Ahmed Hassan"],
+        )
+        self.assertEqual(again.id, first.id)
+        response = self._checkout(again)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["booking_id"], str(first.id))
+        first.refresh_from_db()
+        self.assertEqual(first.status, Booking.Status.PENDING_PAYMENT)
+
+    @patch("payments.client.requests.Session.post")
     def test_redirect_query_params_are_not_payment_confirmation(self, mock_post):
         mock_post.return_value = _paymob_response()
         booking = self._held_booking()

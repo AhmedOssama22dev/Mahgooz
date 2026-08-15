@@ -230,6 +230,9 @@
                           },
                           "label": {
                             "type": "string"
+                          },
+                          "held_by_me": {
+                            "type": "boolean"
                           }
                         }
                       }

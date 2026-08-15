@@ -51,6 +51,7 @@ class Slot {
     required this.priceEgp,
     required this.priceCents,
     this.label,
+    this.heldByMe = false,
   });
 
   final String startTime;
@@ -60,8 +61,9 @@ class Slot {
   final int priceEgp;
   final int priceCents;
   final String? label;
+  final bool heldByMe;
 
-  bool get isOpen => state == 'available';
+  bool get isOpen => state == 'available' || heldByMe;
 
   factory Slot.fromJson(Map<String, dynamic> json) => Slot(
     startTime: json['start_time'] as String,
@@ -71,9 +73,10 @@ class Slot {
     priceEgp: json['price_egp'] as int,
     priceCents: json['price_cents'] as int,
     label: json['label'] as String?,
+    heldByMe: json['held_by_me'] as bool? ?? false,
   );
 
-  Slot copyWith({String? state}) => Slot(
+  Slot copyWith({String? state, bool? heldByMe}) => Slot(
     startTime: startTime,
     endTime: endTime,
     state: state ?? this.state,
@@ -81,6 +84,7 @@ class Slot {
     priceEgp: priceEgp,
     priceCents: priceCents,
     label: label,
+    heldByMe: heldByMe ?? this.heldByMe,
   );
 }
 

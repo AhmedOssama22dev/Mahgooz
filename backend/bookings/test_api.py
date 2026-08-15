@@ -181,10 +181,40 @@ class SlotListApiTests(APITestCase):
 
         by_start = self._by_start(self._slots().json())
         self.assertEqual(by_start["18:00"]["state"], "held")
+        self.assertFalse(by_start["18:00"]["held_by_me"])
         self.assertEqual(by_start["19:00"]["state"], "held")
+        self.assertFalse(by_start["19:00"]["held_by_me"])
         self.assertEqual(by_start["20:00"]["state"], "booked")
+        self.assertFalse(by_start["20:00"]["held_by_me"])
         self.assertEqual(by_start["21:00"]["state"], "booked")
         self.assertEqual(by_start["17:00"]["state"], "available")
+        self.assertFalse(by_start["17:00"]["held_by_me"])
+
+    def test_holder_sees_own_unpaid_slots_as_held_by_me(self):
+        self._slot(
+            self._booking(
+                status=Booking.Status.HELD,
+                hold_expires_at=timezone.now() + timedelta(minutes=10),
+            ),
+            start=time(18, 0),
+        )
+        tokens = issue_tokens(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {tokens['access']}")
+        mine = self._by_start(self._slots().json())
+        self.assertEqual(mine["18:00"]["state"], "held")
+        self.assertTrue(mine["18:00"]["held_by_me"])
+
+        stranger = User.objects.create_user(
+            phone="01098765432",
+            name="Omar Ali",
+            password="secret12",
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {issue_tokens(stranger)['access']}"
+        )
+        other = self._by_start(self._slots().json())
+        self.assertEqual(other["18:00"]["state"], "held")
+        self.assertFalse(other["18:00"]["held_by_me"])
 
     def test_expired_hold_is_released_on_list(self):
         booking = self._booking(
@@ -411,6 +441,34 @@ class HoldCancelApiTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["error"]["code"], "DATE_OUT_OF_RANGE")
         self.assertEqual(Booking.objects.count(), 0)
+
+    def test_same_user_rehold_returns_existing_booking(self):
+        first = self._hold(starts=("18:00", "19:00"))
+        self.assertEqual(first.status_code, 201)
+        booking_id = first.json()["id"]
+        expires = first.json()["hold_expires_at"]
+        second = self._hold(starts=("18:00", "19:00"))
+        self.assertEqual(second.status_code, 201)
+        self.assertEqual(second.json()["id"], booking_id)
+        self.assertEqual(second.json()["hold_expires_at"], expires)
+        self.assertEqual(Booking.objects.filter(user=self.user).count(), 1)
+        self.assertEqual(
+            BookingSlot.objects.filter(released_at__isnull=True).count(),
+            2,
+        )
+
+    def test_same_user_can_replace_overlapping_hold(self):
+        first = self._hold(starts=("18:00",))
+        self.assertEqual(first.status_code, 201)
+        old_id = first.json()["id"]
+        second = self._hold(starts=("18:00", "19:00"))
+        self.assertEqual(second.status_code, 201)
+        self.assertNotEqual(second.json()["id"], old_id)
+        old = Booking.objects.get(pk=old_id)
+        self.assertEqual(old.status, Booking.Status.CANCELLED)
+        self.assertIsNotNone(old.slots.get().released_at)
+        self.assertEqual(len(second.json()["slots"]), 2)
+        self.assertEqual(Booking.objects.filter(status=Booking.Status.HELD).count(), 1)
 
     def test_overlapping_hold_is_slot_taken_with_no_partial_hold(self):
         first = self._hold(starts=("18:00", "19:00"))

@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 
 from bookings import errors
-from bookings.expiry import expire_elapsed_holds
+from bookings.expiry import UNPAID_HOLD_STATUSES, expire_elapsed_holds
 from bookings.models import Booking, BookingSlot
 from bookings.policies import (
     PAID_PASS_STATUSES,
@@ -60,6 +60,85 @@ def _conflicting_slots(normalized):
     ]
 
 
+def _requested_keys(normalized):
+    return frozenset(
+        (row["court"].id, row["date"], row["start_time"]) for row in normalized
+    )
+
+
+def _active_keys(booking):
+    return frozenset(
+        (slot.court_id, slot.date, slot.start_time)
+        for slot in booking.slots.all()
+        if slot.released_at is None
+    )
+
+
+def _cancel_unpaid(booking, now):
+    assert_transition(booking, Booking.Status.CANCELLED)
+    booking.status = Booking.Status.CANCELLED
+    booking.save(update_fields=["status", "updated_at"])
+    booking.slots.filter(released_at__isnull=True).update(released_at=now)
+
+
+def _own_unpaid_exact(user, normalized):
+    overlapping = list(
+        BookingSlot.objects.select_related("booking")
+        .prefetch_related("booking__slots")
+        .filter(
+            court=normalized[0]["court"],
+            date=normalized[0]["date"],
+            start_time__in=[row["start_time"] for row in normalized],
+            released_at__isnull=True,
+            booking__user=user,
+            booking__status__in=UNPAID_HOLD_STATUSES,
+        )
+    )
+    booking_ids = {slot.booking_id for slot in overlapping}
+    if len(booking_ids) != 1:
+        return None
+    booking = overlapping[0].booking
+    if _active_keys(booking) != _requested_keys(normalized):
+        return None
+    return booking
+
+
+def _reuse_or_release_own_holds(user, normalized, attendee_names, now):
+    overlapping = list(
+        BookingSlot.objects.select_for_update()
+        .select_related("booking")
+        .filter(
+            court=normalized[0]["court"],
+            date=normalized[0]["date"],
+            start_time__in=[row["start_time"] for row in normalized],
+            released_at__isnull=True,
+            booking__user=user,
+            booking__status__in=UNPAID_HOLD_STATUSES,
+        )
+        .order_by("pk")
+    )
+    if not overlapping:
+        return None
+    booking_ids = {slot.booking_id for slot in overlapping}
+    bookings = list(
+        Booking.objects.select_for_update()
+        .prefetch_related("slots")
+        .filter(pk__in=booking_ids)
+        .order_by("pk")
+    )
+    requested = _requested_keys(normalized)
+    if len(bookings) == 1 and _active_keys(bookings[0]) == requested:
+        booking = bookings[0]
+        if booking.attendee_names != attendee_names:
+            booking.attendee_names = attendee_names
+            booking.save(update_fields=["attendee_names", "updated_at"])
+        return booking
+    for booking in bookings:
+        if booking.status in UNPAID_HOLD_STATUSES:
+            _cancel_unpaid(booking, now)
+    return None
+
+
 def create_hold(*, user, slots, attendee_names, now=None):
     now = cairo_now(now)
     normalized = normalize_hold_slots(slots, now=now)
@@ -67,6 +146,11 @@ def create_hold(*, user, slots, attendee_names, now=None):
     expire_elapsed_holds(now=now)
     try:
         with transaction.atomic():
+            existing = _reuse_or_release_own_holds(
+                user, normalized, attendee_names, now
+            )
+            if existing is not None:
+                return existing
             booking = Booking.objects.create(
                 user=user,
                 status=Booking.Status.HELD,
@@ -92,6 +176,9 @@ def create_hold(*, user, slots, attendee_names, now=None):
     except IntegrityError as exc:
         if not is_active_slot_conflict(exc):
             raise
+        raced = _own_unpaid_exact(user, normalized)
+        if raced is not None:
+            return raced
         errors.slot_taken(_conflicting_slots(normalized))
     return booking
 

@@ -44,10 +44,22 @@ class MahgoozRepository implements MahgoozApi {
       _guard(() => _live.courts(), () => _mock.courts());
 
   @override
-  Future<SlotGrid> slots({required String date, required String courtId}) =>
+  Future<SlotGrid> slots({
+    required String date,
+    required String courtId,
+    String? accessToken,
+  }) =>
       _guard(
-        () => _live.slots(date: date, courtId: courtId),
-        () => _mock.slots(date: date, courtId: courtId),
+        () => _live.slots(
+          date: date,
+          courtId: courtId,
+          accessToken: accessToken,
+        ),
+        () => _mock.slots(
+          date: date,
+          courtId: courtId,
+          accessToken: accessToken,
+        ),
       );
 
   @override
