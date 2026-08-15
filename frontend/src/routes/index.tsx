@@ -1,6 +1,6 @@
-import { Link } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 
-import { AppShell } from '@/components/app-shell'
+import { CustomerLayout } from '@/components/customer-layout'
 import { PromoBanner } from '@/components/promo-banner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,8 @@ import {
   MxIcon,
   ScanLinear,
 } from '@/lib/icons'
-import { createFileRoute } from '@tanstack/react-router'
+import { $api } from '@/lib/api/client'
+import { todayKey } from '@/lib/format'
 import type { IconProps } from 'mx-icons'
 import type { ComponentType } from 'react'
 
@@ -51,34 +52,65 @@ const STEPS: {
   },
 ]
 
-const COURTS = [
-  { name: 'Court 1', slots: 3 },
-  { name: 'Court 2', slots: 5 },
-] as const
-
 function LandingPage() {
+  const today = todayKey()
+  const courts = $api.useQuery('get', '/courts')
+  const courtA = courts.data?.[0]
+  const courtB = courts.data?.[1]
+  const slotsA = $api.useQuery(
+    'get',
+    '/slots',
+    { params: { query: { date: today, court_id: courtA?.id } } },
+    { enabled: Boolean(courtA?.id) },
+  )
+  const slotsB = $api.useQuery(
+    'get',
+    '/slots',
+    { params: { query: { date: today, court_id: courtB?.id } } },
+    { enabled: Boolean(courtB?.id) },
+  )
+
+  const availability = [
+    {
+      name: courtA?.name ?? 'Court 1',
+      slots: countAvailable(slotsA.data?.slots),
+    },
+    {
+      name: courtB?.name ?? 'Court 2',
+      slots: countAvailable(slotsB.data?.slots),
+    },
+  ]
+
   return (
-    <AppShell
-      width="wide"
-      headerRight={
-        <Button variant="link" className="text-primary" asChild>
-          <Link to="/login">Log in</Link>
-        </Button>
-      }
-    >
-      <section className="relative overflow-hidden rounded-[16px]">
-        <img
-          src={HERO_IMAGE}
-          alt="Padel court at golden hour"
-          className="aspect-[4/3] w-full object-cover md:aspect-[21/9]"
-        />
-        <div className="hero-scrim absolute inset-0" />
-        <div className="absolute inset-0 flex flex-col justify-end p-6 text-[#f4f7f5]">
-          <h1 className="font-display text-[32px] leading-[1.15] font-bold">
+    <CustomerLayout width="wide" showBookCta>
+      <section className="grid items-stretch gap-6 md:grid-cols-2">
+        <div className="relative overflow-hidden rounded-[16px]">
+          <img
+            src={HERO_IMAGE}
+            alt="Padel court at golden hour"
+            className="aspect-[4/3] w-full object-cover md:aspect-[4/3] md:min-h-[280px]"
+          />
+          <div className="hero-scrim absolute inset-0" />
+          <div className="absolute inset-0 flex flex-col justify-end p-6 text-[#f4f7f5] md:hidden">
+            <h1 className="font-display text-[32px] leading-[1.15] font-bold">
+              Book. Pay. Play.
+            </h1>
+            <p className="mt-2 text-base text-white/90">
+              Sheikh Zayed • 2 courts
+            </p>
+            <Button className="mt-6 w-full" size="lg" asChild>
+              <Link to="/book">Book a court</Link>
+            </Button>
+          </div>
+        </div>
+        <div className="hidden flex-col justify-center gap-4 md:flex">
+          <h1 className="font-display text-5xl leading-[1.1] font-bold">
             Book. Pay. Play.
           </h1>
-          <p className="mt-2 text-base text-white/90">Sheikh Zayed • 2 courts</p>
-          <Button className="mt-6 w-full" size="lg" asChild>
+          <p className="text-lg text-muted-foreground">
+            Sheikh Zayed • 2 courts
+          </p>
+          <Button className="w-fit" size="lg" asChild>
             <Link to="/book">Book a court</Link>
           </Button>
         </div>
@@ -96,10 +128,12 @@ function LandingPage() {
                 <div className="mt-3 flex size-10 items-center justify-center text-primary">
                   <MxIcon icon={icon} size={24} />
                 </div>
-                <p className="mt-2 font-display text-[17px] font-semibold leading-snug">
+                <p className="mt-2 font-display text-[17px] leading-snug font-semibold">
                   {title}
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {description}
+                </p>
               </CardContent>
             </Card>
           ))}
@@ -112,12 +146,21 @@ function LandingPage() {
             30% OFF
           </Badge>
         }
+        action={
+          <Button variant="outline" className="mt-4 w-full" asChild>
+            <Link to="/book" search={{ period: 'morning' }}>
+              See morning slots
+            </Link>
+          </Button>
+        }
       />
 
       <section>
-        <h2 className="font-display text-xl font-semibold">Today at a glance</h2>
+        <h2 className="font-display text-xl font-semibold">
+          Today at a glance
+        </h2>
         <Card className="mt-4 gap-0 py-0">
-          {COURTS.map((court, index) => (
+          {availability.map((court, index) => (
             <div key={court.name}>
               {index > 0 ? <Separator /> : null}
               <Link
@@ -127,7 +170,11 @@ function LandingPage() {
                 <span className="size-2.5 shrink-0 rounded-full bg-court-green" />
                 <div className="min-w-0 flex-1">
                   <p className="font-display font-semibold">{court.name}</p>
-                  <p className="text-sm text-primary">{court.slots} slots left</p>
+                  <p className="text-sm text-primary">
+                    {court.slots == null
+                      ? 'Checking…'
+                      : `${court.slots} slots left`}
+                  </p>
                 </div>
                 <MxIcon
                   icon={ArrowRightLinear}
@@ -163,6 +210,11 @@ function LandingPage() {
           </Link>
         </div>
       </footer>
-    </AppShell>
+    </CustomerLayout>
   )
+}
+
+function countAvailable(slots: Array<{ state?: string }> | undefined) {
+  if (!slots) return undefined
+  return slots.filter((slot) => slot.state === 'available').length
 }

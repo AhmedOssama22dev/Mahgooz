@@ -3,13 +3,14 @@ import type { ReactNode } from 'react'
 
 import { StatusBadge, bookingStatusToKind } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
-import { formatBookingDay, formatEgp } from '@/lib/format'
+import { formatBookingDay, formatEgp, formatSlotRange } from '@/lib/format'
 import type { BookingStatus } from '@/lib/slot-states'
 import { cn } from '@/lib/utils'
 
 type BookingCardProps = {
   courtName: string
   start: Date
+  end?: Date
   amount?: number
   status: BookingStatus
   morningDeal?: boolean
@@ -21,6 +22,7 @@ type BookingCardProps = {
 export function BookingCard({
   courtName,
   start,
+  end,
   amount,
   status,
   morningDeal,
@@ -46,7 +48,13 @@ export function BookingCard({
           <p className="font-display text-[17px] font-semibold">
             {formatBookingDay(start)}
             {' · '}
-            {start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
+            {end
+              ? formatSlotRange(start, end)
+              : start.toLocaleTimeString('en-GB', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false,
+                })}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">{courtName}</p>
         </div>

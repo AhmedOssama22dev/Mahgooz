@@ -21,7 +21,7 @@ export function CustomerBottomNav({ onAccount, className }: CustomerBottomNavPro
   return (
     <nav
       className={cn(
-        'sticky bottom-0 z-30 border-t border-border bg-card pb-[env(safe-area-inset-bottom)]',
+        'fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden',
         className,
       )}
       aria-label="Customer"

@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
+  /** Django origin+prefix, e.g. `http://localhost:8000/api/v1`. Unset = in-dev mock. */
   readonly VITE_API_BASE_URL?: string
 }
 

@@ -9,14 +9,24 @@ type StepProgressProps = {
 /** Booking wizard progress — filled dots for completed/current */
 export function StepProgress({ steps, current, className }: StepProgressProps) {
   return (
-    <div className={cn('flex items-center gap-2', className)} role="list">
+    <div
+      className={cn('flex w-full items-center', className)}
+      role="list"
+    >
       {steps.map((label, index) => {
         const active = index <= current
         return (
-          <div key={label} className="flex items-center gap-2" role="listitem">
+          <div
+            key={label}
+            className={cn(
+              'flex items-center',
+              index < steps.length - 1 && 'min-w-0 flex-1',
+            )}
+            role="listitem"
+          >
             <span
               className={cn(
-                'size-2.5 rounded-full',
+                'size-2.5 shrink-0 rounded-full',
                 active ? 'bg-court-green' : 'bg-muted',
               )}
               title={label}
@@ -25,7 +35,7 @@ export function StepProgress({ steps, current, className }: StepProgressProps) {
             {index < steps.length - 1 ? (
               <span
                 className={cn(
-                  'h-px w-4 sm:w-6',
+                  'mx-2 h-px min-w-0 flex-1',
                   index < current ? 'bg-court-green' : 'bg-muted',
                 )}
               />

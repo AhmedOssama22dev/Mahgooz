@@ -1,0 +1,21 @@
+{
+  "booking_code": "MGZ-7F42K",
+  "status": "confirmed",
+  "court": {
+    "id": "11111111-1111-4111-8111-111111111111",
+    "name": "Court 1"
+  },
+  "date": "2026-08-20",
+  "start_time": "18:00",
+  "end_time": "19:00",
+  "booker_name": "Ahmed Hassan",
+  "attendee_names": [
+    "Ahmed Hassan",
+    "Omar Ali",
+    "Youssef Nabil",
+    "Karim Fathy"
+  ],
+  "price_egp": 350,
+  "qr_payload": "https://mahgooz.app/pass/MGZ-7F42K",
+  "redeemed_at": null
+}

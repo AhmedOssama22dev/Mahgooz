@@ -7,6 +7,7 @@ type PromoBannerProps = {
   title?: string
   subtitle?: string
   badge?: ReactNode
+  action?: ReactNode
   className?: string
 }
 
@@ -15,6 +16,7 @@ export function PromoBanner({
   title = 'Quiet mornings, lower price',
   subtitle = 'Before 12 PM — 30% off',
   badge,
+  action,
   className,
 }: PromoBannerProps) {
   return (
@@ -38,6 +40,7 @@ export function PromoBanner({
         </div>
         {badge}
       </div>
+      {action}
     </section>
   )
 }
