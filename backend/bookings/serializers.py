@@ -72,6 +72,11 @@ class SlotGridSerializer(serializers.Serializer):
     slots = SlotGridItemSerializer(many=True)
 
 
+class SlotQuerySerializer(serializers.Serializer):
+    date = serializers.DateField()
+    court_id = serializers.UUIDField()
+
+
 def serialize_slot(slot):
     pricing = price_for_start_time(slot.start_time)
     return {
