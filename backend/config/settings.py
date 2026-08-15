@@ -156,8 +156,19 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000").rstrip("/")
-PUBLIC_API_URL = os.environ.get("PUBLIC_API_URL", "http://localhost:8000").rstrip("/")
+def _env_url(name, default):
+    raw = (os.environ.get(name) or default).strip().rstrip("/")
+    if "${{" in raw:
+        return ""
+    return raw
+
+
+def _is_local_url(url):
+    return (not url) or ("localhost" in url) or ("127.0.0.1" in url)
+
+
+FRONTEND_URL = _env_url("FRONTEND_URL", "http://localhost:3000")
+PUBLIC_API_URL = _env_url("PUBLIC_API_URL", "http://localhost:8000")
 STAFF_PHONE = os.environ.get("STAFF_PHONE", "")
 STAFF_PASSWORD = os.environ.get("STAFF_PASSWORD", "")
 STAFF_NAME = os.environ.get("STAFF_NAME", "Staff")
@@ -165,6 +176,13 @@ STAFF_NAME = os.environ.get("STAFF_NAME", "Staff")
 if os.environ.get("RAILWAY_ENVIRONMENT"):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     USE_X_FORWARDED_HOST = True
+    railway_origin = ""
+    if os.environ.get("RAILWAY_PUBLIC_DOMAIN"):
+        railway_origin = f"https://{os.environ['RAILWAY_PUBLIC_DOMAIN']}"
+    if _is_local_url(PUBLIC_API_URL) and railway_origin:
+        PUBLIC_API_URL = railway_origin
+    if _is_local_url(FRONTEND_URL):
+        FRONTEND_URL = "https://mahgooz.ahmadfathallah89.workers.dev"
 
 PAYMOB_SECRET_KEY = os.environ.get("PAYMOB_SECRET_KEY", "")
 PAYMOB_PUBLIC_KEY = os.environ.get("PAYMOB_PUBLIC_KEY", "")
@@ -222,6 +240,21 @@ def _int_env(name, default):
 
 
 PAYMOB_TIMEOUT_SECONDS = _int_env("PAYMOB_TIMEOUT_SECONDS", 15)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "loggers": {
+        "payments": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
 
 
 # Booking rules: hours 08:00–22:00, last bookable start 21:00 (60-minute slots).

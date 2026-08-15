@@ -51,7 +51,7 @@ class PaymobClient:
             logger.warning("Paymob intention request failed: %s", exc)
             raise PaymobClientError("Paymob request failed") from exc
 
-        if response.status_code != 201:
+        if response.status_code not in (200, 201):
             logger.warning(
                 "Paymob intention failed HTTP %s: %s",
                 response.status_code,

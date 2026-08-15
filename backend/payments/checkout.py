@@ -44,6 +44,12 @@ def start_checkout(*, user, booking_id, now=None, client=None):
             now=now,
             integration_id=paymob.card_integration_id(),
         )
+        logger.info(
+            "Paymob intention booking=%s notification_url=%s redirection_url=%s",
+            booking.id,
+            payload.get("notification_url"),
+            payload.get("redirection_url"),
+        )
         try:
             intention = paymob.create_intention(payload)
         except PaymobClientError as exc:
