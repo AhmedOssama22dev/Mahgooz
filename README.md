@@ -4,7 +4,15 @@ Padel court booking: Pay, reserve, redeem. Django API in `backend/`, React in `f
 
 ## Install and run
 
-Python 3.10 or newer.
+Requires Python 3.10+ and Docker.
+
+Start PostgreSQL from the project root:
+
+```bash
+docker compose up -d db
+```
+
+Set up Django:
 
 ```bash
 cd backend
@@ -32,6 +40,14 @@ python manage.py runserver
 ```
 
 App: http://127.0.0.1:8000/api/health/
+
+The default development database settings are in `backend/.env.example` and
+match `compose.yaml`. PostgreSQL data is kept in the `postgres_data` Docker
+volume. To open a PostgreSQL shell:
+
+```bash
+docker compose exec db psql -U mahgooz -d mahgooz
+```
 
 ## MCP server
 

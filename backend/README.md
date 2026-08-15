@@ -1,8 +1,16 @@
 # Backend
 
-Django project (`config`) with app `core`. Python 3.10+.
+Django project (`config`) with app `core`. Python 3.10+ and PostgreSQL 17.
 
 ## Install and run
+
+From the repository root, start PostgreSQL:
+
+```bash
+docker compose up -d db
+```
+
+Then create the Python environment:
 
 ```bash
 cd backend
@@ -20,6 +28,12 @@ python manage.py runserver
 ```
 
 http://127.0.0.1:8000/api/health/
+
+The values in `.env.example` match the Docker database. Open `psql` with:
+
+```bash
+docker compose exec db psql -U mahgooz -d mahgooz
+```
 
 ## MCP server
 
