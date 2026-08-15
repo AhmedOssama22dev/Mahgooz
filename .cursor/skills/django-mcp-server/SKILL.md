@@ -20,8 +20,8 @@ PyPI package: `django-mcp-server` (import package name: `mcp_server`).
 
 ## This repo
 
-- Django project: `backend/` (`config` settings, `core` app)
-- Tools live in `backend/core/mcp.py` (auto-discovered from installed apps)
+- Django project: `backend/` (`config` settings, `accounts` / `bookings` / `payments` apps)
+- Tools live in `backend/accounts/mcp.py` (auto-discovered from installed apps)
 - HTTP endpoint: `/mcp` (no trailing slash) when `python manage.py runserver`
 - Cursor / local STDIO: `.cursor/mcp.json` runs `backend/run_mcp.py` → `manage.py stdio_server`
 - Shared with anyone who clones the repo — keep `.cursor/mcp.json` committed, never put secrets in it
@@ -41,4 +41,4 @@ cd backend
 - `path("", include("mcp_server.urls"))` is in `config/urls.py`
 - `DJANGO_MCP_GLOBAL_SERVER_CONFIG` and `DJANGO_MCP_ENDPOINT = "mcp"` are in `config/settings.py`
 
-Add new tools in `core/mcp.py`. Do not copy stale examples from chat history if they disagree with the fetched README.
+Add new tools in `accounts/mcp.py` (or another installed app's `mcp.py`). Do not copy stale examples from chat history if they disagree with the fetched README.

@@ -39,7 +39,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-App: http://127.0.0.1:8000/api/health/
+App: http://127.0.0.1:8000/api/v1/health
 
 The default development database settings are in `backend/.env.example` and
 match `compose.yaml`. PostgreSQL data is kept in the `postgres_data` Docker
