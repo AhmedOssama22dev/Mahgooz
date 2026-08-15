@@ -1855,7 +1855,7 @@
                   "amount_egp": 350,
                   "amount_cents": 35000,
                   "currency": "EGP",
-                  "checkout_url": "https://accept.paymob.com/unifiedcheckout/?publicKey=egy_pk_test_xxxxxxxx&clientSecret=egy_csk_test_xxxxxxxx",
+                  "checkout_url": "https://eg.checkout.paymob.com/?publicKey=egy_pk_test_xxxxxxxx&clientSecret=egy_csk_test_xxxxxxxx",
                   "paymob_intention_id": "pi_test_8f3a1c2e"
                 }
               }
@@ -3091,37 +3091,8 @@
               }
             }
           },
-          "400": {
-            "description": "400 Bad Request — malformed payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "error": {
-                    "code": "VALIDATION_ERROR",
-                    "message": "Unrecognized Paymob callback payload."
-                  }
-                }
-              }
-            }
-          },
           "401": {
-            "description": "401 Unauthorized — invalid HMAC",
+            "description": "401 Unauthorized — invalid HMAC or malformed payload",
             "content": {
               "application/json": {
                 "schema": {
@@ -3140,10 +3111,22 @@
                     }
                   }
                 },
-                "example": {
-                  "error": {
-                    "code": "INVALID_HMAC",
-                    "message": "Callback HMAC verification failed."
+                "examples": {
+                  "401 Unauthorized — invalid HMAC": {
+                    "value": {
+                      "error": {
+                        "code": "INVALID_HMAC",
+                        "message": "Callback HMAC verification failed."
+                      }
+                    }
+                  },
+                  "401 Unauthorized — malformed payload": {
+                    "value": {
+                      "error": {
+                        "code": "INVALID_HMAC",
+                        "message": "Callback HMAC verification failed."
+                      }
+                    }
                   }
                 }
               }
@@ -3182,7 +3165,7 @@
         "tags": [
           "5. Paymob webhook (HMAC, no JWT)"
         ],
-        "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** — do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
+        "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject forged or malformed callbacks with **401 INVALID_HMAC** — do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
         "requestBody": {
           "content": {
             "application/json": {

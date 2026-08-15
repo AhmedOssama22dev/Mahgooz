@@ -118,6 +118,14 @@ def invalid_transition(current, target):
     )
 
 
+def invalid_hmac(message=None):
+    raise APIError(
+        "INVALID_HMAC",
+        message or "Callback HMAC verification failed.",
+        status.HTTP_401_UNAUTHORIZED,
+    )
+
+
 def forbidden(message=None):
     raise APIError(
         "FORBIDDEN",
@@ -139,4 +147,21 @@ def not_implemented(message=None):
         "NOT_IMPLEMENTED",
         message or "Not implemented yet.",
         status.HTTP_501_NOT_IMPLEMENTED,
+    )
+
+
+def paymob_error(message=None):
+    raise APIError(
+        "PAYMOB_ERROR",
+        message
+        or "Could not start checkout. Your slot is still held — try again.",
+        status.HTTP_502_BAD_GATEWAY,
+    )
+
+
+def internal_error(message=None):
+    raise APIError(
+        "INTERNAL_ERROR",
+        message or "Unexpected server error",
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
