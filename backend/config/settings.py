@@ -1,6 +1,6 @@
 from datetime import time, timedelta
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 import os
 
 from dotenv import load_dotenv
@@ -21,11 +21,21 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
-# Railway injects RAILWAY_PUBLIC_DOMAIN (e.g. mahgooz-production.up.railway.app).
+# Railway healthchecks hit the private hostname, not the public *.up.railway.app domain.
 if os.environ.get("RAILWAY_PUBLIC_DOMAIN"):
     ALLOWED_HOSTS.append(os.environ["RAILWAY_PUBLIC_DOMAIN"])
+if os.environ.get("RAILWAY_PRIVATE_DOMAIN"):
+    ALLOWED_HOSTS.append(os.environ["RAILWAY_PRIVATE_DOMAIN"])
 if os.environ.get("RAILWAY_ENVIRONMENT"):
-    ALLOWED_HOSTS.extend([".up.railway.app", ".railway.app"])
+    ALLOWED_HOSTS.extend(
+        [
+            "*",
+            ".up.railway.app",
+            ".railway.app",
+            ".railway.internal",
+            "healthcheck.railway.app",
+        ]
+    )
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
@@ -83,28 +93,38 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
+def _postgres_from_url(url):
+    parsed = urlparse(url)
+    sslmode = (parse_qs(parsed.query).get("sslmode") or [None])[0]
+    config = {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": unquote(parsed.path.lstrip("/")) or "railway",
+        "USER": unquote(parsed.username or ""),
+        "PASSWORD": unquote(parsed.password or ""),
+        "HOST": parsed.hostname or "",
+        "PORT": str(parsed.port or 5432),
+        "CONN_MAX_AGE": 60,
+    }
+    if sslmode:
+        config["OPTIONS"] = {"sslmode": sslmode}
+    return config
+
+
 database_url = os.environ.get("DATABASE_URL")
 if database_url:
-    parsed = urlparse(database_url)
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": parsed.path.lstrip("/"),
-            "USER": parsed.username or "",
-            "PASSWORD": parsed.password or "",
-            "HOST": parsed.hostname or "",
-            "PORT": str(parsed.port or 5432),
-        }
-    }
+    DATABASES = {"default": _postgres_from_url(database_url)}
 else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("POSTGRES_DB", "mahgooz"),
-            "USER": os.environ.get("POSTGRES_USER", "mahgooz"),
-            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "mahgooz"),
-            "HOST": os.environ.get("POSTGRES_HOST", "127.0.0.1"),
-            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+            "NAME": os.environ.get("PGDATABASE")
+            or os.environ.get("POSTGRES_DB", "mahgooz"),
+            "USER": os.environ.get("PGUSER") or os.environ.get("POSTGRES_USER", "mahgooz"),
+            "PASSWORD": os.environ.get("PGPASSWORD")
+            or os.environ.get("POSTGRES_PASSWORD", "mahgooz"),
+            "HOST": os.environ.get("PGHOST") or os.environ.get("POSTGRES_HOST", "127.0.0.1"),
+            "PORT": os.environ.get("PGPORT") or os.environ.get("POSTGRES_PORT", "5432"),
+            "CONN_MAX_AGE": 60,
         }
     }
 
@@ -133,6 +153,10 @@ FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000").rstrip("/
 PUBLIC_API_URL = os.environ.get("PUBLIC_API_URL", "http://localhost:8000").rstrip("/")
 STAFF_PIN = os.environ.get("STAFF_PIN", "1234")
 
+if os.environ.get("RAILWAY_ENVIRONMENT"):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    USE_X_FORWARDED_HOST = True
+
 PAYMOB_SECRET_KEY = os.environ.get("PAYMOB_SECRET_KEY", "")
 PAYMOB_PUBLIC_KEY = os.environ.get("PAYMOB_PUBLIC_KEY", "")
 PAYMOB_HMAC_SECRET = os.environ.get("PAYMOB_HMAC_SECRET", "")
@@ -140,7 +164,8 @@ PAYMOB_INTEGRATION_ID_CARD = os.environ.get("PAYMOB_INTEGRATION_ID_CARD", "")
 PAYMOB_BASE_URL = os.environ.get("PAYMOB_BASE_URL", "https://accept.paymob.com")
 
 CORS_ALLOWED_ORIGINS = [FRONTEND_URL]
-CSRF_TRUSTED_ORIGINS = [FRONTEND_URL]
+if FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
