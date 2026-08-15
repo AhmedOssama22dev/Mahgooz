@@ -7,13 +7,17 @@ from accounts.permissions import IsCustomer, IsStaff
 from bookings import errors
 from bookings.availability import build_slot_grid
 from bookings.expiry import expire_elapsed_holds
-from bookings.hold import cancel_booking, create_hold
-from bookings.models import Court
-from bookings.policies import assert_bookable_date
+from bookings.hold import cancel_booking, create_hold, get_owned_booking, get_public_pass
+from bookings.models import Booking, Court
+from bookings.policies import assert_bookable_date, booking_sort_key, partition_my_bookings
 from bookings.serializers import (
+    BookingStatusSerializer,
     CourtSerializer,
+    CustomerBookingDetailSerializer,
+    CustomerBookingListItemSerializer,
     CustomerBookingSerializer,
     HoldRequestSerializer,
+    PublicPassSerializer,
     SlotGridSerializer,
     SlotQuerySerializer,
 )
@@ -54,7 +58,8 @@ class PublicPassView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, _request, code):
-        errors.not_implemented()
+        booking = get_public_pass(code)
+        return Response(PublicPassSerializer(booking).data)
 
 
 class HoldView(APIView):
@@ -77,15 +82,26 @@ class HoldView(APIView):
 class BookingListView(APIView):
     permission_classes = [IsAuthenticated, IsCustomer]
 
-    def get(self, _request):
-        errors.not_implemented()
+    def get(self, request):
+        expire_elapsed_holds()
+        bookings = Booking.objects.filter(user=request.user).prefetch_related("slots__court")
+        upcoming, past = partition_my_bookings(bookings)
+        upcoming.sort(key=booking_sort_key)
+        past.sort(key=booking_sort_key, reverse=True)
+        return Response(
+            {
+                "upcoming": CustomerBookingListItemSerializer(upcoming, many=True).data,
+                "past": CustomerBookingListItemSerializer(past, many=True).data,
+            }
+        )
 
 
 class BookingDetailView(APIView):
     permission_classes = [IsAuthenticated, IsCustomer]
 
-    def get(self, _request, booking_id):
-        errors.not_implemented()
+    def get(self, request, booking_id):
+        booking = get_owned_booking(user=request.user, booking_id=booking_id)
+        return Response(CustomerBookingDetailSerializer(booking).data)
 
     def delete(self, request, booking_id):
         booking = cancel_booking(user=request.user, booking_id=booking_id)
@@ -108,8 +124,9 @@ class CheckoutView(APIView):
 class BookingStatusView(APIView):
     permission_classes = [IsAuthenticated, IsCustomer]
 
-    def get(self, _request, booking_id):
-        errors.not_implemented()
+    def get(self, request, booking_id):
+        booking = get_owned_booking(user=request.user, booking_id=booking_id)
+        return Response(BookingStatusSerializer(booking).data)
 
 
 class StaffBookingListView(APIView):

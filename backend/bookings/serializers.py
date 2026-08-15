@@ -1,7 +1,17 @@
 from rest_framework import serializers
 
 from bookings.models import Booking, Court
-from bookings.policies import can_redeem, end_time_for, format_hhmm, price_for_start_time, qr_payload
+from bookings.policies import (
+    booking_slots_list,
+    can_redeem,
+    end_time_for,
+    first_last_slots,
+    format_hhmm,
+    issued_booking_code,
+    pass_url,
+    price_for_start_time,
+    qr_payload,
+)
 
 
 class CourtSerializer(serializers.ModelSerializer):
@@ -94,6 +104,38 @@ def _booking_slots(booking):
     return [serialize_slot(slot) for slot in booking.slots.select_related("court").all()]
 
 
+class BookingScheduleMixin:
+    def _first_last(self, booking):
+        return first_last_slots(booking)
+
+    def get_court(self, booking):
+        first, _ = self._first_last(booking)
+        if first is None:
+            return None
+        return {"id": str(first.court_id), "name": first.court.name}
+
+    def get_date(self, booking):
+        first, _ = self._first_last(booking)
+        return first.date.isoformat() if first else None
+
+    def get_start_times(self, booking):
+        return [format_hhmm(slot.start_time) for slot in booking_slots_list(booking)]
+
+    def get_start_time(self, booking):
+        first, _ = self._first_last(booking)
+        return format_hhmm(first.start_time) if first else None
+
+    def get_end_time(self, booking):
+        _, last = self._first_last(booking)
+        return format_hhmm(end_time_for(last.start_time)) if last else None
+
+    def get_booking_code(self, booking):
+        return issued_booking_code(booking)
+
+    def get_qr_payload(self, booking):
+        return qr_payload(issued_booking_code(booking))
+
+
 class CustomerBookingSerializer(serializers.ModelSerializer):
     slots = serializers.SerializerMethodField()
     qr_payload = serializers.SerializerMethodField()
@@ -122,29 +164,80 @@ class CustomerBookingSerializer(serializers.ModelSerializer):
         return qr_payload(booking.booking_code)
 
 
-class PublicPassSerializer(serializers.ModelSerializer):
-    slots = serializers.SerializerMethodField()
+class BookingStatusSerializer(serializers.ModelSerializer):
+    booking_code = serializers.SerializerMethodField()
+    pass_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Booking
+        fields = ("id", "status", "booking_code", "pass_url", "hold_expires_at")
+
+    def get_booking_code(self, booking):
+        return issued_booking_code(booking)
+
+    def get_pass_url(self, booking):
+        return pass_url(issued_booking_code(booking))
+
+
+class CustomerBookingDetailSerializer(BookingScheduleMixin, serializers.ModelSerializer):
+    court = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
+    start_times = serializers.SerializerMethodField()
+    start_time = serializers.SerializerMethodField()
+    end_time = serializers.SerializerMethodField()
+    booking_code = serializers.SerializerMethodField()
     qr_payload = serializers.SerializerMethodField()
+    price_egp = serializers.IntegerField(source="total_price_egp")
+    price_cents = serializers.IntegerField(source="total_price_cents")
+
+    class Meta:
+        model = Booking
+        fields = (
+            "id",
+            "status",
+            "court",
+            "date",
+            "start_times",
+            "start_time",
+            "end_time",
+            "booker_name",
+            "attendee_names",
+            "price_egp",
+            "price_cents",
+            "hold_expires_at",
+            "booking_code",
+            "qr_payload",
+            "redeemed_at",
+            "created_at",
+        )
+
+
+class PublicPassSerializer(BookingScheduleMixin, serializers.ModelSerializer):
+    court = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
+    start_times = serializers.SerializerMethodField()
+    start_time = serializers.SerializerMethodField()
+    end_time = serializers.SerializerMethodField()
+    booking_code = serializers.SerializerMethodField()
+    qr_payload = serializers.SerializerMethodField()
+    price_egp = serializers.IntegerField(source="total_price_egp")
 
     class Meta:
         model = Booking
         fields = (
             "booking_code",
             "status",
+            "court",
+            "date",
+            "start_times",
+            "start_time",
+            "end_time",
             "booker_name",
             "attendee_names",
-            "slots",
-            "total_price_egp",
-            "total_price_cents",
+            "price_egp",
             "qr_payload",
             "redeemed_at",
         )
-
-    def get_slots(self, booking):
-        return _booking_slots(booking)
-
-    def get_qr_payload(self, booking):
-        return qr_payload(booking.booking_code)
 
 
 class StaffPassSerializer(serializers.ModelSerializer):
@@ -184,6 +277,7 @@ class CustomerBookingListItemSerializer(serializers.ModelSerializer):
     start_time = serializers.SerializerMethodField()
     end_time = serializers.SerializerMethodField()
     period = serializers.SerializerMethodField()
+    booking_code = serializers.SerializerMethodField()
     price_egp = serializers.IntegerField(source="total_price_egp")
 
     class Meta:
@@ -201,12 +295,7 @@ class CustomerBookingListItemSerializer(serializers.ModelSerializer):
         )
 
     def _first_last(self, booking):
-        slots = list(booking.slots.all())
-        if not slots:
-            return None, None
-        first = min(slots, key=lambda slot: (slot.date, slot.start_time))
-        last = max(slots, key=lambda slot: (slot.date, slot.start_time))
-        return first, last
+        return first_last_slots(booking)
 
     def get_court_name(self, booking):
         first, _ = self._first_last(booking)
@@ -230,6 +319,9 @@ class CustomerBookingListItemSerializer(serializers.ModelSerializer):
             return None
         return price_for_start_time(first.start_time)["period"]
 
+    def get_booking_code(self, booking):
+        return issued_booking_code(booking)
+
 
 class StaffBookingListItemSerializer(serializers.ModelSerializer):
     court_name = serializers.SerializerMethodField()
@@ -249,12 +341,7 @@ class StaffBookingListItemSerializer(serializers.ModelSerializer):
         )
 
     def _first_last(self, booking):
-        slots = list(booking.slots.all())
-        if not slots:
-            return None, None
-        first = min(slots, key=lambda slot: (slot.date, slot.start_time))
-        last = max(slots, key=lambda slot: (slot.date, slot.start_time))
-        return first, last
+        return first_last_slots(booking)
 
     def get_court_name(self, booking):
         first, _ = self._first_last(booking)

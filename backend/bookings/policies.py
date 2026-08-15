@@ -13,22 +13,30 @@ from bookings.pricing import price_for_start_time
 __all__ = [
     "ALLOWED_TRANSITIONS",
     "CODE_PREFIX",
+    "CODE_VISIBLE_STATUSES",
+    "PAID_PASS_STATUSES",
     "UPCOMING_STATUSES",
     "as_cairo_date",
     "assert_bookable_date",
     "assert_transition",
+    "booking_last_slot_end",
     "booking_slot_date",
+    "booking_slots_list",
+    "booking_sort_key",
     "cairo_now",
     "cairo_today",
     "can_cancel",
     "can_checkout",
     "can_redeem",
     "end_time_for",
+    "first_last_slots",
     "format_hhmm",
     "generate_booking_code",
+    "issued_booking_code",
     "iter_start_times",
     "normalize_hold_slots",
     "partition_my_bookings",
+    "pass_url",
     "price_for_start_time",
     "qr_payload",
     "slot_totals",
@@ -63,6 +71,13 @@ UPCOMING_STATUSES = {
     Booking.Status.PENDING_PAYMENT,
     Booking.Status.CONFIRMED,
 }
+
+CODE_VISIBLE_STATUSES = {
+    Booking.Status.CONFIRMED,
+    Booking.Status.REDEEMED,
+}
+
+PAID_PASS_STATUSES = CODE_VISIBLE_STATUSES
 
 
 def cairo_now(now=None):
@@ -227,15 +242,39 @@ def can_checkout(booking, now=None):
     return booking.hold_expires_at > cairo_now(now)
 
 
-def booking_slot_date(booking):
-    slot = None
+def booking_slots_list(booking):
     if hasattr(booking, "_prefetched_objects_cache") and "slots" in booking._prefetched_objects_cache:
         slots = list(booking.slots.all())
-        if slots:
-            slot = min(slots, key=lambda item: (item.date, item.start_time))
     else:
-        slot = booking.slots.order_by("date", "start_time").first()
-    return slot.date if slot else None
+        slots = list(booking.slots.select_related("court").all())
+    slots.sort(key=lambda slot: (slot.date, slot.start_time))
+    return slots
+
+
+def first_last_slots(booking):
+    slots = booking_slots_list(booking)
+    if not slots:
+        return None, None
+    return slots[0], slots[-1]
+
+
+def booking_slot_date(booking):
+    first, _ = first_last_slots(booking)
+    return first.date if first else None
+
+
+def booking_sort_key(booking):
+    first, _ = first_last_slots(booking)
+    if first is None:
+        return (datetime.max.date(), time.max)
+    return (first.date, first.start_time)
+
+
+def booking_last_slot_end(booking):
+    _, last = first_last_slots(booking)
+    if last is None:
+        return None
+    return _slot_datetime(last.date, end_time_for(last.start_time))
 
 
 def as_cairo_date(value=None):
@@ -261,6 +300,12 @@ def generate_booking_code():
     return f"{CODE_PREFIX}{body}"
 
 
+def issued_booking_code(booking):
+    if booking.status not in CODE_VISIBLE_STATUSES:
+        return None
+    return booking.booking_code
+
+
 def qr_payload(code):
     if not code:
         return None
@@ -268,16 +313,25 @@ def qr_payload(code):
     return f"{base}/pass/{code}"
 
 
-def partition_my_bookings(bookings, today=None):
-    today = as_cairo_date(today)
+def pass_url(code):
+    if not code:
+        return None
+    return f"/pass/{code}"
+
+
+def partition_my_bookings(bookings, now=None, today=None):
+    if now is None and today is not None:
+        now = datetime.combine(as_cairo_date(today), time.max)
+        now = timezone.make_aware(now, timezone.get_current_timezone())
+    now = cairo_now(now)
     upcoming = []
     past = []
     for booking in bookings:
-        slot_date = booking_slot_date(booking)
-        is_past_date = slot_date is not None and slot_date < today
-        if booking.status == Booking.Status.REDEEMED or is_past_date:
+        if booking.status not in UPCOMING_STATUSES:
             past.append(booking)
-        elif booking.status in UPCOMING_STATUSES and slot_date is not None and slot_date >= today:
+            continue
+        end_at = booking_last_slot_end(booking)
+        if end_at is not None and end_at > now:
             upcoming.append(booking)
         else:
             past.append(booking)
