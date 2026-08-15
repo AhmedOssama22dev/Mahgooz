@@ -27,6 +27,15 @@ def invalid_slot(message=None):
     )
 
 
+def invalid_query(details, message=None):
+    raise APIError(
+        "VALIDATION_ERROR",
+        message or "Invalid query parameters",
+        status.HTTP_400_BAD_REQUEST,
+        details=details,
+    )
+
+
 def mixed_slots(message=None):
     raise APIError(
         "MIXED_SLOTS",

@@ -31,6 +31,8 @@ http://127.0.0.1:8000/api/v1/health
 
 `migrate` seeds **Court 1** and **Court 2**. Re-run with `python manage.py seed_courts` if needed.
 
+Unpaid holds past the 10-minute TTL are released lazily on `GET /slots`. Run `python manage.py expire_holds` for demo/ops cleanup.
+
 ## Booking rules
 
 One booking can cover one or more 60-minute hours on the same court and date. A slot occupies the court while `released_at` is null (Postgres unique index `uniq_active_court_slot`).
