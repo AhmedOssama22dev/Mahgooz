@@ -165,7 +165,10 @@ PAYMOB_HMAC_SECRET = os.environ.get("PAYMOB_HMAC_SECRET", "")
 PAYMOB_INTEGRATION_ID_CARD = os.environ.get("PAYMOB_INTEGRATION_ID_CARD", "")
 PAYMOB_BASE_URL = os.environ.get("PAYMOB_BASE_URL", "https://accept.paymob.com")
 
-CORS_ALLOWED_ORIGINS = [FRONTEND_URL]
+CORS_ALLOWED_ORIGINS = [
+    FRONTEND_URL,
+    "https://mahgooz.ahmadfathallah89.workers.dev",
+]
 if FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 
