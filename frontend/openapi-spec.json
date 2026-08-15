@@ -1,0 +1,3408 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Mahgooz API — MVP v1",
+    "version": "1.0.0",
+    "description": "# Mahgooz padel booking — MVP v1\n\nDjango REST API for **Pay → Reserve → Redeem**.\n\n## Base URL\n`{{base_url}}` defaults to `http://localhost:8000/api/v1`.\n\n## Auth\n- **Customer JWT** (`Authorization: Bearer {{access_token}}`) on booking routes.\n- **Staff JWT** (`{{staff_token}}`) from PIN login — not interchangeable with customer tokens.\n- **Webhook** has no JWT; authenticity is HMAC-SHA512.\n- Public pass, courts, slots, and health need no auth.\n\n## Suggested run order\n1. Health → List courts (saves `court_id`)\n2. Register or Login (saves `access_token`)\n3. List slots → Hold a slot (saves `booking_id`)\n4. Start checkout → open `checkout_url` in a browser with a Paymob test card\n5. Poll payment status until `confirmed` (saves `booking_code`)\n6. Get public pass\n7. Staff login (saves `staff_token`) → Lookup → Redeem\n\n## Error shape\n```json\n{ \"error\": { \"code\": \"SLOT_TAKEN\", \"message\": \"...\" } }\n```\n\nEvery request has saved **success and failure examples** in the Examples dropdown.\n\n## Slot rules\n- Two courts, 60-minute slots, 08:00–22:00, book 14 days ahead.\n- Hold TTL **10 minutes**. Abandoned / failed / expired holds free the slot.\n- Unique active row: `court + date + start_time`.\n- Pricing: morning EGP 200 (08–12), afternoon 280 (12–17), evening 350 (17–22).\n- A booking is **paid only** after a verified Paymob webhook, never after the redirect page.\n"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api/v1"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "responses": {
+          "200": {
+            "description": "200 OK — healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "status": "ok"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "503 Service Unavailable — database down",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "UNHEALTHY",
+                    "message": "Database unavailable"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "1. Public"
+        ],
+        "description": "Liveness check for deploy/tunnel. No auth.\n\nUse this URL in ngrok health checks and as a smoke test after boot."
+      }
+    },
+    "/courts": {
+      "get": {
+        "summary": "List courts",
+        "responses": {
+          "200": {
+            "description": "200 OK — two courts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "slug": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "id": "11111111-1111-4111-8111-111111111111",
+                    "name": "Court 1",
+                    "slug": "court-1"
+                  },
+                  {
+                    "id": "22222222-2222-4222-8222-222222222222",
+                    "name": "Court 2",
+                    "slug": "court-2"
+                  }
+                ]
+              }
+            }
+          },
+          "500": {
+            "description": "500 Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Unexpected server error"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "1. Public"
+        ],
+        "description": "List the two seeded padel courts. No auth. Save `court_id` from the first item."
+      }
+    },
+    "/slots": {
+      "get": {
+        "summary": "List slots",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "example": "{{slot_date}}"
+          },
+          {
+            "name": "court_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "example": "{{court_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK — slot grid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "court": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "operating_hours": {
+                      "type": "object",
+                      "properties": {
+                        "open": {
+                          "type": "string",
+                          "format": "style"
+                        },
+                        "close": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "slot_minutes": {
+                      "type": "integer"
+                    },
+                    "slots": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "start_time": {
+                            "type": "string",
+                            "format": "style"
+                          },
+                          "end_time": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string"
+                          },
+                          "period": {
+                            "type": "string"
+                          },
+                          "price_egp": {
+                            "type": "integer"
+                          },
+                          "price_cents": {
+                            "type": "integer"
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "date": "2026-08-20",
+                  "court": {
+                    "id": "11111111-1111-4111-8111-111111111111",
+                    "name": "Court 1"
+                  },
+                  "operating_hours": {
+                    "open": "08:00",
+                    "close": "22:00"
+                  },
+                  "slot_minutes": 60,
+                  "slots": [
+                    {
+                      "start_time": "08:00",
+                      "end_time": "09:00",
+                      "state": "available",
+                      "period": "morning",
+                      "price_egp": 200,
+                      "price_cents": 20000,
+                      "label": "Morning available"
+                    },
+                    {
+                      "start_time": "09:00",
+                      "end_time": "10:00",
+                      "state": "held",
+                      "period": "morning",
+                      "price_egp": 200,
+                      "price_cents": 20000,
+                      "label": "Morning available"
+                    },
+                    {
+                      "start_time": "18:00",
+                      "end_time": "19:00",
+                      "state": "available",
+                      "period": "evening",
+                      "price_egp": 350,
+                      "price_cents": 35000,
+                      "label": null
+                    },
+                    {
+                      "start_time": "19:00",
+                      "end_time": "20:00",
+                      "state": "booked",
+                      "period": "evening",
+                      "price_egp": 350,
+                      "price_cents": 35000,
+                      "label": null
+                    },
+                    {
+                      "start_time": "20:00",
+                      "end_time": "21:00",
+                      "state": "available",
+                      "period": "evening",
+                      "price_egp": 350,
+                      "price_cents": 35000,
+                      "label": null
+                    },
+                    {
+                      "start_time": "21:00",
+                      "end_time": "22:00",
+                      "state": "available",
+                      "period": "evening",
+                      "price_egp": 350,
+                      "price_cents": 35000,
+                      "label": null
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 Bad Request — missing date",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "object",
+                          "properties": {
+                            "date": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "400 Bad Request — missing date": {
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "message": "Invalid query parameters",
+                        "details": {
+                          "date": [
+                            "This field is required."
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "400 Bad Request — date out of range": {
+                    "value": {
+                      "error": {
+                        "code": "DATE_OUT_OF_RANGE",
+                        "message": "Date must be today or within the next 14 days."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 Not Found — unknown court",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Court not found."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "1. Public"
+        ],
+        "description": "Generated 08:00–21:00 grid for one court and date.\n\n**States:** `available` | `held` | `booked`. Held slots of other customers are never selectable.\n\nMorning slots include `label: \"Morning available\"` and a lower `price_egp`.\n\nBook-ahead window: today through 14 days. Slot duration: 60 minutes."
+      }
+    },
+    "/passes/{booking_code}": {
+      "get": {
+        "summary": "Get public pass",
+        "responses": {
+          "200": {
+            "description": "200 OK — confirmed pass",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "booking_code": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "court": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "start_time": {
+                      "type": "string",
+                      "format": "style"
+                    },
+                    "end_time": {
+                      "type": "string"
+                    },
+                    "booker_name": {
+                      "type": "string"
+                    },
+                    "attendee_names": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "price_egp": {
+                      "type": "integer"
+                    },
+                    "qr_payload": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "redeemed_at": {
+                      "nullable": true
+                    }
+                  }
+                },
+                "examples": {
+                  "200 OK — confirmed pass": {
+                    "value": {
+                      "booking_code": "MGZ-7F42K",
+                      "status": "confirmed",
+                      "court": {
+                        "id": "11111111-1111-4111-8111-111111111111",
+                        "name": "Court 1"
+                      },
+                      "date": "2026-08-20",
+                      "start_time": "18:00",
+                      "end_time": "19:00",
+                      "booker_name": "Ahmed Hassan",
+                      "attendee_names": [
+                        "Ahmed Hassan",
+                        "Omar Ali",
+                        "Youssef Nabil",
+                        "Karim Fathy"
+                      ],
+                      "price_egp": 350,
+                      "qr_payload": "https://mahgooz.app/pass/MGZ-7F42K",
+                      "redeemed_at": null
+                    }
+                  },
+                  "200 OK — already redeemed": {
+                    "value": {
+                      "booking_code": "MGZ-7F42K",
+                      "status": "redeemed",
+                      "court": {
+                        "id": "11111111-1111-4111-8111-111111111111",
+                        "name": "Court 1"
+                      },
+                      "date": "2026-08-20",
+                      "start_time": "18:00",
+                      "end_time": "19:00",
+                      "booker_name": "Ahmed Hassan",
+                      "attendee_names": [
+                        "Ahmed Hassan",
+                        "Omar Ali",
+                        "Youssef Nabil",
+                        "Karim Fathy"
+                      ],
+                      "price_egp": 350,
+                      "qr_payload": "https://mahgooz.app/pass/MGZ-7F42K",
+                      "redeemed_at": "2026-08-20T17:58:00+03:00"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 Not Found — unknown or unpaid code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "No paid booking for this code."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "1. Public"
+        ],
+        "description": "Public booking pass. Unlisted — you need the code. Omits phone and Paymob ids. Frontend renders QR from `qr_payload`.\n\nCodes are issued **only after** a verified Paymob webhook, so unpaid holds cannot be looked up here."
+      },
+      "parameters": [
+        {
+          "name": "booking_code",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": "MGZ-7F42K"
+        }
+      ]
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Register",
+        "responses": {
+          "201": {
+            "description": "201 Created — account + tokens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access": {
+                      "type": "string"
+                    },
+                    "refresh": {
+                      "type": "string"
+                    },
+                    "token_type": {
+                      "type": "string"
+                    },
+                    "expires_in": {
+                      "type": "integer"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string",
+                          "format": "utc-millisec"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access",
+                  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh",
+                  "token_type": "Bearer",
+                  "expires_in": 3600,
+                  "user": {
+                    "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+                    "name": "Ahmed Hassan",
+                    "phone": "01012345678"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 Bad Request — invalid phone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "object",
+                          "properties": {
+                            "phone": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "400 Bad Request — invalid phone": {
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "message": "Invalid request body",
+                        "details": {
+                          "phone": [
+                            "Enter an Egyptian mobile number like 01xxxxxxxxx."
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "400 Bad Request — short password": {
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "message": "Invalid request body",
+                        "details": {
+                          "password": [
+                            "Ensure this field has at least 6 characters."
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 Conflict — phone taken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "PHONE_TAKEN",
+                    "message": "An account with this phone already exists."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "2. Customer auth"
+        ],
+        "description": "Create a customer account. Phone is the unique identifier (`01xxxxxxxxx`, 11 digits). Password min 6 characters.\n\nOn success, tokens are returned so the client can book immediately.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "name": "Ahmed Hassan",
+                "phone": "1012345678",
+                "password": "secret12"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login",
+        "responses": {
+          "200": {
+            "description": "200 OK — tokens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access": {
+                      "type": "string"
+                    },
+                    "refresh": {
+                      "type": "string"
+                    },
+                    "token_type": {
+                      "type": "string"
+                    },
+                    "expires_in": {
+                      "type": "integer"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string",
+                          "format": "utc-millisec"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access",
+                  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh",
+                  "token_type": "Bearer",
+                  "expires_in": 3600,
+                  "user": {
+                    "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+                    "name": "Ahmed Hassan",
+                    "phone": "01012345678"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 Bad Request — missing fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "object",
+                          "properties": {
+                            "password": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Invalid request body",
+                    "details": {
+                      "password": [
+                        "This field is required."
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized — bad credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_CREDENTIALS",
+                    "message": "Phone or password is incorrect."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "2. Customer auth"
+        ],
+        "description": "Phone + password → JWT access and refresh. Saves tokens into collection variables.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "phone": "1012345678",
+                "password": "secret12"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Refresh token",
+        "responses": {
+          "200": {
+            "description": "200 OK — new access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access": {
+                      "type": "string"
+                    },
+                    "token_type": {
+                      "type": "string"
+                    },
+                    "expires_in": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "example": {
+                  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access",
+                  "token_type": "Bearer",
+                  "expires_in": 3600
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized — invalid refresh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Refresh token is invalid or expired."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "2. Customer auth"
+        ],
+        "description": "Exchange a valid refresh token for a new access token.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refresh": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "refresh": ""
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Me",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer {{access_token}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK — profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "format": "utc-millisec"
+                    }
+                  }
+                },
+                "example": {
+                  "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+                  "name": "Ahmed Hassan",
+                  "phone": "01012345678"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized — missing or expired JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Authentication credentials were not provided."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "2. Customer auth"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Current customer profile. Requires customer JWT."
+      }
+    },
+    "/bookings/hold": {
+      "post": {
+        "summary": "Hold a slot",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer {{access_token}}"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "201 Created — slot held",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "court": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "start_time": {
+                      "type": "string",
+                      "format": "style"
+                    },
+                    "end_time": {
+                      "type": "string"
+                    },
+                    "booker_name": {
+                      "type": "string"
+                    },
+                    "attendee_names": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "price_egp": {
+                      "type": "integer"
+                    },
+                    "price_cents": {
+                      "type": "integer"
+                    },
+                    "hold_expires_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "booking_code": {
+                      "nullable": true
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                  "status": "held",
+                  "court": {
+                    "id": "11111111-1111-4111-8111-111111111111",
+                    "name": "Court 1"
+                  },
+                  "date": "2026-08-20",
+                  "start_time": "18:00",
+                  "end_time": "19:00",
+                  "booker_name": "Ahmed Hassan",
+                  "attendee_names": [
+                    "Ahmed Hassan",
+                    "Omar Ali",
+                    "Youssef Nabil",
+                    "Karim Fathy"
+                  ],
+                  "price_egp": 350,
+                  "price_cents": 35000,
+                  "hold_expires_at": "2026-08-15T16:32:00+03:00",
+                  "booking_code": null,
+                  "created_at": "2026-08-15T16:22:00+03:00"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 Bad Request — attendees",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "object",
+                          "properties": {
+                            "attendee_names": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "400 Bad Request — attendees": {
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "message": "Invalid request body",
+                        "details": {
+                          "attendee_names": [
+                            "Provide between 1 and 4 attendee names."
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "400 Bad Request — past slot": {
+                    "value": {
+                      "error": {
+                        "code": "PAST_SLOT",
+                        "message": "Cannot book a slot that has already started."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Authentication credentials were not provided."
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 Conflict — slot taken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "SLOT_TAKEN",
+                    "message": "This slot was just booked. Please choose another available slot."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "3. Bookings (customer JWT)"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Atomically hold a slot for 10 minutes.\n\nCreates a `held` booking row. Postgres partial unique index on `court + date + start_time` (active statuses only) prevents double booking.\n\n**Attendee names** are required (1–4). Booker name is copied from the JWT user.\n\nOn unique-constraint race: **409 SLOT_TAKEN**.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "court_id": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string"
+                  },
+                  "start_time": {
+                    "type": "string"
+                  },
+                  "attendee_names": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "example": {
+                "court_id": "NaN",
+                "date": "NaN",
+                "start_time": "NaN",
+                "attendee_names": [
+                  "Ahmed Hassan",
+                  "Omar Ali",
+                  "Youssef Nabil",
+                  "Karim Fathy"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings/{booking_id}": {
+      "delete": {
+        "summary": "Cancel hold",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer {{access_token}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK — cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                  "status": "cancelled",
+                  "message": "Slot released."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Authentication credentials were not provided."
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden — not owner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "You do not own this booking."
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Booking not found."
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 Conflict — already paid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "CANNOT_CANCEL",
+                    "message": "Paid bookings cannot be cancelled in MVP (no refunds)."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "3. Bookings (customer JWT)"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Cancel own hold or unpaid booking and release the slot (`cancelled`). Confirmed/redeemed bookings cannot be cancelled in MVP (no refunds)."
+      },
+      "parameters": [
+        {
+          "name": "booking_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": ""
+        }
+      ],
+      "get": {
+        "summary": "Booking detail",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer {{access_token}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK — owner detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "court": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "start_time": {
+                      "type": "string",
+                      "format": "style"
+                    },
+                    "end_time": {
+                      "type": "string"
+                    },
+                    "booker_name": {
+                      "type": "string"
+                    },
+                    "attendee_names": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "price_egp": {
+                      "type": "integer"
+                    },
+                    "price_cents": {
+                      "type": "integer"
+                    },
+                    "booking_code": {
+                      "type": "string"
+                    },
+                    "qr_payload": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "redeemed_at": {
+                      "nullable": true
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "paid_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "examples": {
+                  "200 OK — owner detail": {
+                    "value": {
+                      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                      "status": "confirmed",
+                      "court": {
+                        "id": "11111111-1111-4111-8111-111111111111",
+                        "name": "Court 1"
+                      },
+                      "date": "2026-08-20",
+                      "start_time": "18:00",
+                      "end_time": "19:00",
+                      "booker_name": "Ahmed Hassan",
+                      "attendee_names": [
+                        "Ahmed Hassan",
+                        "Omar Ali",
+                        "Youssef Nabil",
+                        "Karim Fathy"
+                      ],
+                      "price_egp": 350,
+                      "price_cents": 35000,
+                      "booking_code": "MGZ-7F42K",
+                      "qr_payload": "https://mahgooz.app/pass/MGZ-7F42K",
+                      "redeemed_at": null,
+                      "created_at": "2026-08-15T16:22:00+03:00",
+                      "paid_at": "2026-08-15T16:24:11+03:00"
+                    }
+                  },
+                  "200 OK — still held (no code yet)": {
+                    "value": {
+                      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                      "status": "held",
+                      "court": {
+                        "id": "11111111-1111-4111-8111-111111111111",
+                        "name": "Court 1"
+                      },
+                      "date": "2026-08-20",
+                      "start_time": "18:00",
+                      "end_time": "19:00",
+                      "booker_name": "Ahmed Hassan",
+                      "attendee_names": [
+                        "Ahmed Hassan",
+                        "Omar Ali",
+                        "Youssef Nabil",
+                        "Karim Fathy"
+                      ],
+                      "price_egp": 350,
+                      "price_cents": 35000,
+                      "hold_expires_at": "2026-08-15T16:32:00+03:00",
+                      "booking_code": null,
+                      "created_at": "2026-08-15T16:22:00+03:00",
+                      "qr_payload": null,
+                      "redeemed_at": null,
+                      "paid_at": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Authentication credentials were not provided."
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden — not owner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "You do not own this booking."
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Booking not found."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "3. Bookings (customer JWT)"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Owner-only booking detail. Includes `booking_code` after payment is confirmed."
+      }
+    },
+    "/bookings/{booking_id}/checkout": {
+      "post": {
+        "summary": "Start checkout",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer {{access_token}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK — Paymob checkout URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "booking_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "amount_egp": {
+                      "type": "integer"
+                    },
+                    "amount_cents": {
+                      "type": "integer"
+                    },
+                    "currency": {
+                      "type": "string"
+                    },
+                    "checkout_url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "paymob_intention_id": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "booking_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                  "status": "pending_payment",
+                  "amount_egp": 350,
+                  "amount_cents": 35000,
+                  "currency": "EGP",
+                  "checkout_url": "https://accept.paymob.com/unifiedcheckout/?publicKey=egy_pk_test_xxxxxxxx&clientSecret=egy_csk_test_xxxxxxxx",
+                  "paymob_intention_id": "pi_test_8f3a1c2e"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Authentication credentials were not provided."
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Booking not found."
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 Conflict — hold expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "409 Conflict — hold expired": {
+                    "value": {
+                      "error": {
+                        "code": "HOLD_EXPIRED",
+                        "message": "Your hold expired. Please pick the slot again."
+                      }
+                    }
+                  },
+                  "409 Conflict — already paid": {
+                    "value": {
+                      "error": {
+                        "code": "ALREADY_PAID",
+                        "message": "This booking is already confirmed."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "502 Bad Gateway — Paymob error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "PAYMOB_ERROR",
+                    "message": "Could not start checkout. Your slot is still held — try again."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "3. Bookings (customer JWT)"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Create a Paymob Intention for this hold and return Unified Checkout URL.\n\nDoes **not** mark the booking paid. Status becomes `pending_payment`.\n\n`special_reference` sent to Paymob = booking UUID.\n\nIf Paymob fails, status stays `held` so the customer can retry until TTL.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {}
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "booking_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": ""
+        }
+      ]
+    },
+    "/bookings/{booking_id}/status": {
+      "get": {
+        "summary": "Poll payment status",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer {{access_token}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK — still pending",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "booking_code": {
+                      "nullable": true
+                    },
+                    "hold_expires_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "examples": {
+                  "200 OK — still pending": {
+                    "value": {
+                      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                      "status": "pending_payment",
+                      "booking_code": null,
+                      "hold_expires_at": "2026-08-15T16:32:00+03:00"
+                    }
+                  },
+                  "200 OK — confirmed (after webhook)": {
+                    "value": {
+                      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                      "status": "confirmed",
+                      "booking_code": "MGZ-7F42K",
+                      "pass_url": "/pass/MGZ-7F42K",
+                      "hold_expires_at": null
+                    }
+                  },
+                  "200 OK — payment failed": {
+                    "value": {
+                      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                      "status": "failed",
+                      "booking_code": null,
+                      "hold_expires_at": null
+                    }
+                  },
+                  "200 OK — hold expired": {
+                    "value": {
+                      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                      "status": "expired",
+                      "booking_code": null,
+                      "hold_expires_at": "2026-08-15T16:32:00+03:00"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Authentication credentials were not provided."
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden — not owner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "You do not own this booking."
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Booking not found."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "3. Bookings (customer JWT)"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook — never because the browser landed on Paymob's success redirect."
+      },
+      "parameters": [
+        {
+          "name": "booking_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": ""
+        }
+      ]
+    },
+    "/bookings": {
+      "get": {
+        "summary": "My bookings",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer {{access_token}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK — upcoming and past",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "upcoming": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "court_name": {
+                            "type": "string"
+                          },
+                          "date": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "start_time": {
+                            "type": "string",
+                            "format": "style"
+                          },
+                          "end_time": {
+                            "type": "string"
+                          },
+                          "price_egp": {
+                            "type": "integer"
+                          },
+                          "booking_code": {
+                            "type": "string"
+                          },
+                          "period": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "past": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "court_name": {
+                            "type": "string"
+                          },
+                          "date": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "start_time": {
+                            "type": "string",
+                            "format": "style"
+                          },
+                          "end_time": {
+                            "type": "string"
+                          },
+                          "price_egp": {
+                            "type": "integer"
+                          },
+                          "booking_code": {
+                            "type": "string"
+                          },
+                          "period": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "200 OK — upcoming and past": {
+                    "value": {
+                      "upcoming": [
+                        {
+                          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                          "status": "confirmed",
+                          "court_name": "Court 1",
+                          "date": "2026-08-20",
+                          "start_time": "18:00",
+                          "end_time": "19:00",
+                          "price_egp": 350,
+                          "booking_code": "MGZ-7F42K",
+                          "period": "evening"
+                        }
+                      ],
+                      "past": [
+                        {
+                          "id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+                          "status": "redeemed",
+                          "court_name": "Court 2",
+                          "date": "2026-08-11",
+                          "start_time": "19:00",
+                          "end_time": "20:00",
+                          "price_egp": 350,
+                          "booking_code": "MGZ-2K91P",
+                          "period": "evening"
+                        }
+                      ]
+                    }
+                  },
+                  "200 OK — empty": {
+                    "value": {
+                      "upcoming": [],
+                      "past": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Authentication credentials were not provided."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "3. Bookings (customer JWT)"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Authenticated customer's upcoming and past bookings."
+      }
+    },
+    "/staff/login": {
+      "post": {
+        "summary": "Staff login",
+        "responses": {
+          "200": {
+            "description": "200 OK — staff token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access": {
+                      "type": "string"
+                    },
+                    "token_type": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "expires_in": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "example": {
+                  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.staff",
+                  "token_type": "Bearer",
+                  "role": "staff",
+                  "expires_in": 43200
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 Bad Request — missing pin",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "object",
+                          "properties": {
+                            "pin": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Invalid request body",
+                    "details": {
+                      "pin": [
+                        "This field is required."
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized — wrong pin",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_PIN",
+                    "message": "Staff PIN is incorrect."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "4. Staff (staff JWT)"
+        ],
+        "description": "Staff gate: 4-digit PIN from `STAFF_PIN` env. Returns a staff JWT (not a customer token). No staff user table in MVP.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pin": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  }
+                }
+              },
+              "example": {
+                "pin": "1234"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/staff/bookings": {
+      "get": {
+        "summary": "Today's bookings",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "example": "{{slot_date}}"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer {{staff_token}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK — paid bookings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "bookings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "booking_code": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "court_name": {
+                            "type": "string"
+                          },
+                          "start_time": {
+                            "type": "string",
+                            "format": "style"
+                          },
+                          "end_time": {
+                            "type": "string"
+                          },
+                          "booker_name": {
+                            "type": "string"
+                          },
+                          "redeemed_at": {
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "200 OK — paid bookings": {
+                    "value": {
+                      "date": "2026-08-20",
+                      "bookings": [
+                        {
+                          "booking_code": "MGZ-7F42K",
+                          "status": "confirmed",
+                          "court_name": "Court 1",
+                          "start_time": "18:00",
+                          "end_time": "19:00",
+                          "booker_name": "Ahmed Hassan",
+                          "redeemed_at": null
+                        }
+                      ]
+                    }
+                  },
+                  "200 OK — none": {
+                    "value": {
+                      "date": "2026-08-20",
+                      "bookings": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized — missing staff JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Authentication credentials were not provided."
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden — customer JWT used",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Staff token required."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "4. Staff (staff JWT)"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Paid bookings for a date (default today), focused on the next ~12 hours."
+      }
+    },
+    "/staff/passes/{booking_code}": {
+      "get": {
+        "summary": "Lookup pass",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer {{staff_token}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK — valid, not redeemed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "booking_code": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "can_redeem": {
+                      "type": "boolean"
+                    },
+                    "court": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "start_time": {
+                      "type": "string",
+                      "format": "style"
+                    },
+                    "end_time": {
+                      "type": "string"
+                    },
+                    "booker_name": {
+                      "type": "string"
+                    },
+                    "booker_phone": {
+                      "type": "string",
+                      "format": "utc-millisec"
+                    },
+                    "attendee_names": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "price_egp": {
+                      "type": "integer"
+                    },
+                    "paymob_transaction_id": {
+                      "type": "integer"
+                    },
+                    "redeemed_at": {
+                      "nullable": true
+                    }
+                  }
+                },
+                "examples": {
+                  "200 OK — valid, not redeemed": {
+                    "value": {
+                      "booking_code": "MGZ-7F42K",
+                      "status": "confirmed",
+                      "can_redeem": true,
+                      "court": {
+                        "id": "11111111-1111-4111-8111-111111111111",
+                        "name": "Court 1"
+                      },
+                      "date": "2026-08-20",
+                      "start_time": "18:00",
+                      "end_time": "19:00",
+                      "booker_name": "Ahmed Hassan",
+                      "booker_phone": "01012345678",
+                      "attendee_names": [
+                        "Ahmed Hassan",
+                        "Omar Ali",
+                        "Youssef Nabil",
+                        "Karim Fathy"
+                      ],
+                      "price_egp": 350,
+                      "paymob_transaction_id": 289187034,
+                      "redeemed_at": null
+                    }
+                  },
+                  "200 OK — already redeemed": {
+                    "value": {
+                      "booking_code": "MGZ-7F42K",
+                      "status": "redeemed",
+                      "can_redeem": false,
+                      "court": {
+                        "id": "11111111-1111-4111-8111-111111111111",
+                        "name": "Court 1"
+                      },
+                      "date": "2026-08-20",
+                      "start_time": "18:00",
+                      "end_time": "19:00",
+                      "booker_name": "Ahmed Hassan",
+                      "booker_phone": "01012345678",
+                      "attendee_names": [
+                        "Ahmed Hassan",
+                        "Omar Ali",
+                        "Youssef Nabil",
+                        "Karim Fathy"
+                      ],
+                      "price_egp": 350,
+                      "paymob_transaction_id": 289187034,
+                      "redeemed_at": "2026-08-20T17:58:00+03:00"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Authentication credentials were not provided."
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "No booking for this code."
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 Conflict — payment not confirmed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "PAYMENT_NOT_CONFIRMED",
+                    "message": "Payment not confirmed yet."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "4. Staff (staff JWT)"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Staff lookup of a pass. Includes phone and Paymob transaction id.\n\n`can_redeem` is true only when status is `confirmed`, it is the booking day, and it has not been redeemed."
+      },
+      "parameters": [
+        {
+          "name": "booking_code",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": "MGZ-7F42K"
+        }
+      ]
+    },
+    "/staff/passes/{booking_code}/redeem": {
+      "post": {
+        "summary": "Redeem pass",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer {{staff_token}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK — redeemed once",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "booking_code": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "redeemed_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "court": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "start_time": {
+                      "type": "string",
+                      "format": "style"
+                    },
+                    "end_time": {
+                      "type": "string"
+                    },
+                    "booker_name": {
+                      "type": "string"
+                    },
+                    "attendee_names": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "booking_code": "MGZ-7F42K",
+                  "status": "redeemed",
+                  "redeemed_at": "2026-08-20T17:58:00+03:00",
+                  "court": {
+                    "id": "11111111-1111-4111-8111-111111111111",
+                    "name": "Court 1"
+                  },
+                  "date": "2026-08-20",
+                  "start_time": "18:00",
+                  "end_time": "19:00",
+                  "booker_name": "Ahmed Hassan",
+                  "attendee_names": [
+                    "Ahmed Hassan",
+                    "Omar Ali",
+                    "Youssef Nabil",
+                    "Karim Fathy"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Authentication credentials were not provided."
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403 Forbidden — customer JWT used",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Staff token required."
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "No booking for this code."
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409 Conflict — already redeemed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string",
+                          "format": "style"
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "409 Conflict — already redeemed": {
+                    "value": {
+                      "error": {
+                        "code": "ALREADY_REDEEMED",
+                        "message": "This pass was already redeemed at 17:58."
+                      }
+                    }
+                  },
+                  "409 Conflict — payment not confirmed": {
+                    "value": {
+                      "error": {
+                        "code": "PAYMENT_NOT_CONFIRMED",
+                        "message": "Payment not confirmed yet."
+                      }
+                    }
+                  },
+                  "409 Conflict — wrong day": {
+                    "value": {
+                      "error": {
+                        "code": "WRONG_DAY",
+                        "message": "This pass is for Wed 20 Aug 2026, not today."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "4. Staff (staff JWT)"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Atomic one-time redeem: `UPDATE … WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {}
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "booking_code",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "example": "MGZ-7F42K"
+        }
+      ]
+    },
+    "/webhooks/paymob": {
+      "post": {
+        "summary": "Payment success (placeholder HMAC)",
+        "responses": {
+          "200": {
+            "description": "200 OK — booking confirmed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "received": {
+                      "type": "boolean"
+                    },
+                    "booking_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "booking_code": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "examples": {
+                  "200 OK — booking confirmed": {
+                    "value": {
+                      "received": true,
+                      "booking_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                      "status": "confirmed",
+                      "booking_code": "MGZ-7F42K"
+                    }
+                  },
+                  "200 OK — duplicate callback (idempotent)": {
+                    "value": {
+                      "received": true,
+                      "booking_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                      "status": "confirmed",
+                      "booking_code": "MGZ-7F42K",
+                      "idempotent": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 Bad Request — malformed payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Unrecognized Paymob callback payload."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401 Unauthorized — invalid HMAC",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_HMAC",
+                    "message": "Callback HMAC verification failed."
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 Not Found — unknown booking reference",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "No booking matches this payment reference."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "5. Paymob webhook (HMAC, no JWT)"
+        ],
+        "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** — do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "obj": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "pending": {
+                        "type": "boolean"
+                      },
+                      "amount_cents": {
+                        "type": "integer"
+                      },
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "is_auth": {
+                        "type": "boolean"
+                      },
+                      "is_capture": {
+                        "type": "boolean"
+                      },
+                      "is_standalone_payment": {
+                        "type": "boolean"
+                      },
+                      "is_voided": {
+                        "type": "boolean"
+                      },
+                      "is_refunded": {
+                        "type": "boolean"
+                      },
+                      "is_3d_secure": {
+                        "type": "boolean"
+                      },
+                      "integration_id": {
+                        "type": "integer"
+                      },
+                      "profile_id": {
+                        "type": "integer"
+                      },
+                      "has_parent_transaction": {
+                        "type": "boolean"
+                      },
+                      "order": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "merchant_order_id": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "format": "style"
+                      },
+                      "currency": {
+                        "type": "string"
+                      },
+                      "error_occured": {
+                        "type": "boolean"
+                      },
+                      "owner": {
+                        "type": "integer"
+                      },
+                      "source_data": {
+                        "type": "object",
+                        "properties": {
+                          "pan": {
+                            "type": "string",
+                            "format": "utc-millisec"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "sub_type": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "hmac": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "type": "TRANSACTION",
+                "obj": {
+                  "id": 289187034,
+                  "pending": false,
+                  "amount_cents": 35000,
+                  "success": true,
+                  "is_auth": false,
+                  "is_capture": false,
+                  "is_standalone_payment": true,
+                  "is_voided": false,
+                  "is_refunded": false,
+                  "is_3d_secure": true,
+                  "integration_id": 123456,
+                  "profile_id": 98765,
+                  "has_parent_transaction": false,
+                  "order": {
+                    "id": 998877,
+                    "merchant_order_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                  },
+                  "created_at": "2026-08-15T13:24:11.123456",
+                  "currency": "EGP",
+                  "error_occured": false,
+                  "owner": 111222,
+                  "source_data": {
+                    "pan": "2346",
+                    "type": "card",
+                    "sub_type": "MasterCard"
+                  }
+                },
+                "hmac": "REPLACE_WITH_COMPUTED_HMAC_SHA512"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ]
+}
