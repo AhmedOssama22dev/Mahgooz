@@ -4,6 +4,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 
+import { PwaReloadPrompt } from '@/components/pwa-reload-prompt'
 import { Toaster } from '@/components/ui/sonner'
 
 import '../styles.css'
@@ -19,6 +20,7 @@ function RootComponent() {
     <div className="font-sans antialiased">
       <Outlet />
       <Toaster position="top-center" richColors closeButton />
+      <PwaReloadPrompt />
       <TanStackDevtools
         config={{
           position: 'bottom-right',

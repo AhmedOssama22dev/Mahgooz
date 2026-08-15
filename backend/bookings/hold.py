@@ -5,6 +5,7 @@ from bookings import errors
 from bookings.expiry import expire_elapsed_holds
 from bookings.models import Booking, BookingSlot
 from bookings.policies import (
+    PAID_PASS_STATUSES,
     assert_transition,
     cairo_now,
     can_cancel,
@@ -92,6 +93,31 @@ def create_hold(*, user, slots, attendee_names, now=None):
         if not is_active_slot_conflict(exc):
             raise
         errors.slot_taken(_conflicting_slots(normalized))
+    return booking
+
+
+def get_owned_booking(*, user, booking_id, now=None):
+    now = cairo_now(now)
+    expire_elapsed_holds(now=now)
+    try:
+        booking = Booking.objects.prefetch_related("slots__court").get(pk=booking_id)
+    except Booking.DoesNotExist:
+        errors.not_found("Booking not found.")
+    if booking.user_id != user.id:
+        errors.forbidden("You do not own this booking.")
+    return booking
+
+
+def get_public_pass(code):
+    if not isinstance(code, str) or not code.strip():
+        errors.not_found("No paid booking for this code.")
+    booking = (
+        Booking.objects.prefetch_related("slots__court")
+        .filter(booking_code__iexact=code.strip())
+        .first()
+    )
+    if booking is None or booking.status not in PAID_PASS_STATUSES:
+        errors.not_found("No paid booking for this code.")
     return booking
 
 

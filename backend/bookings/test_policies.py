@@ -14,6 +14,7 @@ from bookings.policies import (
     generate_booking_code,
     iter_start_times,
     normalize_hold_slots,
+    partition_my_bookings,
     qr_payload,
     slot_totals,
 )
@@ -175,6 +176,82 @@ class RedeemPolicyTests(TestCase):
     def test_confirmed_today_can_redeem(self):
         booking = self._booking(Booking.Status.CONFIRMED, cairo_today())
         self.assertTrue(can_redeem(booking, today=cairo_today()))
+
+
+class PartitionMyBookingsTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            phone="01012345678",
+            name="Ahmed Hassan",
+            password="secret12",
+        )
+        seed_courts()
+        self.court = Court.objects.get(slug="court-1")
+        self.today = cairo_today()
+
+    def _booking(self, status, slot_date, start=time(18, 0), released=False, **overrides):
+        payload = {
+            "user": self.user,
+            "status": status,
+            "booker_name": self.user.name,
+            "attendee_names": ["Ahmed Hassan"],
+            "total_price_egp": 350,
+            "total_price_cents": 35000,
+        }
+        payload.update(overrides)
+        booking = Booking.objects.create(**payload)
+        BookingSlot.objects.create(
+            booking=booking,
+            court=self.court,
+            date=slot_date,
+            start_time=start,
+            price_egp=350,
+            price_cents=35000,
+            released_at=aware(slot_date, 8) if released else None,
+        )
+        return booking
+
+    def test_future_confirmed_is_upcoming(self):
+        booking = self._booking(Booking.Status.CONFIRMED, self.today + timedelta(days=1))
+        upcoming, past = partition_my_bookings([booking], now=aware(self.today, 8))
+        self.assertEqual(upcoming, [booking])
+        self.assertEqual(past, [])
+
+    def test_redeemed_is_past(self):
+        booking = self._booking(Booking.Status.REDEEMED, self.today + timedelta(days=1))
+        upcoming, past = partition_my_bookings([booking], now=aware(self.today, 8))
+        self.assertEqual(upcoming, [])
+        self.assertEqual(past, [booking])
+
+    def test_yesterday_confirmed_is_past(self):
+        booking = self._booking(Booking.Status.CONFIRMED, self.today - timedelta(days=1))
+        upcoming, past = partition_my_bookings([booking], now=aware(self.today, 8))
+        self.assertEqual(upcoming, [])
+        self.assertEqual(past, [booking])
+
+    def test_today_slot_after_end_is_past(self):
+        booking = self._booking(Booking.Status.CONFIRMED, self.today, start=time(9, 0))
+        upcoming, past = partition_my_bookings([booking], now=aware(self.today, 11))
+        self.assertEqual(upcoming, [])
+        self.assertEqual(past, [booking])
+
+    def test_today_slot_before_end_is_upcoming(self):
+        booking = self._booking(Booking.Status.CONFIRMED, self.today, start=time(18, 0))
+        upcoming, past = partition_my_bookings([booking], now=aware(self.today, 11))
+        self.assertEqual(upcoming, [booking])
+        self.assertEqual(past, [])
+
+    def test_failed_cancelled_expired_are_past_even_if_future_date(self):
+        future = self.today + timedelta(days=2)
+        failed = self._booking(Booking.Status.FAILED, future, start=time(18, 0), released=True)
+        cancelled = self._booking(Booking.Status.CANCELLED, future, start=time(19, 0), released=True)
+        expired = self._booking(Booking.Status.EXPIRED, future, start=time(20, 0), released=True)
+        upcoming, past = partition_my_bookings(
+            [failed, cancelled, expired],
+            now=aware(self.today, 8),
+        )
+        self.assertEqual(upcoming, [])
+        self.assertEqual(past, [failed, cancelled, expired])
 
 
 class CodeAndQrTests(TestCase):

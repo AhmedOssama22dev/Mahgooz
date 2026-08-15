@@ -7,16 +7,24 @@ from accounts.permissions import IsCustomer, IsStaff
 from bookings import errors
 from bookings.availability import build_slot_grid
 from bookings.expiry import expire_elapsed_holds
-from bookings.hold import cancel_booking, create_hold
-from bookings.models import Court
-from bookings.policies import assert_bookable_date
+from bookings.hold import cancel_booking, create_hold, get_owned_booking, get_public_pass
+from bookings.models import Booking, Court
+from bookings.policies import assert_bookable_date, booking_sort_key, cairo_today, partition_my_bookings
 from bookings.serializers import (
+    BookingStatusSerializer,
     CourtSerializer,
+    CustomerBookingDetailSerializer,
+    CustomerBookingListItemSerializer,
     CustomerBookingSerializer,
     HoldRequestSerializer,
+    PublicPassSerializer,
     SlotGridSerializer,
     SlotQuerySerializer,
+    StaffBookingListItemSerializer,
+    StaffDateQuerySerializer,
+    StaffPassSerializer,
 )
+from bookings.staff import get_staff_pass, list_staff_bookings, redeem_pass
 from config.exceptions import _as_details
 from payments.checkout import start_checkout
 
@@ -54,7 +62,8 @@ class PublicPassView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, _request, code):
-        errors.not_implemented()
+        booking = get_public_pass(code)
+        return Response(PublicPassSerializer(booking).data)
 
 
 class HoldView(APIView):
@@ -77,15 +86,26 @@ class HoldView(APIView):
 class BookingListView(APIView):
     permission_classes = [IsAuthenticated, IsCustomer]
 
-    def get(self, _request):
-        errors.not_implemented()
+    def get(self, request):
+        expire_elapsed_holds()
+        bookings = Booking.objects.filter(user=request.user).prefetch_related("slots__court")
+        upcoming, past = partition_my_bookings(bookings)
+        upcoming.sort(key=booking_sort_key)
+        past.sort(key=booking_sort_key, reverse=True)
+        return Response(
+            {
+                "upcoming": CustomerBookingListItemSerializer(upcoming, many=True).data,
+                "past": CustomerBookingListItemSerializer(past, many=True).data,
+            }
+        )
 
 
 class BookingDetailView(APIView):
     permission_classes = [IsAuthenticated, IsCustomer]
 
-    def get(self, _request, booking_id):
-        errors.not_implemented()
+    def get(self, request, booking_id):
+        booking = get_owned_booking(user=request.user, booking_id=booking_id)
+        return Response(CustomerBookingDetailSerializer(booking).data)
 
     def delete(self, request, booking_id):
         booking = cancel_booking(user=request.user, booking_id=booking_id)
@@ -108,26 +128,39 @@ class CheckoutView(APIView):
 class BookingStatusView(APIView):
     permission_classes = [IsAuthenticated, IsCustomer]
 
-    def get(self, _request, booking_id):
-        errors.not_implemented()
+    def get(self, request, booking_id):
+        booking = get_owned_booking(user=request.user, booking_id=booking_id)
+        return Response(BookingStatusSerializer(booking).data)
 
 
 class StaffBookingListView(APIView):
     permission_classes = [IsAuthenticated, IsStaff]
 
-    def get(self, _request):
-        errors.not_implemented()
+    def get(self, request):
+        query = StaffDateQuerySerializer(data=request.query_params)
+        if not query.is_valid():
+            errors.invalid_query(_as_details(query.errors))
+        slot_date = query.validated_data.get("date") or cairo_today()
+        bookings = list_staff_bookings(slot_date)
+        return Response(
+            {
+                "date": slot_date,
+                "bookings": StaffBookingListItemSerializer(bookings, many=True).data,
+            }
+        )
 
 
 class StaffPassView(APIView):
     permission_classes = [IsAuthenticated, IsStaff]
 
     def get(self, _request, code):
-        errors.not_implemented()
+        booking = get_staff_pass(code)
+        return Response(StaffPassSerializer(booking).data)
 
 
 class StaffRedeemView(APIView):
     permission_classes = [IsAuthenticated, IsStaff]
 
     def post(self, _request, code):
-        errors.not_implemented()
+        booking = redeem_pass(code)
+        return Response(StaffPassSerializer(booking).data)

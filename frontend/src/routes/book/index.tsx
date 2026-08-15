@@ -126,9 +126,11 @@ function BookPage() {
     try {
       const booking = await holdSlot.mutateAsync({
         body: {
-          court_id: courtId,
-          date: dateStr,
-          start_times: selectedTimes,
+          slots: selectedTimes.map((start_time) => ({
+            court_id: courtId,
+            date: dateStr,
+            start_time,
+          })),
           attendee_names: [name],
         },
       })
@@ -139,8 +141,8 @@ function BookPage() {
       setHold({
         id: booking.id,
         expiresAt: booking.hold_expires_at,
-        endTime: booking.end_time ?? addHours(selectedTimes[selectedTimes.length - 1]!, 1),
-        price: booking.price_egp ?? 0,
+        endTime: addHours(selectedTimes[selectedTimes.length - 1]!, 1),
+        price: selectedTotal,
         name: booking.booker_name ?? name,
         phone: booker?.phone ?? '',
       })

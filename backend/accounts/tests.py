@@ -183,6 +183,7 @@ class AuthTests(APITestCase):
         response = self.client.get("/api/v1/staff/bookings")
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["error"]["code"], "FORBIDDEN")
+        self.assertEqual(response.json()["error"]["message"], "Staff token required.")
 
     def test_staff_routes_accept_staff(self):
         User.objects.create_user(
@@ -198,8 +199,10 @@ class AuthTests(APITestCase):
         ).json()
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {tokens['access']}")
         response = self.client.get("/api/v1/staff/bookings")
-        self.assertEqual(response.status_code, 501)
-        self.assertEqual(response.json()["error"]["code"], "NOT_IMPLEMENTED")
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertIn("date", body)
+        self.assertEqual(body["bookings"], [])
 
     def test_refresh_invalid(self):
         response = self.client.post(

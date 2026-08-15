@@ -9,7 +9,7 @@ class IsCustomer(BasePermission):
 
 
 class IsStaff(BasePermission):
-    message = "Staff role required."
+    message = "Staff token required."
 
     def has_permission(self, request, view):
         user = request.user
