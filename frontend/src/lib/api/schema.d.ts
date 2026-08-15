@@ -852,7 +852,7 @@ export interface paths {
          * Hold slots
          * @description Atomically hold 1–4 consecutive 60-minute slots for 10 minutes.
          *
-         *     `start_times` is the list of hour starts on one court and date (e.g. `["18:00","19:00"]` holds 18:00–20:00). Hours must be unique and consecutive. Price is the sum of each hour's band.
+         *     `slots` is a list of `{ court_id, date, start_time }` objects (e.g. 18:00 and 19:00 holds 18:00–20:00). Hours must share one court and date, be unique, and be consecutive. Price is the sum of each hour's band.
          *
          *     Creates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).
          *
@@ -874,11 +874,17 @@ export interface paths {
                 content: {
                     /**
                      * @example {
-                     *       "court_id": "11111111-1111-4111-8111-111111111111",
-                     *       "date": "2026-08-20",
-                     *       "start_times": [
-                     *         "18:00",
-                     *         "19:00"
+                     *       "slots": [
+                     *         {
+                     *           "court_id": "11111111-1111-4111-8111-111111111111",
+                     *           "date": "2026-08-20",
+                     *           "start_time": "18:00"
+                     *         },
+                     *         {
+                     *           "court_id": "11111111-1111-4111-8111-111111111111",
+                     *           "date": "2026-08-20",
+                     *           "start_time": "19:00"
+                     *         }
                      *       ],
                      *       "attendee_names": [
                      *         "Ahmed Hassan",
@@ -889,9 +895,14 @@ export interface paths {
                      *     }
                      */
                     "application/json": {
-                        court_id: string;
-                        date: string;
-                        start_times: string[];
+                        slots: {
+                            /** Format: uuid */
+                            court_id: string;
+                            /** Format: date */
+                            date: string;
+                            /** @example 18:00 */
+                            start_time: string;
+                        }[];
                         attendee_names: string[];
                     };
                 };
@@ -1347,7 +1358,7 @@ export interface paths {
                          *       "amount_egp": 350,
                          *       "amount_cents": 35000,
                          *       "currency": "EGP",
-                         *       "checkout_url": "https://accept.paymob.com/unifiedcheckout/?publicKey=egy_pk_test_xxxxxxxx&clientSecret=egy_csk_test_xxxxxxxx",
+                         *       "checkout_url": "https://eg.checkout.paymob.com/?publicKey=egy_pk_test_xxxxxxxx&clientSecret=egy_csk_test_xxxxxxxx",
                          *       "paymob_intention_id": "pi_test_8f3a1c2e"
                          *     }
                          */
@@ -2089,7 +2100,7 @@ export interface paths {
          * @description **Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.
          *
          *     1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.
-         *     2. Reject mismatch with **401 INVALID_HMAC** — do not update the booking.
+         *     2. Reject forged or malformed callbacks with **401 INVALID_HMAC** — do not update the booking.
          *     3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).
          *     4. On failure: set status `failed` and release the slot.
          *
@@ -2191,42 +2202,12 @@ export interface paths {
                         };
                     };
                 };
-                /** @description 400 Bad Request — malformed payload */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "VALIDATION_ERROR",
-                         *         "message": "Unrecognized Paymob callback payload."
-                         *       }
-                         *     }
-                         */
-                        "application/json": {
-                            error?: {
-                                code?: string;
-                                message?: string;
-                            };
-                        };
-                    };
-                };
-                /** @description 401 Unauthorized — invalid HMAC */
+                /** @description 401 Unauthorized — invalid HMAC or malformed payload */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        /**
-                         * @example {
-                         *       "error": {
-                         *         "code": "INVALID_HMAC",
-                         *         "message": "Callback HMAC verification failed."
-                         *       }
-                         *     }
-                         */
                         "application/json": {
                             error?: {
                                 code?: string;

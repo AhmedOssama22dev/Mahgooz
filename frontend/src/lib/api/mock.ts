@@ -181,20 +181,22 @@ function occupying(courtId: string, date: string, start: string) {
   )
 }
 
-function parseStartTimes(body: Record<string, unknown>): string[] | MockRes {
-  const raw = Array.isArray(body.start_times)
-    ? body.start_times
-    : typeof body.start_time === 'string'
-      ? [body.start_time]
-      : null
+function parseHoldSlots(
+  body: Record<string, unknown>,
+): { court_id: string; date: string; start_times: string[] } | MockRes {
+  const raw = Array.isArray(body.slots) ? body.slots : null
   if (!raw) {
-    return err(
-      400,
-      'VALIDATION_ERROR',
-      'Provide 1–4 consecutive hour starts in start_times.',
-    )
+    return err(400, 'VALIDATION_ERROR', 'This field is required.')
   }
-  const times = uniqueSortedTimes(raw.filter((x) => typeof x === 'string'))
+  const items = raw.filter(
+    (item): item is Record<string, unknown> =>
+      typeof item === 'object' && item !== null,
+  )
+  const times = uniqueSortedTimes(
+    items
+      .map((item) => item.start_time)
+      .filter((t): t is string => typeof t === 'string'),
+  )
   const hourOk = times.every((t) => {
     const hour = hourFromTime(t)
     return (
@@ -215,7 +217,11 @@ function parseStartTimes(body: Record<string, unknown>): string[] | MockRes {
       'Provide 1–4 consecutive hour starts (e.g. 18:00, 19:00).',
     )
   }
-  return times
+  return {
+    court_id: str(items[0]?.court_id),
+    date: str(items[0]?.date, todayCairo()),
+    start_times: times,
+  }
 }
 
 function slotState(courtId: string, date: string, start: string) {
@@ -354,7 +360,7 @@ function seedBookings() {
     id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
     status: 'confirmed',
     court: { id: COURT_1.id, name: COURT_1.name },
-    date: '2026-08-20',
+    date: todayCairo(),
     start_times: ['18:00'],
     start_time: '18:00',
     end_time: '19:00',
@@ -464,10 +470,11 @@ function handleRoute(
   if (pattern === '/auth/me') return ok(user)
 
   if (pattern === '/bookings/hold') {
-    const court = courtById(str(body.court_id) || undefined)
-    const date = str(body.date, todayCairo())
-    const start_times = parseStartTimes(body)
-    if (!Array.isArray(start_times)) return start_times
+    const parsed = parseHoldSlots(body)
+    if ('status' in parsed) return parsed
+    const court = courtById(parsed.court_id || undefined)
+    const date = parsed.date
+    const start_times = parsed.start_times
     const taken = start_times.find((t) => occupying(court.id, date, t))
     if (taken) {
       return err(409, 'SLOT_TAKEN', 'This slot is no longer available')

@@ -2,22 +2,37 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>Mahgouz — Book. Pay. Play.</title>
-    <link rel="icon" type="image/png" href="/mahgouz-logo-badge.png" />
-    <link rel="apple-touch-icon" href="/mahgouz-logo-badge.png" />
+    <meta
+      name="description"
+      content="Book padel courts in Sheikh Zayed. Pay, reserve, and redeem your pass."
+    />
+    <meta name="theme-color" content="#1B7A4E" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Mahgouz" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap"
       rel="stylesheet"
+      crossorigin="anonymous"
     />
     <script>
       ;(function () {
         const stored =
           localStorage.getItem('mahgouz-theme') ??
           localStorage.getItem('courtpass-theme')
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        const prefersDark = window.matchMedia(
+          '(prefers-color-scheme: dark)',
+        ).matches
         if (stored === 'dark' || (!stored && prefersDark)) {
           document.documentElement.classList.add('dark')
         }

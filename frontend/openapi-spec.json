@@ -1332,45 +1332,65 @@
             "BearerAuth": []
           }
         ],
-        "description": "Atomically hold 1–4 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00–20:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1–4). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
+        "description": "Atomically hold 1–4 consecutive 60-minute slots for 10 minutes.\n\n`slots` is a list of `{ court_id, date, start_time }` objects (e.g. 18:00 and 19:00 holds 18:00–20:00). Hours must share one court and date, be unique, and be consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1–4). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "court_id": {
-                    "type": "string"
-                  },
-                  "date": {
-                    "type": "string"
-                  },
-                  "start_times": {
+                  "slots": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
-                      "type": "string"
+                      "type": "object",
+                      "properties": {
+                        "court_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "date": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "start_time": {
+                          "type": "string",
+                          "example": "18:00"
+                        }
+                      },
+                      "required": [
+                        "court_id",
+                        "date",
+                        "start_time"
+                      ]
                     }
                   },
                   "attendee_names": {
                     "type": "array",
+                    "minItems": 1,
+                    "maxItems": 4,
                     "items": {
                       "type": "string"
                     }
                   }
                 },
                 "required": [
-                  "court_id",
-                  "date",
-                  "start_times",
+                  "slots",
                   "attendee_names"
                 ]
               },
               "example": {
-                "court_id": "11111111-1111-4111-8111-111111111111",
-                "date": "2026-08-20",
-                "start_times": [
-                  "18:00",
-                  "19:00"
+                "slots": [
+                  {
+                    "court_id": "11111111-1111-4111-8111-111111111111",
+                    "date": "2026-08-20",
+                    "start_time": "18:00"
+                  },
+                  {
+                    "court_id": "11111111-1111-4111-8111-111111111111",
+                    "date": "2026-08-20",
+                    "start_time": "19:00"
+                  }
                 ],
                 "attendee_names": [
                   "Ahmed Hassan",
