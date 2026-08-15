@@ -11,3 +11,15 @@ class IsCustomer(BasePermission):
             if role is not None and role != "customer":
                 return False
         return True
+
+
+class IsStaff(BasePermission):
+    message = "Staff token required."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        token = getattr(request, "auth", None)
+        if token is None or not hasattr(token, "get"):
+            return False
+        return token.get("role") == "staff"
