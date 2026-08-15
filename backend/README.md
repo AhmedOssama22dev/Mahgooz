@@ -1,6 +1,6 @@
 # Backend
 
-Django project (`config`) with app `core`. Python 3.10+ and PostgreSQL 17.
+Django project (`config`) with apps `accounts`, `bookings`, and `payments`. Python 3.10+ and PostgreSQL 17.
 
 ## Install and run
 
@@ -27,7 +27,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-http://127.0.0.1:8000/api/health/
+http://127.0.0.1:8000/api/v1/health
 
 The values in `.env.example` match the Docker database. Open `psql` with:
 

@@ -1,15 +1,15 @@
 ---
 name: Django MVP Backend
-overview: "Scaffold a Django REST backend for Mahgooz that implements Pay → Reserve → Redeem: phone auth, slot holds with a Postgres unique constraint, real Paymob checkout + HMAC webhook, one-time staff redeem, and a Postman collection with success/failure examples for every endpoint."
+overview: "Scaffold a Django REST backend for Mahgooz that implements Pay → Reserve → Redeem: phone auth, atomic multi-slot holds with a Postgres unique constraint, one Paymob checkout per booking + HMAC webhook, one-time staff redeem, and a Postman collection with success/failure examples for every endpoint."
 todos:
   - id: scaffold
     content: Scaffold Django 5 + DRF + Postgres + custom User (phone) + JWT + CORS + .env.example
     status: pending
   - id: models
-    content: Add Court + Booking models, partial unique index, pricing bands, seed two courts
+    content: Add Court + Booking + BookingSlot models, partial unique index, pricing bands, seed two courts
     status: pending
   - id: slots-hold
-    content: Implement slots listing, atomic hold, cancel, lazy hold expiry
+    content: Implement slots listing, atomic all-or-nothing multi-slot hold, cancel, lazy hold expiry
     status: pending
   - id: paymob
     content: Implement Intention checkout, HMAC webhook, confirmed code issuance, failed-payment release
@@ -37,7 +37,8 @@ The Core MVP in [backend/requirements.md](backend/requirements.md) is the right 
 - Phone + password JWT auth (your choice) so every paid booking has a `user_id`
 - Two seeded courts, 60-minute slots, 14-day book-ahead window, hours 08:00–22:00
 - **Hold TTL 10 minutes** so abandoned/failed payments release the slot
-- **Postgres partial unique index** on `court + date + start_time` for active rows only (`held` / `pending_payment` / `confirmed` / `redeemed`)
+- One booking can contain **one or more 60-minute slots**; the MVP accepts multiple distinct start times for the same court and date
+- **Postgres partial unique index** on each active `BookingSlot`'s `court + date + start_time`
 - Real Paymob Intention API + Unified Checkout + HMAC webhook
 - Attendee **names** (from requirements.md), not just a player count
 - Morning / afternoon / evening price bands as **config**, not a pricing engine
@@ -59,9 +60,9 @@ sequenceDiagram
 
     C->>API: POST /auth/login
     C->>API: GET /slots?date&court
-    C->>API: POST /bookings/hold
-    API->>DB: Insert held row unique court plus slot
-    C->>API: POST /bookings/checkout
+    C->>API: POST /bookings/hold with slots array
+    API->>DB: Atomically insert booking plus all unique slot rows
+    C->>API: POST /bookings/id/checkout
     API->>P: Create Intention
     P-->>C: Unified Checkout
     P->>API: POST /webhooks/paymob HMAC
@@ -109,34 +110,45 @@ backend/
 
 **Court** (seeded: Court 1, Court 2)
 
-**Booking** — single table, single source of truth
+**Booking** — one customer hold/payment/pass that groups one or more slots
 
 - `id` UUID
 - `user` FK
-- `court` FK
-- `date`, `start_time` (1 hour implied)
 - `status`: `held` → `pending_payment` → `confirmed` | `failed` | `cancelled` | `expired` → `redeemed`
 - `booker_name` (copied from user at hold)
 - `attendee_names` JSON list of strings (required, 1–4)
-- `price_egp`, `price_cents` (piasters for Paymob)
+- `total_price_egp`, `total_price_cents` (sum of the selected slots; piasters for Paymob)
 - `hold_expires_at`
 - `booking_code` unique, nullable until paid (`MGZ-XXXXX`)
 - `paymob_intention_id`, `paymob_transaction_id` unique nullable
 - `redeemed_at`
 
-**Partial unique index** (this is the double-booking guarantee):
+**BookingSlot** — one 60-minute court/time allocation belonging to a booking
+
+- `id` UUID
+- `booking` FK with related name `slots`
+- `court` FK
+- `date`, `start_time`
+- `price_egp`, `price_cents` captured at hold time
+- `released_at` nullable; null means this row still occupies the court/time slot
+
+**Partial unique index** on `BookingSlot` (this is the per-slot double-booking guarantee):
 
 ```python
 UniqueConstraint(
     fields=["court", "date", "start_time"],
-    condition=Q(status__in=["held", "pending_payment", "confirmed", "redeemed"]),
+    condition=Q(released_at__isnull=True),
     name="uniq_active_court_slot",
 )
 ```
 
-Expired / failed / cancelled rows do **not** occupy the slot.
+Confirmed and redeemed slot rows keep `released_at=NULL` and remain occupied. Expired, failed, and cancelled bookings set `released_at` on every child slot so all of them become available together.
 
-**Hold expiry:** lazy on `GET /slots` and `POST /hold` (`UPDATE … WHERE hold_expires_at < now()`), plus a `python manage.py expire_holds` command for demo safety. No Redis.
+**Multi-slot invariant:** the hold payload contains a non-empty `slots` array. For MVP, every entry must have the same `court_id` and `date`, with distinct `start_time` values; this supports consecutive or non-consecutive hours on one court while keeping one coherent payment and pass. Reject mixed courts/dates or duplicate entries with `400`.
+
+**Atomic hold:** inside one `transaction.atomic()` block, expire stale holds, validate every requested slot, create the parent `Booking`, and insert every `BookingSlot`. The partial unique constraint is the final concurrency guard. If any requested slot conflicts, roll back the entire booking—never leave a partial hold—and return `409` with `conflicting_slots`.
+
+**Hold expiry:** lazy on `GET /slots` and `POST /hold`; atomically set expired parents to `expired` and release all their child slot rows. Also add a `python manage.py expire_holds` command for demo safety. No Redis.
 
 **Atomic redeem:** `UPDATE … WHERE booking_code=%s AND status='confirmed'` — if `rowcount != 1`, return already redeemed / invalid.
 
@@ -170,12 +182,26 @@ Prefix: `/api/v1`. JSON only. CORS enabled for the frontend origin.
 
 ### Booking (JWT)
 
-- `POST /bookings/hold` — court, date, start_time, attendee_names → 201 or **409 slot taken**
-- `DELETE /bookings/{id}` — cancel own hold / unpaid booking, release slot
-- `POST /bookings/{id}/checkout` — create Paymob intention, return `checkout_url` (`unifiedcheckout/?publicKey&clientSecret`)
+- `POST /bookings/hold` — `slots[]`, `attendee_names` → one booking holding all requested slots, or **409 with no partial hold**
+- `DELETE /bookings/{id}` — cancel own hold / unpaid booking and release all its slots
+- `POST /bookings/{id}/checkout` — create one Paymob intention for `total_price_cents`, with one item per slot, and return `checkout_url` (`unifiedcheckout/?publicKey&clientSecret`)
 - `GET /bookings/{id}/status` — poll for pending page (`held` / `pending_payment` / `confirmed` / `failed` / `expired`)
 - `GET /bookings` — my bookings (upcoming / past derived by date+status)
 - `GET /bookings/{id}` — owner detail including code after confirmed
+
+Multi-slot hold request:
+
+```json
+{
+  "slots": [
+    { "court_id": "<court-uuid>", "date": "2026-08-20", "start_time": "18:00" },
+    { "court_id": "<court-uuid>", "date": "2026-08-20", "start_time": "19:00" }
+  ],
+  "attendee_names": ["Ahmed Hassan", "Omar Ali"]
+}
+```
+
+Success (`201`) returns the parent `booking_id`, normalized `slots`, `hold_expires_at`, and `total_price_cents`. A conflict returns `409 SLOT_TAKEN` with every currently conflicting requested slot; the response must make clear that **none** of the requested slots were held.
 
 ### Staff (staff JWT from PIN)
 
@@ -199,7 +225,7 @@ Standard error body for all failures:
 
 ## Paymob (required, not mocked)
 
-Follow the project skill: Intention API from the backend only; `special_reference` = booking UUID; `notification_url` = public `POST /api/v1/webhooks/paymob`; amount in piasters.
+Follow the project skill: Intention API from the backend only; `special_reference` = parent booking UUID; `notification_url` = public `POST /api/v1/webhooks/paymob`; amount is `Booking.total_price_cents` in piasters. Send one Paymob item per `BookingSlot`, and verify the locally calculated total before creating the intention.
 
 Env (in `.env.example` only):
 
@@ -213,7 +239,8 @@ Implementation notes:
 - HMAC SHA-512 with Paymob’s documented field order **before** any status write
 - Unique `paymob_transaction_id` so duplicate callbacks are idempotent
 - Checkout does not mark paid; only the verified webhook does
-- If Paymob create-intention fails, keep status `held` (user can retry) until TTL
+- If Paymob create-intention fails, keep the booking and all its slots `held` (user can retry) until TTL
+- A verified successful webhook confirms the parent booking and therefore all child slots as one unit; a verified failure releases all child slots as one unit
 
 ---
 
@@ -231,12 +258,15 @@ Implementation notes:
 
 Django tests, not a large suite:
 
-1. Two concurrent holds → one 201, one 409
-2. Forged webhook (bad HMAC) → booking stays unpaid
-3. Valid success webhook → `confirmed` + code issued
-4. Failed webhook → slot available again
-5. Expired hold → slot available
-6. Redeem twice → first 200, second 409
+1. Multi-slot hold succeeds and returns every normalized slot plus the summed price
+2. Duplicate or mixed-court/date slots in one request → 400 and creates nothing
+3. If one slot in a multi-slot request is taken → 409, identifies the conflict, and holds none of the other requested slots
+4. Two concurrent overlapping multi-slot holds → only one request can hold the shared slot; the losing request creates no partial hold
+5. Forged webhook (bad HMAC) → booking stays unpaid and every slot remains held
+6. Valid success webhook → parent booking `confirmed` + one code issued for all slots
+7. Failed webhook → every slot in the booking becomes available again
+8. Expired or cancelled hold → every slot in the booking becomes available again
+9. Redeem twice → first 200, second 409
 
 ---
 
@@ -252,7 +282,7 @@ Collection v2.1, folders matching the API groups above. Collection variables: `b
 **Every request includes saved examples:**
 
 - Success (2xx) with realistic JSON
-- At least one failure (400 validation, 401 unauthenticated, 403 staff-only, 404 unknown code, 409 slot taken / already redeemed, 401 bad HMAC)
+- At least one failure (400 duplicate/mixed slot validation, 401 unauthenticated, 403 staff-only, 404 unknown code, 409 slot taken / already redeemed, 401 bad HMAC)
 
 Login/hold/checkout requests use test scripts to stash tokens and ids into collection variables so the folder can be run top-to-bottom.
 
@@ -263,8 +293,8 @@ Webhook example includes a documented HMAC-invalid body (will 401) and a note th
 ## Implementation order
 
 1. Django project + Postgres + custom User + JWT
-2. Court seed + Booking model + partial unique index
-3. Slots + hold/cancel + lazy expiry
+2. Court seed + Booking/BookingSlot models + partial unique index
+3. Slots + atomic multi-slot hold/cancel + lazy expiry
 4. Paymob client + checkout + HMAC webhook
 5. Pass + my bookings + staff PIN/login/lookup/redeem
 6. Tests for constraint / HMAC / redeem
