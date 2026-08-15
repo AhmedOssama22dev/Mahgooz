@@ -1,7 +1,10 @@
 from urllib.parse import urlencode
+import logging
 
 import requests
 from django.conf import settings
+
+logger = logging.getLogger("payments.paymob")
 
 
 class PaymobClientError(Exception):
@@ -42,11 +45,18 @@ class PaymobClient:
         try:
             response = self.session.post(url, json=payload, timeout=self.timeout)
         except requests.Timeout as exc:
+            logger.warning("Paymob intention timed out after %ss", self.timeout)
             raise PaymobClientError("Paymob request timed out") from exc
         except requests.RequestException as exc:
+            logger.warning("Paymob intention request failed: %s", exc)
             raise PaymobClientError("Paymob request failed") from exc
 
         if response.status_code != 201:
+            logger.warning(
+                "Paymob intention failed HTTP %s: %s",
+                response.status_code,
+                (response.text or "")[:800],
+            )
             raise PaymobClientError(
                 f"Paymob intention failed with HTTP {response.status_code}"
             )

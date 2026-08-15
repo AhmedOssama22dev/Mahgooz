@@ -88,21 +88,21 @@ class MahgoozRepository implements MahgoozApi {
     required String accessToken,
     required String courtId,
     required String date,
-    required String startTime,
+    required List<String> startTimes,
     required List<String> attendeeNames,
   }) => _guard(
     () => _live.hold(
       accessToken: accessToken,
       courtId: courtId,
       date: date,
-      startTime: startTime,
+      startTimes: startTimes,
       attendeeNames: attendeeNames,
     ),
     () => _mock.hold(
       accessToken: accessToken,
       courtId: courtId,
       date: date,
-      startTime: startTime,
+      startTimes: startTimes,
       attendeeNames: attendeeNames,
     ),
   );
