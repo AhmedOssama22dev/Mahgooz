@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import status
 from rest_framework.exceptions import (
     APIException,
@@ -9,6 +11,8 @@ from rest_framework.exceptions import (
 )
 from rest_framework.response import Response
 from rest_framework.views import exception_handler as drf_exception_handler
+
+logger = logging.getLogger(__name__)
 
 
 def envelope(code, message, details=None):
@@ -46,6 +50,7 @@ def api_exception_handler(exc, context):
 
     response = drf_exception_handler(exc, context)
     if response is None:
+        logger.exception("Unhandled API exception", exc_info=exc)
         return Response(
             envelope("INTERNAL_ERROR", "Unexpected server error"),
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
