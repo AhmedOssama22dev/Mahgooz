@@ -146,7 +146,7 @@ When Paymob webhook confirms payment → set `booking.user_id` from the authenti
 
 ## 4. Page inventory
 
-Minimum pages to ship the challenge. **12 customer/staff screens + 2 system endpoints** (webhook is not a UI page).
+Minimum pages to ship the challenge. **14 customer/staff screens + 2 system endpoints** (webhook is not a UI page).
 
 ```
 Public
@@ -165,8 +165,12 @@ Customer (auth required except pass link)
 
 Staff (separate PIN gate, not customer auth)
 ├── /staff/login          4-digit PIN
-├── /staff                Lookup home
+├── /staff                Lookup home (search by code)
+├── /staff/bookings       Today's bookings — admin list (who's coming / checked in)
 ├── /staff/pass/{code}    Pass detail + redeem
+
+**Design coverage:** every route above has **mobile + desktop** layouts and **light + dark** Stitch screens.  
+Label pattern: `{page}-mobile-light`, `{page}-desktop-light`, etc. See [stitch/screen-matrix.md](./stitch/screen-matrix.md).
 
 System (no UI)
 ├── POST /webhooks/paymob HMAC-verified payment callback
@@ -178,7 +182,7 @@ System (no UI)
 | Page | Why skip for MVP |
 |------|------------------|
 | `/forgot-password` | Mostafa can reset manually at the desk for demo |
-| Admin dashboard | Staff lookup covers redeem; no need for analytics |
+| Full analytics dashboard | `/staff/bookings` covers today's ops; skip charts for MVP |
 | Arabic locale | Add post-MVP |
 
 ---
@@ -231,9 +235,24 @@ System (no UI)
 | Slot availability teaser | Optional — requires lightweight public API; omit if not ready |
 | Staff link | Small footer link `/staff` — not prominent |
 
-#### Desktop
+#### Desktop (1440px)
 
-Same content, max-width `480px` centered card on wider screens (mobile-first shell).
+Full-width marketing layout — **not** a narrow phone column. Max content ~1200px centered.
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│ [Logo] CourtPass          Bookings    Log in    [ Book a court — green ] │
+├──────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────┐   Book. Pay. Play.                              │
+│  │   Hero court photo  │   Sheikh Zayed · 2 courts                      │
+│  │                     │   [ Book a court ]                             │
+│  └─────────────────────┘                                                 │
+│  How it works — 3 columns: Pick slot | Pay | Pass                        │
+│  Morning promo banner (orange) · Today availability: Court 1 | Court 2   │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Footer: location · WhatsApp · Staff login                                │
+└──────────────────────────────────────────────────────────────────────────┘
+```
 
 #### Dark mode (same layout)
 
@@ -571,9 +590,30 @@ The customer's proof of payment. This is the **Redeem** target.
 
 ---
 
-### 5.9 Staff lookup — `/staff`
+### 5.9 Staff PIN login — `/staff/login`
 
-Minimal gate: **4-digit PIN** stored in env (buildathon-simple). Session cookie after login.
+Separate from customer auth. **4-digit PIN** in env (buildathon-simple). Session cookie after success.
+
+```
+┌─────────────────────────────┐
+│ CourtPass Staff             │
+├─────────────────────────────┤
+│ Enter PIN                   │
+│   [ • ] [ • ] [ • ] [ • ]   │
+│   [ 1 ] [ 2 ] [ 3 ]         │
+│   [ 4 ] [ 5 ] [ 6 ]         │
+│   [ 7 ] [ 8 ] [ 9 ]         │
+│   [ ← ] [ 0 ] [ ✓ ]         │
+└─────────────────────────────┘
+```
+
+Wrong PIN → shake + "Incorrect PIN". Success → `/staff/bookings` (default) or `/staff`.
+
+---
+
+### 5.10 Staff lookup — `/staff`
+
+After PIN gate. Search-first; full schedule on `/staff/bookings`.
 
 ```
 ┌─────────────────────────────┐
@@ -589,7 +629,9 @@ Minimal gate: **4-digit PIN** stored in env (buildathon-simple). Session cookie 
 │ — or —                      │
 │ [ Open camera scanner ]     │  ← optional: html5-qrcode
 │                             │
-│ Today's bookings (list)     │
+│ [ View today's bookings → ] │  ← links to /staff/bookings
+│                             │
+│ Next arrivals (3)           │
 │ ┌─────────────────────────┐ │
 │ │ 18:00 Court 1 · CP-7X4K │ │
 │ │ Paid · not redeemed     │ │
@@ -597,11 +639,53 @@ Minimal gate: **4-digit PIN** stored in env (buildathon-simple). Session cookie 
 └─────────────────────────────┘
 ```
 
-Staff list shows next 12 hours only — keeps query small.
+Mini preview shows next 3 arrivals only — full list lives on `/staff/bookings`.
 
 ---
 
-### 5.10 Staff pass detail — `/staff/pass/{code}`
+### 5.11 Staff bookings list — `/staff/bookings`
+
+**Primary staff ops screen** — who booked, who checked in, who hasn't arrived yet.
+
+**Mobile:** card list with filters  
+**Desktop:** full-width data table (recommended for front desk)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ CourtPass Staff          Lookup    Today's bookings    Out  │
+├─────────────────────────────────────────────────────────────┤
+│ Today's bookings · Wed 20 Aug          [ ‹ Today › ]        │
+│                                                             │
+│  12 booked  ·  8 checked in  ·  4 upcoming  ·  1 no-show   │
+│                                                             │
+│  [All] [Court 1] [Court 2] [Paid] [Redeemed] [No-show]      │
+├────────┬────────┬──────────────┬───────┬────────┬──────────┤
+│ Time   │ Court  │ Customer     │ Phone │ Status │ Actions  │
+├────────┼────────┼──────────────┼───────┼────────┼──────────┤
+│ 18:00  │ Court 1│ Ahmed Hassan │ 010xx │ ● Ready│ Redeem   │
+│ 19:00  │ Court 2│ Sara Ali     │ 011xx │ ✓ Done │ View     │
+│ 20:00  │ Court 1│ Omar K.      │ 012xx │ ○ Soon │ View     │
+│ 17:00  │ Court 2│ (no show)    │ 010xx │ ⚠ Miss │ —        │
+└────────┴────────┴──────────────┴───────┴────────┴──────────┘
+```
+
+| Status badge | Meaning | Color |
+|--------------|---------|-------|
+| **Ready** | Paid, slot started or within 15 min | Green `#1B7A4E` |
+| **Upcoming** | Paid, starts later today | Muted / yellow outline |
+| **Redeemed** | Staff checked in | Grey |
+| **No-show risk** | Slot ended, not redeemed | Orange `#E86A2A` |
+| **Expired** | Past, never paid or cancelled | Grey strikethrough |
+
+**Row actions:** View pass → `/staff/pass/{code}` · Redeem (if paid + not redeemed)
+
+**Default query:** today's bookings for both courts, ordered by slot start time.
+
+**No-show heuristic (UI only for MVP):** If `now > slot_end` and status still `paid`, show **No-show risk** — staff decides manually; no auto-cancel in buildathon.
+
+---
+
+### 5.12 Staff pass detail — `/staff/pass/{code}`
 
 ```
 ┌─────────────────────────────┐
@@ -641,6 +725,68 @@ Status: ✓ REDEEMED at 17:58
 | Unpaid / pending | "Payment not confirmed yet" |
 | Wrong day | "This pass is for Wed 20 Aug, not today" |
 | Already redeemed | Show redeem timestamp + staff initials optional |
+
+---
+
+### 5.13 Desktop layouts — all routes (1440px)
+
+Shared shell for **customer** pages: top nav `[Logo] CourtPass | Bookings | Book a court | Account`.  
+Shared shell for **staff** pages: top bar `CourtPass Staff | Lookup | Today's bookings | Log out`.
+
+Max content width **~1200px**. Same light/dark tokens as mobile — only layout widens.
+
+| Route | Desktop layout |
+|-------|----------------|
+| `/` | Split hero + 3-col steps + promo + court availability grid (see §5.1) |
+| `/login` | Centered card (~400px): logo, phone, password, Log in |
+| `/register` | Centered card (~440px): name, phone, password, Create account |
+| `/book` step 1 | Left: month calendar · Right: selected date + 14-day strip + Next |
+| `/book` step 2 | Two court cards side-by-side (50/50), photo + slots-left |
+| `/book` step 3 | Wide slot grid: Morning / Afternoon / Evening columns with price bands |
+| `/book` step 4 | Two columns: booking summary (left) · form + Paymob CTA + hold timer (right) |
+| `/book/pending` | Centered status card with spinner + slot summary |
+| `/book/failed` | Centered error card + Try another slot / Back home |
+| `/bookings` | Two sections (Upcoming \| Past); table or 2-col card grid; + Book in header |
+| `/pass/{code}` | Centered pass card, large QR, print-friendly; optional sidebar with details |
+| `/staff/login` | Centered PIN pad (~360px), minimal chrome |
+| `/staff` | Wide search bar + Scan QR; right sidebar: next 3 arrivals; link to full list |
+| `/staff/bookings` | **Full ops dashboard** — stats row, filters, data table (see §5.11) |
+| `/staff/pass/{code}` | Two columns: booking details (left) · status banner + Redeem (right) |
+
+#### Desktop — booking wizard (`/book`)
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│ [Logo] CourtPass          My bookings              Ahmed ▾               │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Book a court          ● Date — Court — Time — Confirm                    │
+├───────────────────────────────┬──────────────────────────────────────────┤
+│  August 2026  [< >]           │  Wed 20 Aug selected                     │
+│  [ calendar month grid ]      │  [ Mon Tue Wed … date strip ]            │
+│                               │                        [ Next → ]        │
+└───────────────────────────────┴──────────────────────────────────────────┘
+```
+
+Step 2: two `Court 1` / `Court 2` cards in a row.  
+Step 3: full-width chip grid grouped by period.  
+Step 4: summary + checkout side-by-side.
+
+#### Desktop — my bookings (`/bookings`)
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│ My bookings                                    [ + Book a court ]        │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Upcoming                                                                 │
+│ Time     Court    Date        Status          Amount    [ View pass ]    │
+│ 18:00    Court 1  Wed 20 Aug  Ready to play   EGP 350   [ View pass ]    │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Past                                                                     │
+│ 19:00    Court 1  Mon 11 Aug  ✓ Redeemed      EGP 350   [ View ]         │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+Stitch screens: `{pageId}-desktop-light` and `{pageId}-desktop-dark` for each row in [stitch/prompts.json](./stitch/prompts.json).
 
 ---
 
@@ -833,7 +979,8 @@ Actual numbers live in Laravel config/DB — UI reads from API as `{ period, pri
 | `Bookings/Index.tsx` | `GET /bookings` | **Required** | `upcoming[]`, `past[]` |
 | `Pass/Show.tsx` | `GET /pass/{code}` | Public | `pass`, `isOwner` |
 | `Staff/Login.tsx` | `GET /staff/login` | Staff gate | — |
-| `Staff/Lookup.tsx` | `GET /staff` | Staff gate | `upcomingBookings` |
+| `Staff/Lookup.tsx` | `GET /staff` | Staff gate | `nextArrivals[]` |
+| `Staff/Bookings.tsx` | `GET /staff/bookings` | Staff gate | `bookings[]`, `stats`, `filters` |
 | `Staff/PassShow.tsx` | `GET /staff/pass/{code}` | Staff gate | `pass`, `canRedeem` |
 
 JSON endpoints (same app, not Inertia):
