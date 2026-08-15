@@ -1,0 +1,147 @@
+{
+  "projectId": "7191702240633724843",
+  "designSystem": "assets/e03cc309c60b436bbc38e48fd719a96f",
+  "brand": {
+    "mobileLight": "CourtPass padel booking Sheikh Zayed Egypt. LIGHT MODE mobile 390px. bg #F4F7F5, cards #FFFFFF, text #0F1A14, primary #1B7A4E, orange #E86A2A, promo #FDE8DC. DM Sans headings, Inter body.",
+    "mobileDark": "CourtPass padel booking Sheikh Zayed Egypt. DARK MODE mobile 390px. bg #0F1A14, cards #1A2620, text #F4F7F5, SAME accents #1B7A4E and #E86A2A. Subtle green glow on primary CTA only. DM Sans + Inter.",
+    "desktopLight": "CourtPass padel booking Sheikh Zayed Egypt. LIGHT MODE desktop 1440px wide layout with max-width content ~1200px, sidebar or top nav where appropriate. bg #F4F7F5, cards #FFFFFF, primary #1B7A4E, orange #E86A2A. Professional admin table layouts for staff pages.",
+    "desktopDark": "CourtPass padel booking Sheikh Zayed Egypt. DARK MODE desktop 1440px. bg #0F1A14, cards #1A2620, SAME accents #1B7A4E #E86A2A. Staff admin tables with readable contrast."
+  },
+  "pages": [
+    {
+      "id": "landing",
+      "route": "/",
+      "audience": "customer",
+      "mobileLight": "Landing /: header logo + Log in, hero padel photo Book. Pay. Play., Sheikh Zayed 2 courts, Book a court CTA, how it works 3 steps, morning promo Before 12PM 30% off, today slot counts, footer Staff link.",
+      "mobileDark": "Same landing layout in dark mode — inverted surfaces, same green/orange accents.",
+      "desktopLight": "Desktop landing: top nav logo Bookings Log in Book a court, wide hero with court photo left and headline right, 3-column how it works, promo banner, today availability grid for Court 1 and Court 2, footer.",
+      "desktopDark": "Same desktop landing in dark mode."
+    },
+    {
+      "id": "login",
+      "route": "/login",
+      "audience": "customer",
+      "mobileLight": "Login /login: Welcome back, phone 01xxxxxxxx, password, green Log in, Create account link.",
+      "mobileDark": "Same login in dark mode.",
+      "desktopLight": "Desktop login: centered card on light bg, CourtPass logo, Welcome back, phone password fields, Log in, Create account.",
+      "desktopDark": "Same desktop login dark mode."
+    },
+    {
+      "id": "register",
+      "route": "/register",
+      "audience": "customer",
+      "mobileLight": "Register /register: Create your account, name phone password, green Create account, Log in link.",
+      "mobileDark": "Same register dark mode.",
+      "desktopLight": "Desktop register centered form card with name phone password Create account.",
+      "desktopDark": "Same desktop register dark mode."
+    },
+    {
+      "id": "book-date",
+      "route": "/book",
+      "audience": "customer",
+      "mobileLight": "Book step 1/4: progress bar, When do you want to play, 14-day date strip, Open calendar, Next.",
+      "mobileDark": "Same book date step dark mode.",
+      "desktopLight": "Desktop book step 1: progress 1/4, calendar month view + date strip sidebar, Next button.",
+      "desktopDark": "Same desktop book date dark mode."
+    },
+    {
+      "id": "book-court",
+      "route": "/book",
+      "audience": "customer",
+      "mobileLight": "Book step 2/4: progress bar, Choose your court, Court 1 and Court 2 cards with photo slots-left price hint, selected state green border, Next.",
+      "mobileDark": "Same book court step dark mode.",
+      "desktopLight": "Desktop book step 2: two court cards side by side Court 1 Court 2 with availability, select one, Next.",
+      "desktopDark": "Same desktop book court dark mode."
+    },
+    {
+      "id": "book-slots",
+      "route": "/book",
+      "audience": "customer",
+      "mobileLight": "Book step 3/4: Court 1 Wed 20 Aug, Morning/Afternoon/Evening slots EGP 200/280/350, available/held/booked/selected chips, legend.",
+      "mobileDark": "Same slot grid dark mode with tinted chips.",
+      "desktopLight": "Desktop book step 3: wide slot grid grouped by Morning Afternoon Evening, legend, court date header.",
+      "desktopDark": "Same desktop slot grid dark mode."
+    },
+    {
+      "id": "book-confirm",
+      "route": "/book",
+      "audience": "customer",
+      "mobileLight": "Book step 4/4: summary Court 1 18-19 EGP 350, name phone players, hold timer 09:42, Pay with Paymob, cancel note.",
+      "mobileDark": "Same confirm step dark mode.",
+      "desktopLight": "Desktop book confirm: two-column summary left form right, hold timer, Pay with Paymob.",
+      "desktopDark": "Same desktop confirm dark mode."
+    },
+    {
+      "id": "pending",
+      "route": "/book/pending",
+      "audience": "customer",
+      "mobileLight": "Payment pending: spinner, Confirming payment, Don't close, Court 1 18:00 summary.",
+      "mobileDark": "Same pending dark mode.",
+      "desktopLight": "Desktop payment pending centered status card with spinner.",
+      "desktopDark": "Same desktop pending dark mode."
+    },
+    {
+      "id": "failed",
+      "route": "/book/failed",
+      "audience": "customer",
+      "mobileLight": "Payment failed: red X, Payment didn't go through, slot released, Try another slot + Back home.",
+      "mobileDark": "Same failed dark mode.",
+      "desktopLight": "Desktop payment failed centered error card with actions.",
+      "desktopDark": "Same desktop failed dark mode."
+    },
+    {
+      "id": "bookings",
+      "route": "/bookings",
+      "audience": "customer",
+      "mobileLight": "My bookings /bookings: Upcoming cards Ready to play + View pass, Past Redeemed/Expired badges, + Book header button.",
+      "mobileDark": "Same bookings list dark mode.",
+      "desktopLight": "Desktop my bookings: table or card grid Upcoming and Past sections, View pass links, Book new button in header.",
+      "desktopDark": "Same desktop bookings dark mode."
+    },
+    {
+      "id": "pass",
+      "route": "/pass/{code}",
+      "audience": "customer",
+      "mobileLight": "Booking pass: QR code, CP-7X4K-29MN, court date time, payer 4 players EGP 350, Show this to staff.",
+      "mobileDark": "Same pass dark mode.",
+      "desktopLight": "Desktop booking pass: centered pass card with large QR, booking details, print-friendly.",
+      "desktopDark": "Same desktop pass dark mode."
+    },
+    {
+      "id": "staff-login",
+      "route": "/staff/login",
+      "audience": "staff",
+      "mobileLight": "Staff login /staff/login: CourtPass Staff, 4-digit PIN pad dots, Enter PIN, minimal utilitarian.",
+      "mobileDark": "Same staff login dark mode.",
+      "desktopLight": "Desktop staff login: centered PIN pad, CourtPass Staff title.",
+      "desktopDark": "Same desktop staff login dark mode."
+    },
+    {
+      "id": "staff-bookings",
+      "route": "/staff/bookings",
+      "audience": "staff",
+      "mobileLight": "Staff Today's Bookings /staff/bookings MOBILE: header CourtPass Staff, date picker Today, summary chips 12 booked · 8 checked in · 4 upcoming, filter tabs All Paid Redeemed No-show, booking cards with time court customer phone players status badge Ready/Paid/Redeemed/No-show risk, pass code CP-7X4K, actions View pass Redeem.",
+      "mobileDark": "Same staff bookings list dark mode.",
+      "desktopLight": "Staff admin Today's Bookings DESKTOP /staff/bookings: top bar CourtPass Staff + Lookup + Log out, date picker, stats row 12 booked 8 checked in 4 upcoming 1 no-show, filters All Court 1 Court 2 Paid Redeemed, FULL WIDTH DATA TABLE columns Time Court Customer Phone Players Status Code Actions, sample rows 18:00 Court 1 Ahmed Hassan 010xxx 4 Paid Ready CP-7X4K Redeem button, 19:00 Court 2 redeemed grey badge, 20:00 upcoming yellow, utilitarian ops dashboard.",
+      "desktopDark": "Same staff admin bookings table dark mode high contrast."
+    },
+    {
+      "id": "staff-lookup",
+      "route": "/staff",
+      "audience": "staff",
+      "mobileLight": "Staff lookup /staff: Look up booking, code search input Scan QR, Search, quick link to Today's bookings list, next 3 upcoming mini cards.",
+      "mobileDark": "Same staff lookup dark mode.",
+      "desktopLight": "Desktop staff lookup: search bar prominent, link to full bookings table, sidebar with next arrivals.",
+      "desktopDark": "Same desktop staff lookup dark mode."
+    },
+    {
+      "id": "staff-redeem",
+      "route": "/staff/pass/{code}",
+      "audience": "staff",
+      "mobileLight": "Staff pass detail: CP-7X4K-29MN, PAID Ready status, court time customer phone 4 players, big green REDEEM CHECK-IN, cannot undo warning.",
+      "mobileDark": "Same staff redeem dark mode.",
+      "desktopLight": "Desktop staff pass detail: two-column booking info + large Redeem button, status banner.",
+      "desktopDark": "Same desktop staff redeem dark mode."
+    }
+  ]
+}

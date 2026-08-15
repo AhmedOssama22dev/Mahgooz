@@ -1,0 +1,20 @@
+{
+  "done": [
+    "book-date-mobile-dark",
+    "book-date-mobile-light",
+    "bookings-mobile-dark",
+    "bookings-mobile-light",
+    "landing-desktop-dark",
+    "landing-desktop-light",
+    "landing-mobile-dark",
+    "landing-mobile-light",
+    "login-desktop-dark",
+    "login-desktop-light",
+    "login-mobile-dark",
+    "login-mobile-light",
+    "register-desktop-dark",
+    "register-desktop-light",
+    "register-mobile-dark",
+    "register-mobile-light"
+  ]
+}
