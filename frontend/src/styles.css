@@ -34,6 +34,10 @@
   --color-clay-orange-light: #fde8dc;
   --color-redeemed: #6b7280;
   --color-promo-banner: var(--promo-banner);
+  --color-slot-available: var(--slot-available);
+  --color-slot-held: var(--slot-held);
+  --color-slot-held-text: var(--slot-held-text);
+  --color-slot-booked: var(--slot-booked);
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -61,6 +65,10 @@
   --input: #e2e8e4;
   --ring: #1b7a4e;
   --promo-banner: #fde8dc;
+  --slot-available: #d4eddf;
+  --slot-held: #fff3cd;
+  --slot-held-text: #856404;
+  --slot-booked: #e8eaec;
   --radius: 0.75rem;
 }
 
@@ -84,6 +92,10 @@
   --input: #2d4035;
   --ring: #1b7a4e;
   --promo-banner: rgba(232, 106, 42, 0.12);
+  --slot-available: rgba(27, 122, 78, 0.18);
+  --slot-held: rgba(133, 100, 4, 0.22);
+  --slot-held-text: #d4a843;
+  --slot-booked: #1e2a24;
 }
 
 * {
@@ -136,5 +148,22 @@ h4 {
 
   .cta-glow {
     @apply dark:shadow-[0_0_24px_rgba(27,122,78,0.15)];
+  }
+
+  .animate-shake {
+    animation: mahgouz-shake 300ms ease-in-out;
+  }
+}
+
+@keyframes mahgouz-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
   }
 }

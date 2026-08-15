@@ -1,18 +1,15 @@
 import { cn } from '@/lib/utils'
 
-export function CourtPassLogo({
+export function MahgouzLogo({
   className,
   variant = 'default',
 }: {
   className?: string
   variant?: 'default' | 'on-dark'
 }) {
-  const iconClass =
-    variant === 'on-dark' ? 'text-court-green' : 'text-court-green'
+  const iconClass = 'text-court-green'
   const textClass =
-    variant === 'on-dark'
-      ? 'text-foreground'
-      : 'text-foreground dark:text-foreground'
+    variant === 'on-dark' ? 'text-[#F4F7F5]' : 'text-foreground'
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
@@ -43,8 +40,13 @@ export function CourtPassLogo({
           strokeLinecap="round"
         />
       </svg>
-      <span className={cn('font-display text-lg font-bold tracking-tight', textClass)}>
-        CourtPass
+      <span
+        className={cn(
+          'font-display text-lg font-bold tracking-tight',
+          textClass,
+        )}
+      >
+        Mahgouz
       </span>
     </div>
   )

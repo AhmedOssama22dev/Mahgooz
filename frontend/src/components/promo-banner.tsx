@@ -31,10 +31,10 @@ export function PromoBanner({
           className="mt-0.5 text-clay-orange"
         />
         <div className="min-w-0 flex-1">
-          <p className="font-display text-base font-semibold text-clay-orange">
+          <p className="font-display text-base font-semibold text-foreground">
             {title}
           </p>
-          <p className="mt-1 text-sm text-foreground">{subtitle}</p>
+          <p className="mt-1 text-sm text-clay-orange">{subtitle}</p>
         </div>
         {badge}
       </div>

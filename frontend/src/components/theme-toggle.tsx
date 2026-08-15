@@ -14,7 +14,7 @@ export function ThemeToggle() {
 
   function toggleTheme() {
     const next = document.documentElement.classList.toggle('dark')
-    localStorage.setItem('courtpass-theme', next ? 'dark' : 'light')
+    localStorage.setItem('mahgouz-theme', next ? 'dark' : 'light')
     setIsDark(next)
   }
 

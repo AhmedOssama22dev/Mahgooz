@@ -10,6 +10,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { BOOK_AHEAD_DAYS } from '@/lib/slot-states'
 import { cn } from '@/lib/utils'
 
 type DateStripProps = {
@@ -24,7 +25,7 @@ type DateStripProps = {
 export function DateStrip({
   value,
   onChange,
-  days = 14,
+  days = BOOK_AHEAD_DAYS,
   className,
 }: DateStripProps) {
   const today = useMemo(() => startOfDay(new Date()), [])
@@ -46,7 +47,7 @@ export function DateStrip({
               type="button"
               onClick={() => onChange(day)}
               className={cn(
-                'flex min-h-14 min-w-14 shrink-0 flex-col items-center justify-center rounded-[12px] border px-2 py-2 text-center transition-colors',
+                'flex min-h-14 min-w-14 shrink-0 flex-col items-center justify-center rounded-[12px] border px-2 py-2 text-center transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
                 active
                   ? 'border-court-green bg-court-green text-white'
                   : 'border-border bg-card text-foreground hover:border-court-green/40',
