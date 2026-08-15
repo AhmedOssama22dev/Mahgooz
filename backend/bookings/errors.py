@@ -118,6 +118,14 @@ def invalid_transition(current, target):
     )
 
 
+def forbidden(message=None):
+    raise APIError(
+        "FORBIDDEN",
+        message or "You do not have permission to perform this action.",
+        status.HTTP_403_FORBIDDEN,
+    )
+
+
 def not_found(message=None):
     raise APIError(
         "NOT_FOUND",

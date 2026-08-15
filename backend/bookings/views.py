@@ -1,3 +1,4 @@
+from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,9 +7,16 @@ from accounts.permissions import IsCustomer, IsStaff
 from bookings import errors
 from bookings.availability import build_slot_grid
 from bookings.expiry import expire_elapsed_holds
+from bookings.hold import cancel_booking, create_hold
 from bookings.models import Court
 from bookings.policies import assert_bookable_date
-from bookings.serializers import CourtSerializer, SlotGridSerializer, SlotQuerySerializer
+from bookings.serializers import (
+    CourtSerializer,
+    CustomerBookingSerializer,
+    HoldRequestSerializer,
+    SlotGridSerializer,
+    SlotQuerySerializer,
+)
 from config.exceptions import _as_details
 
 
@@ -51,8 +59,18 @@ class PublicPassView(APIView):
 class HoldView(APIView):
     permission_classes = [IsAuthenticated, IsCustomer]
 
-    def post(self, _request):
-        errors.not_implemented()
+    def post(self, request):
+        serializer = HoldRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        booking = create_hold(
+            user=request.user,
+            slots=serializer.validated_data["slots"],
+            attendee_names=serializer.validated_data["attendee_names"],
+        )
+        return Response(
+            CustomerBookingSerializer(booking).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class BookingListView(APIView):
@@ -68,8 +86,15 @@ class BookingDetailView(APIView):
     def get(self, _request, booking_id):
         errors.not_implemented()
 
-    def delete(self, _request, booking_id):
-        errors.not_implemented()
+    def delete(self, request, booking_id):
+        booking = cancel_booking(user=request.user, booking_id=booking_id)
+        return Response(
+            {
+                "id": str(booking.id),
+                "status": booking.status,
+                "message": "Slot released.",
+            }
+        )
 
 
 class CheckoutView(APIView):
@@ -83,14 +108,6 @@ class BookingStatusView(APIView):
     permission_classes = [IsAuthenticated, IsCustomer]
 
     def get(self, _request, booking_id):
-        errors.not_implemented()
-
-
-class StaffLoginView(APIView):
-    authentication_classes = []
-    permission_classes = [AllowAny]
-
-    def post(self, _request):
         errors.not_implemented()
 
 
