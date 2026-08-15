@@ -219,7 +219,7 @@ function BookPage() {
                 ? 'Holding…'
                 : selectedTimes.length === 0
                   ? 'Pick a time'
-                  : `Hold ${selectedTimes[0]}–${addHours(selectedTimes[selectedTimes.length - 1]!, 1)} · ${formatEgp(selectedTotal)}`}
+                  : `Hold ${selectedTimes[0]} – ${addHours(selectedTimes[selectedTimes.length - 1]!, 1)} · ${formatEgp(selectedTotal)}`}
             </Button>
           </StickyFooterCTA>
         ) : step === 3 && hold ? (
