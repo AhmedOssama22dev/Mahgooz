@@ -6,38 +6,36 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet'
 
 type AccountMenuProps = {
   name?: string
-  triggerLabel?: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onLogout: () => void
 }
 
-/** Header account menu: My bookings + Log out. */
+/** Header / bottom-nav account sheet: My bookings + Log out. */
 export function AccountMenu({
   name,
-  triggerLabel = 'Account',
+  open,
+  onOpenChange,
+  onLogout,
 }: AccountMenuProps) {
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="sm">
-          {name ?? triggerLabel}
-        </Button>
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-72">
         <SheetHeader>
-          <SheetTitle className="font-display">
-            {name ?? 'Account'}
-          </SheetTitle>
+          <SheetTitle className="font-display">{name ?? 'Account'}</SheetTitle>
         </SheetHeader>
         <div className="flex flex-col gap-2 px-4">
           <Button variant="outline" asChild>
-            <Link to="/bookings">My bookings</Link>
+            <Link to="/bookings" onClick={() => onOpenChange(false)}>
+              My bookings
+            </Link>
           </Button>
-          <Button variant="ghost" asChild>
-            <Link to="/">Log out</Link>
+          <Button variant="ghost" onClick={onLogout}>
+            Log out
           </Button>
         </div>
       </SheetContent>

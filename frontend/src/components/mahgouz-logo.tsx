@@ -1,53 +1,13 @@
 import { cn } from '@/lib/utils'
 
-export function MahgouzLogo({
-  className,
-  variant = 'default',
-}: {
-  className?: string
-  variant?: 'default' | 'on-dark'
-}) {
-  const iconClass = 'text-court-green'
-  const textClass =
-    variant === 'on-dark' ? 'text-[#F4F7F5]' : 'text-foreground'
-
+export function MahgouzLogo({ className }: { className?: string }) {
   return (
-    <div className={cn('flex items-center gap-2', className)}>
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        aria-hidden="true"
-        className={cn('size-6 shrink-0', iconClass)}
-      >
-        <ellipse
-          cx="12"
-          cy="8"
-          rx="7"
-          ry="5.5"
-          stroke="currentColor"
-          strokeWidth="1.75"
-        />
-        <path
-          d="M12 13.5V21"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-        />
-        <path
-          d="M10 21H14"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-        />
-      </svg>
-      <span
-        className={cn(
-          'font-display text-lg font-bold tracking-tight',
-          textClass,
-        )}
-      >
-        Mahgouz
-      </span>
-    </div>
+    <img
+      src="/mahgouz-logo-badge.png"
+      alt="Mahgouz"
+      width={56}
+      height={56}
+      className={cn('size-14 shrink-0 object-contain', className)}
+    />
   )
 }

@@ -840,14 +840,16 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Hold a slot
-         * @description Atomically hold a slot for 10 minutes.
+         * Hold slots
+         * @description Atomically hold 1–4 consecutive 60-minute slots for 10 minutes.
          *
-         *     Creates a `held` booking row. Postgres partial unique index on `court + date + start_time` (active statuses only) prevents double booking.
+         *     `start_times` is the list of hour starts on one court and date (e.g. `["18:00","19:00"]` holds 18:00–20:00). Hours must be unique and consecutive. Price is the sum of each hour's band.
+         *
+         *     Creates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).
          *
          *     **Attendee names** are required (1–4). Booker name is copied from the JWT user.
          *
-         *     On unique-constraint race: **409 SLOT_TAKEN**.
+         *     If any hour is taken: **409 SLOT_TAKEN**.
          */
         post: {
             parameters: {
@@ -863,9 +865,12 @@ export interface paths {
                 content: {
                     /**
                      * @example {
-                     *       "court_id": "NaN",
-                     *       "date": "NaN",
-                     *       "start_time": "NaN",
+                     *       "court_id": "11111111-1111-4111-8111-111111111111",
+                     *       "date": "2026-08-20",
+                     *       "start_times": [
+                     *         "18:00",
+                     *         "19:00"
+                     *       ],
                      *       "attendee_names": [
                      *         "Ahmed Hassan",
                      *         "Omar Ali",
@@ -875,15 +880,15 @@ export interface paths {
                      *     }
                      */
                     "application/json": {
-                        court_id?: string;
-                        date?: string;
-                        start_time?: string;
-                        attendee_names?: string[];
+                        court_id: string;
+                        date: string;
+                        start_times: string[];
+                        attendee_names: string[];
                     };
                 };
             };
             responses: {
-                /** @description 201 Created — slot held */
+                /** @description 201 Created — slots held */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -898,8 +903,12 @@ export interface paths {
                          *         "name": "Court 1"
                          *       },
                          *       "date": "2026-08-20",
+                         *       "start_times": [
+                         *         "18:00",
+                         *         "19:00"
+                         *       ],
                          *       "start_time": "18:00",
-                         *       "end_time": "19:00",
+                         *       "end_time": "20:00",
                          *       "booker_name": "Ahmed Hassan",
                          *       "attendee_names": [
                          *         "Ahmed Hassan",
@@ -907,8 +916,8 @@ export interface paths {
                          *         "Youssef Nabil",
                          *         "Karim Fathy"
                          *       ],
-                         *       "price_egp": 350,
-                         *       "price_cents": 35000,
+                         *       "price_egp": 700,
+                         *       "price_cents": 70000,
                          *       "hold_expires_at": "2026-08-15T16:32:00+03:00",
                          *       "booking_code": null,
                          *       "created_at": "2026-08-15T16:22:00+03:00"
@@ -923,6 +932,7 @@ export interface paths {
                             };
                             /** Format: date */
                             date?: string;
+                            start_times?: string[];
                             /** Format: style */
                             start_time?: string;
                             end_time?: string;
