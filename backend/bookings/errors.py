@@ -118,6 +118,14 @@ def invalid_transition(current, target):
     )
 
 
+def invalid_hmac(message=None):
+    raise APIError(
+        "INVALID_HMAC",
+        message or "Callback HMAC verification failed.",
+        status.HTTP_401_UNAUTHORIZED,
+    )
+
+
 def forbidden(message=None):
     raise APIError(
         "FORBIDDEN",

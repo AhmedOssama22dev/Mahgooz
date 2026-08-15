@@ -45,6 +45,7 @@ ALLOWED_TRANSITIONS = {
         Booking.Status.CANCELLED,
         Booking.Status.EXPIRED,
         Booking.Status.CONFIRMED,
+        Booking.Status.FAILED,
     },
     Booking.Status.PENDING_PAYMENT: {
         Booking.Status.CONFIRMED,

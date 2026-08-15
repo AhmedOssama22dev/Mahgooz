@@ -3490,7 +3490,7 @@
               "body": "{\n  \"received\": true,\n  \"booking_id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"status\": \"confirmed\",\n  \"booking_code\": \"MGZ-7F42K\",\n  \"idempotent\": true\n}"
             },
             {
-              "name": "400 Bad Request — malformed payload",
+              "name": "401 Unauthorized — malformed payload",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -3514,8 +3514,8 @@
                   "type": "noauth"
                 }
               },
-              "status": "Bad Request",
-              "code": 400,
+              "status": "Unauthorized",
+              "code": 401,
               "_postman_previewlanguage": "json",
               "header": [
                 {
@@ -3524,7 +3524,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Unrecognized Paymob callback payload.\"\n  }\n}"
+              "body": "{\n  \"error\": {\n    \"code\": \"INVALID_HMAC\",\n    \"message\": \"Callback HMAC verification failed.\"\n  }\n}"
             },
             {
               "name": "401 Unauthorized — invalid HMAC",
