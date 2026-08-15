@@ -10,10 +10,14 @@ flutter pub get
 flutter run
 ```
 
-The app talks to `http://127.0.0.1:8000/api/v1` (Android emulator: `http://10.0.2.2:8000/api/v1`). Override with:
+The app talks to the Railway API:
+
+`https://server-production-7b2c.up.railway.app/api/v1`
+
+Override for local Django with:
 
 ```bash
-flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8000/api/v1
+flutter run --dart-define=API_BASE_URL=http://127.0.0.1:8000/api/v1
 ```
 
 If the backend is unreachable, the app falls back to bundled mock JSON and stays fully usable.

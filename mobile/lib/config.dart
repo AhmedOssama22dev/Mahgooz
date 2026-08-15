@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class AppConfig {
   static const whatsappUrl = 'https://wa.me/201000000000';
   static const locationLabel = 'Sheikh Zayed • 2 courts';
@@ -7,18 +5,14 @@ class AppConfig {
   static const holdTtl = Duration(minutes: 10);
   static const pollInterval = Duration(seconds: 2);
   static const pollTimeout = Duration(seconds: 60);
-  static const requestTimeout = Duration(seconds: 6);
+  static const requestTimeout = Duration(seconds: 15);
+  static const productionApiBaseUrl =
+      'https://server-production-7b2c.up.railway.app/api/v1';
 
   static String get apiBaseUrl {
     const fromEnv = String.fromEnvironment('API_BASE_URL');
     if (fromEnv.isNotEmpty) return fromEnv.replaceAll(RegExp(r'/$'), '');
-    if (kIsWeb) return 'http://127.0.0.1:8000/api/v1';
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return 'http://10.0.2.2:8000/api/v1';
-      default:
-        return 'http://127.0.0.1:8000/api/v1';
-    }
+    return productionApiBaseUrl;
   }
 }
 
