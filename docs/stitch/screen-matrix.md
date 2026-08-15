@@ -1,4 +1,4 @@
-# CourtPass — Stitch screen matrix
+# Mahgouz — Stitch screen matrix
 
 Full design coverage for user-flow review: **15 pages × 4 variants = 60 screens**.
 
@@ -8,7 +8,7 @@ Full design coverage for user-flow review: **15 pages × 4 variants = 60 screens
 | **Device** | Mobile (390px) · Desktop (1440px) |
 | **Theme** | Light · Dark |
 
-Open project: [CourtPass Mahgooz on Stitch](https://stitch.withgoogle.com) · ID `7191702240633724843`
+Open project: [Mahgouz on Stitch](https://stitch.withgoogle.com) · ID `7191702240633724843`
 
 ---
 

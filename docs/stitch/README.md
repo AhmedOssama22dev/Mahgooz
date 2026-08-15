@@ -1,4 +1,4 @@
-# CourtPass — Stitch Design Project
+# Mahgouz — Stitch Design Project
 
 > AI-generated UI for **all pages**, **mobile + desktop**, **light + dark**.  
 > See **[screen-matrix.md](./screen-matrix.md)** for the full 60-screen overview.
@@ -7,7 +7,7 @@
 
 | Item | Value |
 |------|-------|
-| **Stitch project** | CourtPass Mahgooz |
+| **Stitch project** | Mahgouz |
 | **Project ID** | `7191702240633724843` |
 | **Open in Stitch** | [stitch.withgoogle.com](https://stitch.withgoogle.com) |
 | **Design system** | `assets/e03cc309c60b436bbc38e48fd719a96f` |

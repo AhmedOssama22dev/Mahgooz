@@ -1,4 +1,4 @@
-# CourtPass — Pages & UI Design Spec
+# Mahgouz — Pages & UI Design Spec
 
 > **Product:** Reserve & Redeem padel court booking for Mostafa's two courts in Sheikh Zayed  
 > **Stack (later):** Laravel + Inertia + React  
@@ -11,7 +11,7 @@
 
 | Item | Value |
 |------|-------|
-| Working name | **CourtPass** (placeholder — swap for final brand) |
+| Product name | **Mahgouz** (محجوز — “booked / reserved”) |
 | Courts | 2 padel courts |
 | Location | Sheikh Zayed, Egypt |
 | Owner persona | Mostafa — runs bookings manually on WhatsApp today |
@@ -38,7 +38,7 @@
 > **Full spec:** [branding.md](./branding.md) — colors, components, mockups, Tailwind tokens.  
 > **Rule:** Light and dark share the same brand green `#1B7A4E` and clay orange `#E86A2A`. Only surfaces and text invert.
 
-Padel = fast, social, outdoor energy. Keep it clean and sporty — not a generic gym app.
+Padel = fast, social, outdoor energy. Keep it clean and sporty — not a generic gym app. Product name in chrome is **Mahgouz** (racket icon + wordmark).
 
 ### Color palette (semantic)
 
@@ -99,6 +99,8 @@ Use Google Fonts — both are free and fast to add.
 |------|-----------|
 | Light | [courtpass-landing-mockup.png](./assets/courtpass-landing-mockup.png) |
 | Dark | [courtpass-landing-mockup-dark.png](./assets/courtpass-landing-mockup-dark.png) |
+
+Layout only — generated mockups may still show **CourtPass**. Ship the **Mahgouz** lockup from [branding.md](./branding.md#files-source-of-truth-for-the-mark).
 
 Both share identical layout and copy; dark inverts surfaces and may show subtle CTA glow.
 
@@ -199,7 +201,7 @@ System (no UI)
 
 ```
 ┌─────────────────────────────┐
-│ [Logo] CourtPass    [Account]│  ← logged out: "Log in" · logged in: avatar/menu
+│ [Logo] Mahgouz    [Account]│  ← logged out: "Log in" · logged in: avatar/menu
 ├─────────────────────────────┤
 │                             │
 │   [Hero: court photo]       │
@@ -241,7 +243,7 @@ Full-width marketing layout — **not** a narrow phone column. Max content ~1200
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ [Logo] CourtPass          Bookings    Log in    [ Book a court — green ] │
+│ [Logo] Mahgouz          Bookings    Log in    [ Book a court — green ] │
 ├──────────────────────────────────────────────────────────────────────────┤
 │  ┌─────────────────────┐   Book. Pay. Play.                              │
 │  │   Hero court photo  │   Sheikh Zayed · 2 courts                      │
@@ -561,7 +563,7 @@ The customer's proof of payment. This is the **Redeem** target.
 │      │  QR CODE    │        │  ← qrcode.react
 │      └─────────────┘        │
 │                             │
-│   CP-7X4K-29MN              │  ← large monospace code
+│   MG-7X4K-29MN              │  ← large monospace code
 │   [ Copy code ]             │
 │                             │
 │ ─────────────────────────── │
@@ -596,7 +598,7 @@ Separate from customer auth. **4-digit PIN** in env (buildathon-simple). Session
 
 ```
 ┌─────────────────────────────┐
-│ CourtPass Staff             │
+│ Mahgouz Staff             │
 ├─────────────────────────────┤
 │ Enter PIN                   │
 │   [ • ] [ • ] [ • ] [ • ]   │
@@ -617,7 +619,7 @@ After PIN gate. Search-first; full schedule on `/staff/bookings`.
 
 ```
 ┌─────────────────────────────┐
-│ Staff · CourtPass           │
+│ Staff · Mahgouz           │
 ├─────────────────────────────┤
 │                             │
 │ Look up a booking           │
@@ -633,7 +635,7 @@ After PIN gate. Search-first; full schedule on `/staff/bookings`.
 │                             │
 │ Next arrivals (3)           │
 │ ┌─────────────────────────┐ │
-│ │ 18:00 Court 1 · CP-7X4K │ │
+│ │ 18:00 Court 1 · MG-7X4K │ │
 │ │ Paid · not redeemed     │ │
 │ └─────────────────────────┘ │
 └─────────────────────────────┘
@@ -652,7 +654,7 @@ Mini preview shows next 3 arrivals only — full list lives on `/staff/bookings`
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ CourtPass Staff          Lookup    Today's bookings    Out  │
+│ Mahgouz Staff          Lookup    Today's bookings    Out  │
 ├─────────────────────────────────────────────────────────────┤
 │ Today's bookings · Wed 20 Aug          [ ‹ Today › ]        │
 │                                                             │
@@ -691,7 +693,7 @@ Mini preview shows next 3 arrivals only — full list lives on `/staff/bookings`
 ┌─────────────────────────────┐
 │ ← Lookup                    │
 ├─────────────────────────────┤
-│ CP-7X4K-29MN                │
+│ MG-7X4K-29MN                │
 │                             │
 │ Status: ● PAID — Ready      │
 │                             │
@@ -730,8 +732,8 @@ Status: ✓ REDEEMED at 17:58
 
 ### 5.13 Desktop layouts — all routes (1440px)
 
-Shared shell for **customer** pages: top nav `[Logo] CourtPass | Bookings | Book a court | Account`.  
-Shared shell for **staff** pages: top bar `CourtPass Staff | Lookup | Today's bookings | Log out`.
+Shared shell for **customer** pages: top nav `[Logo] Mahgouz | Bookings | Book a court | Account`.  
+Shared shell for **staff** pages: top bar `Mahgouz Staff | Lookup | Today's bookings | Log out`.
 
 Max content width **~1200px**. Same light/dark tokens as mobile — only layout widens.
 
@@ -757,7 +759,7 @@ Max content width **~1200px**. Same light/dark tokens as mobile — only layout 
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ [Logo] CourtPass          My bookings              Ahmed ▾               │
+│ [Logo] Mahgouz          My bookings              Ahmed ▾               │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ Book a court          ● Date — Court — Time — Confirm                    │
 ├───────────────────────────────┬──────────────────────────────────────────┤
@@ -797,7 +799,7 @@ Stitch screens: `{pageId}-desktop-light` and `{pageId}-desktop-dark` for each ro
 ```mermaid
 sequenceDiagram
     participant C as Customer
-    participant App as CourtPass
+    participant App as Mahgouz
     participant P as Paymob
     participant S as Staff
 
@@ -1102,4 +1104,4 @@ resources/js/
 
 ---
 
-*Last updated: buildathon planning — CourtPass / Mahgooz (unified light/dark)*
+*Last updated: Mahgouz brand v1.2 — name + lockup*

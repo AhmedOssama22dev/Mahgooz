@@ -2,10 +2,10 @@
   "projectId": "7191702240633724843",
   "designSystem": "assets/e03cc309c60b436bbc38e48fd719a96f",
   "brand": {
-    "mobileLight": "CourtPass padel booking Sheikh Zayed Egypt. LIGHT MODE mobile 390px. bg #F4F7F5, cards #FFFFFF, text #0F1A14, primary #1B7A4E, orange #E86A2A, promo #FDE8DC. DM Sans headings, Inter body.",
-    "mobileDark": "CourtPass padel booking Sheikh Zayed Egypt. DARK MODE mobile 390px. bg #0F1A14, cards #1A2620, text #F4F7F5, SAME accents #1B7A4E and #E86A2A. Subtle green glow on primary CTA only. DM Sans + Inter.",
-    "desktopLight": "CourtPass padel booking Sheikh Zayed Egypt. LIGHT MODE desktop 1440px wide layout with max-width content ~1200px, sidebar or top nav where appropriate. bg #F4F7F5, cards #FFFFFF, primary #1B7A4E, orange #E86A2A. Professional admin table layouts for staff pages.",
-    "desktopDark": "CourtPass padel booking Sheikh Zayed Egypt. DARK MODE desktop 1440px. bg #0F1A14, cards #1A2620, SAME accents #1B7A4E #E86A2A. Staff admin tables with readable contrast."
+    "mobileLight": "Mahgouz padel booking Sheikh Zayed Egypt. LIGHT MODE mobile 390px. bg #F4F7F5, cards #FFFFFF, text #0F1A14, primary #1B7A4E, orange #E86A2A, promo #FDE8DC. DM Sans headings, Inter body.",
+    "mobileDark": "Mahgouz padel booking Sheikh Zayed Egypt. DARK MODE mobile 390px. bg #0F1A14, cards #1A2620, text #F4F7F5, SAME accents #1B7A4E and #E86A2A. Subtle green glow on primary CTA only. DM Sans + Inter.",
+    "desktopLight": "Mahgouz padel booking Sheikh Zayed Egypt. LIGHT MODE desktop 1440px wide layout with max-width content ~1200px, sidebar or top nav where appropriate. bg #F4F7F5, cards #FFFFFF, primary #1B7A4E, orange #E86A2A. Professional admin table layouts for staff pages.",
+    "desktopDark": "Mahgouz padel booking Sheikh Zayed Egypt. DARK MODE desktop 1440px. bg #0F1A14, cards #1A2620, SAME accents #1B7A4E #E86A2A. Staff admin tables with readable contrast."
   },
   "pages": [
     {
@@ -23,7 +23,7 @@
       "audience": "customer",
       "mobileLight": "Login /login: Welcome back, phone 01xxxxxxxx, password, green Log in, Create account link.",
       "mobileDark": "Same login in dark mode.",
-      "desktopLight": "Desktop login: centered card on light bg, CourtPass logo, Welcome back, phone password fields, Log in, Create account.",
+      "desktopLight": "Desktop login: centered card on light bg, Mahgouz logo, Welcome back, phone password fields, Log in, Create account.",
       "desktopDark": "Same desktop login dark mode."
     },
     {
@@ -102,7 +102,7 @@
       "id": "pass",
       "route": "/pass/{code}",
       "audience": "customer",
-      "mobileLight": "Booking pass: QR code, CP-7X4K-29MN, court date time, payer 4 players EGP 350, Show this to staff.",
+      "mobileLight": "Booking pass: QR code, MG-7X4K-29MN, court date time, payer 4 players EGP 350, Show this to staff.",
       "mobileDark": "Same pass dark mode.",
       "desktopLight": "Desktop booking pass: centered pass card with large QR, booking details, print-friendly.",
       "desktopDark": "Same desktop pass dark mode."
@@ -111,18 +111,18 @@
       "id": "staff-login",
       "route": "/staff/login",
       "audience": "staff",
-      "mobileLight": "Staff login /staff/login: CourtPass Staff, 4-digit PIN pad dots, Enter PIN, minimal utilitarian.",
+      "mobileLight": "Staff login /staff/login: Mahgouz Staff, 4-digit PIN pad dots, Enter PIN, minimal utilitarian.",
       "mobileDark": "Same staff login dark mode.",
-      "desktopLight": "Desktop staff login: centered PIN pad, CourtPass Staff title.",
+      "desktopLight": "Desktop staff login: centered PIN pad, Mahgouz Staff title.",
       "desktopDark": "Same desktop staff login dark mode."
     },
     {
       "id": "staff-bookings",
       "route": "/staff/bookings",
       "audience": "staff",
-      "mobileLight": "Staff Today's Bookings /staff/bookings MOBILE: header CourtPass Staff, date picker Today, summary chips 12 booked · 8 checked in · 4 upcoming, filter tabs All Paid Redeemed No-show, booking cards with time court customer phone players status badge Ready/Paid/Redeemed/No-show risk, pass code CP-7X4K, actions View pass Redeem.",
+      "mobileLight": "Staff Today's Bookings /staff/bookings MOBILE: header Mahgouz Staff, date picker Today, summary chips 12 booked · 8 checked in · 4 upcoming, filter tabs All Paid Redeemed No-show, booking cards with time court customer phone players status badge Ready/Paid/Redeemed/No-show risk, pass code MG-7X4K, actions View pass Redeem.",
       "mobileDark": "Same staff bookings list dark mode.",
-      "desktopLight": "Staff admin Today's Bookings DESKTOP /staff/bookings: top bar CourtPass Staff + Lookup + Log out, date picker, stats row 12 booked 8 checked in 4 upcoming 1 no-show, filters All Court 1 Court 2 Paid Redeemed, FULL WIDTH DATA TABLE columns Time Court Customer Phone Players Status Code Actions, sample rows 18:00 Court 1 Ahmed Hassan 010xxx 4 Paid Ready CP-7X4K Redeem button, 19:00 Court 2 redeemed grey badge, 20:00 upcoming yellow, utilitarian ops dashboard.",
+      "desktopLight": "Staff admin Today's Bookings DESKTOP /staff/bookings: top bar Mahgouz Staff + Lookup + Log out, date picker, stats row 12 booked 8 checked in 4 upcoming 1 no-show, filters All Court 1 Court 2 Paid Redeemed, FULL WIDTH DATA TABLE columns Time Court Customer Phone Players Status Code Actions, sample rows 18:00 Court 1 Ahmed Hassan 010xxx 4 Paid Ready MG-7X4K Redeem button, 19:00 Court 2 redeemed grey badge, 20:00 upcoming yellow, utilitarian ops dashboard.",
       "desktopDark": "Same staff admin bookings table dark mode high contrast."
     },
     {
@@ -138,7 +138,7 @@
       "id": "staff-redeem",
       "route": "/staff/pass/{code}",
       "audience": "staff",
-      "mobileLight": "Staff pass detail: CP-7X4K-29MN, PAID Ready status, court time customer phone 4 players, big green REDEEM CHECK-IN, cannot undo warning.",
+      "mobileLight": "Staff pass detail: MG-7X4K-29MN, PAID Ready status, court time customer phone 4 players, big green REDEEM CHECK-IN, cannot undo warning.",
       "mobileDark": "Same staff redeem dark mode.",
       "desktopLight": "Desktop staff pass detail: two-column booking info + large Redeem button, status banner.",
       "desktopDark": "Same desktop staff redeem dark mode."

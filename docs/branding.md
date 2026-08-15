@@ -1,4 +1,4 @@
-# CourtPass — Brand & Visual Identity
+# Mahgouz — Brand & Visual Identity
 
 > Single source of truth for colors, typography, logo usage, UI tokens, and tone.  
 > Product: padel court booking · Sheikh Zayed · **Pay → Reserve → Redeem**
@@ -9,6 +9,7 @@
 
 | Attribute | Direction |
 |-----------|-----------|
+| **Name** | **Mahgouz** — محجوز, “booked / reserved.” The court is yours. |
 | **Personality** | Fast, social, outdoor, trustworthy |
 | **Feels like** | A local padel club app — not a generic gym or fintech |
 | **Audience** | Players in Sheikh Zayed who today book via WhatsApp |
@@ -21,11 +22,11 @@
 
 ### Wordmark
 
-**CourtPass** — one word, PascalCase in UI, sentence case in marketing copy.
+**Mahgouz** — one word. Title case in UI and marketing. Never all-caps (`MAHGOUZ`), never split (`Mah Gouz`), never the old placeholder **CourtPass**.
 
 | Usage | Spec |
 |-------|------|
-| Primary lockup | Padel racket icon (minimal line) + **CourtPass** |
+| Primary lockup | Padel racket icon (minimal line) + **Mahgouz** |
 | Icon color (light) | `#1B7A4E` on `bg` / `surface` |
 | Icon color (dark) | `#1B7A4E` on header, or `#F4F7F5` on hero scrim |
 | Wordmark on hero | `#F4F7F5` (both modes — photo + scrim behind) |
@@ -40,11 +41,24 @@ Simple **line-style padel racket** — oval head, short handle, no fill. Matches
 
 Minimum padding around logo = height of the racket icon on all sides.
 
+### Files (source of truth for the mark)
+
+| Asset | Path |
+|-------|------|
+| App icon (green) | [assets/brand/mahgouz-icon-green-official.png](./assets/brand/mahgouz-icon-green-official.png) |
+| App icon (dark) | [assets/brand/mahgouz-icon-dark-official.png](./assets/brand/mahgouz-icon-dark-official.png) |
+| Lockup (light) | [assets/brand/mahgouz-lockup-light-official.png](./assets/brand/mahgouz-lockup-light-official.png) |
+| Lockup (dark) | [assets/brand/mahgouz-lockup-dark-official.png](./assets/brand/mahgouz-lockup-dark-official.png) |
+| Brand board | [assets/brand/mahgouz-brand-board-official.png](./assets/brand/mahgouz-brand-board-official.png) |
+
+Editable Canva kit lives in the **Mahgouz Brand** folder (app icons, lockups, brand board, 7-page brand kit).
+
 ### Don’t
 
 - Stretch or rotate the mark
 - Use gradients on the wordmark text
 - Place green wordmark on busy photo without scrim
+- Use a tennis-racket string pattern — padel head is a solid oval with sparse mesh dots
 
 ---
 
@@ -298,15 +312,15 @@ borderRadius: {
 
 ### Light mode
 
-![CourtPass landing page mockup — light](./assets/courtpass-landing-mockup.png)
+![Mahgouz landing page mockup — light](./assets/courtpass-landing-mockup.png)
 
 ### Dark mode
 
-![CourtPass landing page mockup — dark](./assets/courtpass-landing-mockup-dark.png)
+![Mahgouz landing page mockup — dark](./assets/courtpass-landing-mockup-dark.png)
 
 Dark mode inverts surfaces (`#0F1A14` bg, `#1A2620` cards) but keeps the **same** green CTA `#1B7A4E` and orange accent `#E86A2A`. Optional subtle glow on the primary button only — see [Dark-mode-only enhancement](#dark-mode-only-enhancement-optional).
 
-> **Note on mockup:** The dark reference image may look slightly glowy or use brighter accents from generation — treat [Semantic tokens](#semantic-tokens-light--dark) as source of truth when building UI.
+> **Note on mockup:** Layout and tokens are the source of truth. Generated mockup images may still show the old **CourtPass** wordmark — ship **Mahgouz** + the racket lockup from [Brand assets](#files-source-of-truth-for-the-mark). Dark mockups may look slightly glowy; treat [Semantic tokens](#semantic-tokens-light--dark) as source of truth when building UI.
 
 ### Section breakdown (matches mockup)
 
@@ -349,8 +363,8 @@ Full interaction spec: [pages-and-ui-design.md](./pages-and-ui-design.md#51-land
 - [ ] Hero uses same photo + scrim (stronger scrim in dark only)  
 - [ ] Dark CTA glow is subtle and primary-button-only  
 - [ ] Touch targets ≥ 44px  
-- [ ] Wordmark reads **CourtPass** consistently  
+- [ ] Wordmark reads **Mahgouz** consistently (never CourtPass)  
 
 ---
 
-*CourtPass / Mahgooz buildathon · Brand v1.1 (unified light/dark)*
+*Mahgouz · Brand v1.2 (name + lockup)*
