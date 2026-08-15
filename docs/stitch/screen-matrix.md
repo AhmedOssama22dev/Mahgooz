@@ -1,6 +1,6 @@
 # Mahgouz — Stitch screen matrix
 
-Full design coverage for user-flow review: **15 pages × 4 variants = 60 screens**.
+Full design coverage for user-flow review: **14 pages × 4 variants = 56 screens**.
 
 | Dimension | Values |
 |-----------|--------|
@@ -34,7 +34,6 @@ Open project: [Mahgouz on Stitch](https://stitch.withgoogle.com) · ID `71917022
 
 | Page | Route | Stitch labels | Notes |
 |------|-------|---------------|-------|
-| Staff PIN login | `/staff/login` | `staff-login-*` | 4-digit gate |
 | **Today's bookings** | `/staff/bookings` | `staff-bookings-*` | **Admin list — who's coming** |
 | Lookup | `/staff` | `staff-lookup-*` | Search by code / QR |
 | Redeem pass | `/staff/pass/{code}` | `staff-redeem-*` | One-tap check-in |
@@ -56,8 +55,8 @@ flowchart TB
   end
 
   subgraph staff [Staff]
-    SL[Staff login] --> SB[Today's bookings]
-    SL --> Lookup
+    Login --> SB[Today's bookings]
+    Login --> Lookup
     SB --> Redeem[Redeem pass]
     Lookup --> Redeem
   end

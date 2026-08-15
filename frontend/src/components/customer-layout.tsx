@@ -7,7 +7,7 @@ import { AppShell } from '@/components/app-shell'
 import { CustomerBottomNav } from '@/components/customer-bottom-nav'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/hooks/use-session'
-import { clearCustomerSession } from '@/lib/api/auth'
+import { clearSession } from '@/lib/api/auth'
 
 type CustomerLayoutProps = {
   children: ReactNode
@@ -25,12 +25,12 @@ export function CustomerLayout({
   showBookCta = false,
   showBottomNav = true,
 }: CustomerLayoutProps) {
-  const { loggedIn, user } = useSession()
+  const { loggedIn, isStaff, user } = useSession()
   const [accountOpen, setAccountOpen] = useState(false)
   const navigate = useNavigate()
 
   function logout() {
-    clearCustomerSession()
+    clearSession()
     setAccountOpen(false)
     void navigate({ to: '/' })
   }
@@ -82,6 +82,7 @@ export function CustomerLayout({
       </AppShell>
       <AccountMenu
         name={user?.name}
+        isStaff={isStaff}
         open={accountOpen}
         onOpenChange={setAccountOpen}
         onLogout={logout}

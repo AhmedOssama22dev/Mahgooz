@@ -8,7 +8,7 @@ import { StatusBadge, bookingStatusToKind } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { $api } from '@/lib/api/client'
-import { clearStaffSession } from '@/lib/api/auth'
+import { clearSession } from '@/lib/api/auth'
 import {
   formatBookingDay,
   formatClock,
@@ -21,8 +21,8 @@ import { apiStatusToUi } from '@/lib/slot-states'
 import { apiErrorMessage } from '@/lib/utils'
 
 export const Route = createFileRoute('/staff/pass/$code')({
-  beforeLoad: () => {
-    requireStaff()
+  beforeLoad: ({ location }) => {
+    requireStaff(`${location.pathname}${location.searchStr}`)
   },
   component: StaffPassPage,
 })
@@ -52,8 +52,8 @@ function StaffPassPage() {
     <StaffShell
       current="lookup"
       onLogout={() => {
-        clearStaffSession()
-        void navigate({ to: '/staff/login' })
+        clearSession()
+        void navigate({ to: '/login' })
       }}
     >
       <Button

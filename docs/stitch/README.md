@@ -1,7 +1,7 @@
 # Mahgouz — Stitch Design Project
 
 > AI-generated UI for **all pages**, **mobile + desktop**, **light + dark**.  
-> See **[screen-matrix.md](./screen-matrix.md)** for the full 60-screen overview.
+> See **[screen-matrix.md](./screen-matrix.md)** for the full 56-screen overview.
 
 ## Project
 
@@ -25,9 +25,9 @@ Accents **never change** between light and dark — only surfaces invert.
 
 ---
 
-## Screen matrix (60 total)
+## Screen matrix (56 total)
 
-**15 pages × 4 variants** (mobile/desktop × light/dark)
+**14 pages × 4 variants** (mobile/desktop × light/dark)
 
 ### Customer (11 pages)
 
@@ -45,11 +45,10 @@ Accents **never change** between light and dark — only surfaces invert.
 | My bookings | `/bookings` |
 | Booking pass | `/pass/{code}` |
 
-### Staff (4 pages)
+### Staff (3 pages)
 
 | Page | Route | Purpose |
 |------|-------|---------|
-| Staff PIN login | `/staff/login` | Gate |
 | **Today's bookings** | `/staff/bookings` | **Admin list — manage arrivals** |
 | Lookup | `/staff` | Search by code |
 | Redeem | `/staff/pass/{code}` | Check-in |

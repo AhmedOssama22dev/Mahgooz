@@ -1,18 +1,17 @@
 export {
-  clearCustomerSession,
-  clearStaffSession,
+  clearSession,
+  defaultHomePath,
   getAccessToken,
-  getCustomerUser,
   getRefreshToken,
-  getStaffToken,
+  getSessionUser,
+  parseRole,
   sessionSnapshot,
-  setCustomerSession,
-  setStaffSession,
+  setSession,
   subscribeSession,
   saveAuthTokens,
   tokenForPath,
   tokenKindForPath,
 } from './auth.ts'
-export type { CustomerUser, TokenKind } from './auth.ts'
+export type { AuthUser, TokenKind, UserRole } from './auth.ts'
 export { $api, fetchClient } from './client.ts'
 export type { paths } from './schema'

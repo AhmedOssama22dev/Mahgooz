@@ -15,7 +15,7 @@ Padel court booking: Pay → Reserve → Redeem. Two courts in Sheikh Zayed, Egy
 
 ## Stack
 
-Django + DRF + React + TypeScript + shadcn/ui. Auth via phone + password. MCP via django-mcp-server.
+Django + DRF + React + TypeScript + shadcn/ui. Auth via phone + password; role `customer` or `staff`. MCP via django-mcp-server.
 
 ## Rules
 

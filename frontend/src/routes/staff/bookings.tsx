@@ -8,7 +8,7 @@ import type { StaffFilter } from '@/components/staff-ops'
 import { StaffShell } from '@/components/staff-shell'
 import { Button } from '@/components/ui/button'
 import { $api } from '@/lib/api/client'
-import { clearStaffSession } from '@/lib/api/auth'
+import { clearSession } from '@/lib/api/auth'
 import { parseSlotStart, todayKey } from '@/lib/format'
 import { requireStaff } from '@/lib/guards'
 import { staffKind } from '@/lib/slot-states'
@@ -22,8 +22,8 @@ export const Route = createFileRoute('/staff/bookings')({
   validateSearch: (search: Record<string, unknown>): StaffBookingsSearch => ({
     date: typeof search.date === 'string' ? search.date : undefined,
   }),
-  beforeLoad: () => {
-    requireStaff()
+  beforeLoad: ({ location }) => {
+    requireStaff(`${location.pathname}${location.searchStr}`)
   },
   component: StaffBookingsPage,
 })
@@ -93,8 +93,8 @@ function StaffBookingsPage() {
     <StaffShell
       current="bookings"
       onLogout={() => {
-        clearStaffSession()
-        void navigate({ to: '/staff/login' })
+        clearSession()
+        void navigate({ to: '/login' })
       }}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">

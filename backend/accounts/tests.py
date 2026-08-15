@@ -58,6 +58,7 @@ class AuthTests(APITestCase):
         self.assertTrue(body["refresh"])
         self.assertEqual(body["user"]["name"], "Ahmed Hassan")
         self.assertEqual(body["user"]["phone"], "01012345678")
+        self.assertEqual(body["user"]["role"], "customer")
         self.assertTrue(User.objects.filter(phone="01012345678").exists())
 
     def test_register_normalizes_plus_country_code(self):
@@ -101,6 +102,7 @@ class AuthTests(APITestCase):
         body = response.json()
         self.assertTrue(body["access"])
         self.assertEqual(body["user"]["phone"], "01012345678")
+        self.assertEqual(body["user"]["role"], "customer")
 
     def test_login_missing_password(self):
         response = self.client.post(
@@ -136,7 +138,8 @@ class AuthTests(APITestCase):
         body = response.json()
         self.assertEqual(body["name"], "Ahmed Hassan")
         self.assertEqual(body["phone"], "01012345678")
-        self.assertEqual(set(body.keys()), {"id", "name", "phone"})
+        self.assertEqual(body["role"], "customer")
+        self.assertEqual(set(body.keys()), {"id", "name", "phone", "role"})
 
     def test_refresh_success(self):
         tokens = self._register().json()
@@ -153,6 +156,51 @@ class AuthTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {body['access']}")
         self.assertEqual(self.client.get(self.me_url).status_code, 200)
 
+    def test_login_staff_returns_staff_role(self):
+        User.objects.create_user(
+            phone="01000000000",
+            name="Mostafa",
+            password="staffpass",
+            is_staff=True,
+        )
+        response = self.client.post(
+            self.login_url,
+            {"phone": "01000000000", "password": "staffpass"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["user"]["role"], "staff")
+        self.assertEqual(body["user"]["phone"], "01000000000")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {body['access']}")
+        me = self.client.get(self.me_url)
+        self.assertEqual(me.status_code, 200)
+        self.assertEqual(me.json()["role"], "staff")
+
+    def test_staff_routes_reject_customer(self):
+        tokens = self._register().json()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {tokens['access']}")
+        response = self.client.get("/api/v1/staff/bookings")
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["error"]["code"], "FORBIDDEN")
+
+    def test_staff_routes_accept_staff(self):
+        User.objects.create_user(
+            phone="01000000000",
+            name="Mostafa",
+            password="staffpass",
+            is_staff=True,
+        )
+        tokens = self.client.post(
+            self.login_url,
+            {"phone": "01000000000", "password": "staffpass"},
+            format="json",
+        ).json()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {tokens['access']}")
+        response = self.client.get("/api/v1/staff/bookings")
+        self.assertEqual(response.status_code, 501)
+        self.assertEqual(response.json()["error"]["code"], "NOT_IMPLEMENTED")
+
     def test_refresh_invalid(self):
         response = self.client.post(
             self.refresh_url,
@@ -161,3 +209,30 @@ class AuthTests(APITestCase):
         )
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json()["error"]["code"], "UNAUTHENTICATED")
+
+
+class SeedStaffTests(APITestCase):
+    def test_seed_creates_staff_from_settings(self):
+        from django.test import override_settings
+
+        from accounts.seed import seed_staff_user
+
+        with override_settings(
+            STAFF_PHONE="01000000000",
+            STAFF_PASSWORD="staffpass",
+            STAFF_NAME="Mostafa",
+        ):
+            user = seed_staff_user()
+        self.assertIsNotNone(user)
+        self.assertTrue(user.is_staff)
+        self.assertEqual(user.phone, "01000000000")
+        self.assertEqual(user.role, "staff")
+        self.assertTrue(user.check_password("staffpass"))
+
+    def test_seed_skipped_without_credentials(self):
+        from django.test import override_settings
+
+        from accounts.seed import seed_staff_user
+
+        with override_settings(STAFF_PHONE="", STAFF_PASSWORD=""):
+            self.assertIsNone(seed_staff_user())

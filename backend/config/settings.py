@@ -151,7 +151,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000").rstrip("/")
 PUBLIC_API_URL = os.environ.get("PUBLIC_API_URL", "http://localhost:8000").rstrip("/")
-STAFF_PIN = os.environ.get("STAFF_PIN", "1234")
+STAFF_PHONE = os.environ.get("STAFF_PHONE", "")
+STAFF_PASSWORD = os.environ.get("STAFF_PASSWORD", "")
+STAFF_NAME = os.environ.get("STAFF_NAME", "Staff")
 
 if os.environ.get("RAILWAY_ENVIRONMENT"):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -169,7 +171,7 @@ if FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "accounts.authentication.RoleJWTAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",

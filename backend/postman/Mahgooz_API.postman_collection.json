@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "ab8467da-c17a-4d78-a2b6-65036cc4b11c",
-    "name": "Mahgooz API \u2014 MVP v1",
-    "description": "# Mahgooz padel booking \u2014 MVP v1\n\nDjango REST API for **Pay \u2192 Reserve \u2192 Redeem**.\n\n## Base URL\n`{{base_url}}` defaults to `http://localhost:8000/api/v1`.\n\n## Auth\n- **Customer JWT** (`Authorization: Bearer {{access_token}}`) on booking routes.\n- **Staff JWT** (`{{staff_token}}`) from PIN login \u2014 not interchangeable with customer tokens.\n- **Webhook** has no JWT; authenticity is HMAC-SHA512.\n- Public pass, courts, slots, and health need no auth.\n\n## Suggested run order\n1. Health \u2192 List courts (saves `court_id`)\n2. Register or Login (saves `access_token`)\n3. List slots \u2192 Hold a slot (saves `booking_id`)\n4. Start checkout \u2192 open `checkout_url` in a browser with a Paymob test card\n5. Poll payment status until `confirmed` (saves `booking_code`)\n6. Get public pass\n7. Staff login (saves `staff_token`) \u2192 Lookup \u2192 Redeem\n\n## Error shape\n```json\n{ \"error\": { \"code\": \"SLOT_TAKEN\", \"message\": \"...\" } }\n```\n\nEvery request has saved **success and failure examples** in the Examples dropdown.\n\n## Slot rules\n- Two courts, 60-minute slots, 08:00\u201322:00, book 14 days ahead.\n- Hold TTL **10 minutes**. Abandoned / failed / expired holds free the slot.\n- Unique active row per occupied hour: `court + date + start_time`.\n- Hold 1\u20134 consecutive hours in one booking via `start_times`.\n- Pricing: morning EGP 200 (08\u201312), afternoon 280 (12\u201317), evening 350 (17\u201322).\n- A booking is **paid only** after a verified Paymob webhook, never after the redirect page.\n",
+    "name": "Mahgooz API — MVP v1",
+    "description": "# Mahgooz padel booking — MVP v1\n\nDjango REST API for **Pay → Reserve → Redeem**.\n\n## Base URL\n`{{base_url}}` defaults to `http://localhost:8000/api/v1`.\n\n## Auth\n- **One JWT** (`Authorization: Bearer {{access_token}}`) from phone + password login.\n- Role is on the user (`customer` or `staff`). Public register always creates customers; staff is granted in Django admin or `python manage.py seed_staff`.\n- Staff-only routes (`/staff/*`) return 403 for customer accounts.\n- **Webhook** has no JWT; authenticity is HMAC-SHA512.\n- Public pass, courts, slots, and health need no auth.\n\n## Suggested run order\n1. Health → List courts (saves `court_id`)\n2. Register or Login (saves `access_token`)\n3. List slots → Hold a slot (saves `booking_id`)\n4. Start checkout → open `checkout_url` in a browser with a Paymob test card\n5. Poll payment status until `confirmed` (saves `booking_code`)\n6. Get public pass\n7. Log in as staff (same `/auth/login`) → Lookup → Redeem\n\n## Error shape\n```json\n{ \"error\": { \"code\": \"SLOT_TAKEN\", \"message\": \"...\" } }\n```\n\nEvery request has saved **success and failure examples** in the Examples dropdown.\n\n## Slot rules\n- Two courts, 60-minute slots, 08:00–22:00, book 14 days ahead.\n- Hold TTL **10 minutes**. Abandoned / failed / expired holds free the slot.\n- Unique active row per occupied hour: `court + date + start_time`.\n- Hold 1–4 consecutive hours in one booking via `start_times`.\n- Pricing: morning EGP 200 (08–12), afternoon 280 (12–17), evening 350 (17–22).\n- A booking is **paid only** after a verified Paymob webhook, never after the redirect page.\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -19,10 +19,6 @@
       "value": ""
     },
     {
-      "key": "staff_token",
-      "value": ""
-    },
-    {
       "key": "court_id",
       "value": "11111111-1111-4111-8111-111111111111"
     },
@@ -33,10 +29,6 @@
     {
       "key": "booking_code",
       "value": "MGZ-7F42K"
-    },
-    {
-      "key": "staff_pin",
-      "value": "1234"
     },
     {
       "key": "phone",
@@ -53,6 +45,14 @@
     {
       "key": "start_time",
       "value": "18:00"
+    },
+    {
+      "key": "staff_phone",
+      "value": "01000000000"
+    },
+    {
+      "key": "staff_password",
+      "value": "staffpass"
     }
   ],
   "auth": {
@@ -83,7 +83,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 healthy",
+              "name": "200 OK — healthy",
               "originalRequest": {
                 "method": "GET",
                 "header": [],
@@ -106,7 +106,7 @@
               "body": "{\n  \"status\": \"ok\"\n}"
             },
             {
-              "name": "503 Service Unavailable \u2014 database down",
+              "name": "503 Service Unavailable — database down",
               "originalRequest": {
                 "method": "GET",
                 "header": [],
@@ -143,7 +143,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 two courts",
+              "name": "200 OK — two courts",
               "originalRequest": {
                 "method": "GET",
                 "header": [],
@@ -212,19 +212,19 @@
             "method": "GET",
             "header": [],
             "url": "{{base_url}}/slots?date={{slot_date}}&court_id={{court_id}}",
-            "description": "Generated 08:00\u201321:00 grid for one court and date.\n\n**States:** `available` | `held` | `booked`. Held slots of other customers are never selectable.\n\nMorning slots include `label: \"Morning available\"` and a lower `price_egp`.\n\nBook-ahead window: today through 14 days. Slot duration: 60 minutes.",
+            "description": "Generated 08:00–21:00 grid for one court and date.\n\n**States:** `available` | `held` | `booked`. Held slots of other customers are never selectable.\n\nMorning slots include `label: \"Morning available\"` and a lower `price_egp`.\n\nBook-ahead window: today through 14 days. Slot duration: 60 minutes.",
             "auth": {
               "type": "noauth"
             }
           },
           "response": [
             {
-              "name": "200 OK \u2014 slot grid",
+              "name": "200 OK — slot grid",
               "originalRequest": {
                 "method": "GET",
                 "header": [],
                 "url": "{{base_url}}/slots?date={{slot_date}}&court_id={{court_id}}",
-                "description": "Generated 08:00\u201321:00 grid for one court and date.\n\n**States:** `available` | `held` | `booked`. Held slots of other customers are never selectable.\n\nMorning slots include `label: \"Morning available\"` and a lower `price_egp`.\n\nBook-ahead window: today through 14 days. Slot duration: 60 minutes.",
+                "description": "Generated 08:00–21:00 grid for one court and date.\n\n**States:** `available` | `held` | `booked`. Held slots of other customers are never selectable.\n\nMorning slots include `label: \"Morning available\"` and a lower `price_egp`.\n\nBook-ahead window: today through 14 days. Slot duration: 60 minutes.",
                 "auth": {
                   "type": "noauth"
                 }
@@ -242,12 +242,12 @@
               "body": "{\n  \"date\": \"2026-08-20\",\n  \"court\": {\n    \"id\": \"11111111-1111-4111-8111-111111111111\",\n    \"name\": \"Court 1\"\n  },\n  \"operating_hours\": {\n    \"open\": \"08:00\",\n    \"close\": \"22:00\"\n  },\n  \"slot_minutes\": 60,\n  \"slots\": [\n    {\n      \"start_time\": \"08:00\",\n      \"end_time\": \"09:00\",\n      \"state\": \"available\",\n      \"period\": \"morning\",\n      \"price_egp\": 200,\n      \"price_cents\": 20000,\n      \"label\": \"Morning available\"\n    },\n    {\n      \"start_time\": \"09:00\",\n      \"end_time\": \"10:00\",\n      \"state\": \"held\",\n      \"period\": \"morning\",\n      \"price_egp\": 200,\n      \"price_cents\": 20000,\n      \"label\": \"Morning available\"\n    },\n    {\n      \"start_time\": \"18:00\",\n      \"end_time\": \"19:00\",\n      \"state\": \"available\",\n      \"period\": \"evening\",\n      \"price_egp\": 350,\n      \"price_cents\": 35000,\n      \"label\": null\n    },\n    {\n      \"start_time\": \"19:00\",\n      \"end_time\": \"20:00\",\n      \"state\": \"booked\",\n      \"period\": \"evening\",\n      \"price_egp\": 350,\n      \"price_cents\": 35000,\n      \"label\": null\n    },\n    {\n      \"start_time\": \"20:00\",\n      \"end_time\": \"21:00\",\n      \"state\": \"available\",\n      \"period\": \"evening\",\n      \"price_egp\": 350,\n      \"price_cents\": 35000,\n      \"label\": null\n    },\n    {\n      \"start_time\": \"21:00\",\n      \"end_time\": \"22:00\",\n      \"state\": \"available\",\n      \"period\": \"evening\",\n      \"price_egp\": 350,\n      \"price_cents\": 35000,\n      \"label\": null\n    }\n  ]\n}"
             },
             {
-              "name": "400 Bad Request \u2014 missing date",
+              "name": "400 Bad Request — missing date",
               "originalRequest": {
                 "method": "GET",
                 "header": [],
                 "url": "{{base_url}}/slots?date={{slot_date}}&court_id={{court_id}}",
-                "description": "Generated 08:00\u201321:00 grid for one court and date.\n\n**States:** `available` | `held` | `booked`. Held slots of other customers are never selectable.\n\nMorning slots include `label: \"Morning available\"` and a lower `price_egp`.\n\nBook-ahead window: today through 14 days. Slot duration: 60 minutes.",
+                "description": "Generated 08:00–21:00 grid for one court and date.\n\n**States:** `available` | `held` | `booked`. Held slots of other customers are never selectable.\n\nMorning slots include `label: \"Morning available\"` and a lower `price_egp`.\n\nBook-ahead window: today through 14 days. Slot duration: 60 minutes.",
                 "auth": {
                   "type": "noauth"
                 }
@@ -265,12 +265,12 @@
               "body": "{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid query parameters\",\n    \"details\": {\n      \"date\": [\n        \"This field is required.\"\n      ]\n    }\n  }\n}"
             },
             {
-              "name": "400 Bad Request \u2014 date out of range",
+              "name": "400 Bad Request — date out of range",
               "originalRequest": {
                 "method": "GET",
                 "header": [],
                 "url": "{{base_url}}/slots?date={{slot_date}}&court_id={{court_id}}",
-                "description": "Generated 08:00\u201321:00 grid for one court and date.\n\n**States:** `available` | `held` | `booked`. Held slots of other customers are never selectable.\n\nMorning slots include `label: \"Morning available\"` and a lower `price_egp`.\n\nBook-ahead window: today through 14 days. Slot duration: 60 minutes.",
+                "description": "Generated 08:00–21:00 grid for one court and date.\n\n**States:** `available` | `held` | `booked`. Held slots of other customers are never selectable.\n\nMorning slots include `label: \"Morning available\"` and a lower `price_egp`.\n\nBook-ahead window: today through 14 days. Slot duration: 60 minutes.",
                 "auth": {
                   "type": "noauth"
                 }
@@ -288,12 +288,12 @@
               "body": "{\n  \"error\": {\n    \"code\": \"DATE_OUT_OF_RANGE\",\n    \"message\": \"Date must be today or within the next 14 days.\"\n  }\n}"
             },
             {
-              "name": "404 Not Found \u2014 unknown court",
+              "name": "404 Not Found — unknown court",
               "originalRequest": {
                 "method": "GET",
                 "header": [],
                 "url": "{{base_url}}/slots?date={{slot_date}}&court_id={{court_id}}",
-                "description": "Generated 08:00\u201321:00 grid for one court and date.\n\n**States:** `available` | `held` | `booked`. Held slots of other customers are never selectable.\n\nMorning slots include `label: \"Morning available\"` and a lower `price_egp`.\n\nBook-ahead window: today through 14 days. Slot duration: 60 minutes.",
+                "description": "Generated 08:00–21:00 grid for one court and date.\n\n**States:** `available` | `held` | `booked`. Held slots of other customers are never selectable.\n\nMorning slots include `label: \"Morning available\"` and a lower `price_egp`.\n\nBook-ahead window: today through 14 days. Slot duration: 60 minutes.",
                 "auth": {
                   "type": "noauth"
                 }
@@ -318,19 +318,19 @@
             "method": "GET",
             "header": [],
             "url": "{{base_url}}/passes/{{booking_code}}",
-            "description": "Public booking pass. Unlisted \u2014 you need the code. Omits phone and Paymob ids. Frontend renders QR from `qr_payload`.\n\nCodes are issued **only after** a verified Paymob webhook, so unpaid holds cannot be looked up here.",
+            "description": "Public booking pass. Unlisted — you need the code. Omits phone and Paymob ids. Frontend renders QR from `qr_payload`.\n\nCodes are issued **only after** a verified Paymob webhook, so unpaid holds cannot be looked up here.",
             "auth": {
               "type": "noauth"
             }
           },
           "response": [
             {
-              "name": "200 OK \u2014 confirmed pass",
+              "name": "200 OK — confirmed pass",
               "originalRequest": {
                 "method": "GET",
                 "header": [],
                 "url": "{{base_url}}/passes/{{booking_code}}",
-                "description": "Public booking pass. Unlisted \u2014 you need the code. Omits phone and Paymob ids. Frontend renders QR from `qr_payload`.\n\nCodes are issued **only after** a verified Paymob webhook, so unpaid holds cannot be looked up here.",
+                "description": "Public booking pass. Unlisted — you need the code. Omits phone and Paymob ids. Frontend renders QR from `qr_payload`.\n\nCodes are issued **only after** a verified Paymob webhook, so unpaid holds cannot be looked up here.",
                 "auth": {
                   "type": "noauth"
                 }
@@ -348,12 +348,12 @@
               "body": "{\n  \"booking_code\": \"MGZ-7F42K\",\n  \"status\": \"confirmed\",\n  \"court\": {\n    \"id\": \"11111111-1111-4111-8111-111111111111\",\n    \"name\": \"Court 1\"\n  },\n  \"date\": \"2026-08-20\",\n  \"start_times\": [\n    \"18:00\"\n  ],\n  \"start_time\": \"18:00\",\n  \"end_time\": \"19:00\",\n  \"booker_name\": \"Ahmed Hassan\",\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ],\n  \"price_egp\": 350,\n  \"qr_payload\": \"https://mahgooz.app/pass/MGZ-7F42K\",\n  \"redeemed_at\": null\n}"
             },
             {
-              "name": "200 OK \u2014 already redeemed",
+              "name": "200 OK — already redeemed",
               "originalRequest": {
                 "method": "GET",
                 "header": [],
                 "url": "{{base_url}}/passes/{{booking_code}}",
-                "description": "Public booking pass. Unlisted \u2014 you need the code. Omits phone and Paymob ids. Frontend renders QR from `qr_payload`.\n\nCodes are issued **only after** a verified Paymob webhook, so unpaid holds cannot be looked up here.",
+                "description": "Public booking pass. Unlisted — you need the code. Omits phone and Paymob ids. Frontend renders QR from `qr_payload`.\n\nCodes are issued **only after** a verified Paymob webhook, so unpaid holds cannot be looked up here.",
                 "auth": {
                   "type": "noauth"
                 }
@@ -371,12 +371,12 @@
               "body": "{\n  \"booking_code\": \"MGZ-7F42K\",\n  \"status\": \"redeemed\",\n  \"court\": {\n    \"id\": \"11111111-1111-4111-8111-111111111111\",\n    \"name\": \"Court 1\"\n  },\n  \"date\": \"2026-08-20\",\n  \"start_times\": [\n    \"18:00\"\n  ],\n  \"start_time\": \"18:00\",\n  \"end_time\": \"19:00\",\n  \"booker_name\": \"Ahmed Hassan\",\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ],\n  \"price_egp\": 350,\n  \"qr_payload\": \"https://mahgooz.app/pass/MGZ-7F42K\",\n  \"redeemed_at\": \"2026-08-20T17:58:00+03:00\"\n}"
             },
             {
-              "name": "404 Not Found \u2014 unknown or unpaid code",
+              "name": "404 Not Found — unknown or unpaid code",
               "originalRequest": {
                 "method": "GET",
                 "header": [],
                 "url": "{{base_url}}/passes/{{booking_code}}",
-                "description": "Public booking pass. Unlisted \u2014 you need the code. Omits phone and Paymob ids. Frontend renders QR from `qr_payload`.\n\nCodes are issued **only after** a verified Paymob webhook, so unpaid holds cannot be looked up here.",
+                "description": "Public booking pass. Unlisted — you need the code. Omits phone and Paymob ids. Frontend renders QR from `qr_payload`.\n\nCodes are issued **only after** a verified Paymob webhook, so unpaid holds cannot be looked up here.",
                 "auth": {
                   "type": "noauth"
                 }
@@ -428,7 +428,7 @@
           },
           "response": [
             {
-              "name": "201 Created \u2014 account + tokens",
+              "name": "201 Created — account + tokens",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -465,7 +465,7 @@
               "body": "{\n  \"access\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access\",\n  \"refresh\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh\",\n  \"token_type\": \"Bearer\",\n  \"expires_in\": 3600,\n  \"user\": {\n    \"id\": \"9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d\",\n    \"name\": \"Ahmed Hassan\",\n    \"phone\": \"01012345678\"\n  }\n}"
             },
             {
-              "name": "400 Bad Request \u2014 invalid phone",
+              "name": "400 Bad Request — invalid phone",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -502,7 +502,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid request body\",\n    \"details\": {\n      \"phone\": [\n        \"Enter an Egyptian mobile number like 01xxxxxxxxx.\"\n      ]\n    }\n  }\n}"
             },
             {
-              "name": "400 Bad Request \u2014 short password",
+              "name": "400 Bad Request — short password",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -539,7 +539,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid request body\",\n    \"details\": {\n      \"password\": [\n        \"Ensure this field has at least 6 characters.\"\n      ]\n    }\n  }\n}"
             },
             {
-              "name": "409 Conflict \u2014 phone taken",
+              "name": "409 Conflict — phone taken",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -603,7 +603,7 @@
               }
             ],
             "url": "{{base_url}}/auth/login",
-            "description": "Phone + password \u2192 JWT access and refresh. Saves tokens into collection variables.",
+            "description": "Phone + password → JWT access and refresh. Saves tokens into collection variables.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"password\": \"{{password}}\"\n}",
@@ -619,7 +619,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 tokens",
+              "name": "200 OK — tokens",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -629,7 +629,7 @@
                   }
                 ],
                 "url": "{{base_url}}/auth/login",
-                "description": "Phone + password \u2192 JWT access and refresh. Saves tokens into collection variables.",
+                "description": "Phone + password → JWT access and refresh. Saves tokens into collection variables.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"password\": \"{{password}}\"\n}",
@@ -656,7 +656,7 @@
               "body": "{\n  \"access\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access\",\n  \"refresh\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh\",\n  \"token_type\": \"Bearer\",\n  \"expires_in\": 3600,\n  \"user\": {\n    \"id\": \"9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d\",\n    \"name\": \"Ahmed Hassan\",\n    \"phone\": \"01012345678\"\n  }\n}"
             },
             {
-              "name": "400 Bad Request \u2014 missing fields",
+              "name": "400 Bad Request — missing fields",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -666,7 +666,7 @@
                   }
                 ],
                 "url": "{{base_url}}/auth/login",
-                "description": "Phone + password \u2192 JWT access and refresh. Saves tokens into collection variables.",
+                "description": "Phone + password → JWT access and refresh. Saves tokens into collection variables.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"password\": \"{{password}}\"\n}",
@@ -693,7 +693,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid request body\",\n    \"details\": {\n      \"password\": [\n        \"This field is required.\"\n      ]\n    }\n  }\n}"
             },
             {
-              "name": "401 Unauthorized \u2014 bad credentials",
+              "name": "401 Unauthorized — bad credentials",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -703,7 +703,7 @@
                   }
                 ],
                 "url": "{{base_url}}/auth/login",
-                "description": "Phone + password \u2192 JWT access and refresh. Saves tokens into collection variables.",
+                "description": "Phone + password → JWT access and refresh. Saves tokens into collection variables.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"password\": \"{{password}}\"\n}",
@@ -773,7 +773,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 new access token",
+              "name": "200 OK — new access token",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -810,7 +810,7 @@
               "body": "{\n  \"access\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access\",\n  \"token_type\": \"Bearer\",\n  \"expires_in\": 3600\n}"
             },
             {
-              "name": "401 Unauthorized \u2014 invalid refresh",
+              "name": "401 Unauthorized — invalid refresh",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -887,7 +887,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 profile",
+              "name": "200 OK — profile",
               "originalRequest": {
                 "method": "GET",
                 "header": [
@@ -922,7 +922,7 @@
               "body": "{\n  \"id\": \"9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d\",\n  \"name\": \"Ahmed Hassan\",\n  \"phone\": \"01012345678\"\n}"
             },
             {
-              "name": "401 Unauthorized \u2014 missing or expired JWT",
+              "name": "401 Unauthorized — missing or expired JWT",
               "originalRequest": {
                 "method": "GET",
                 "header": [
@@ -962,7 +962,7 @@
     },
     {
       "name": "3. Bookings (customer JWT)",
-      "description": "Hold \u2192 checkout \u2192 poll status \u2192 my bookings. Pay \u2192 Reserve.",
+      "description": "Hold → checkout → poll status → my bookings. Pay → Reserve.",
       "auth": {
         "type": "bearer",
         "bearer": [
@@ -989,7 +989,7 @@
               }
             ],
             "url": "{{base_url}}/bookings/hold",
-            "description": "Atomically hold 1\u20134 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00\u201320:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1\u20134). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
+            "description": "Atomically hold 1–4 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00–20:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1–4). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"court_id\": \"{{court_id}}\",\n  \"date\": \"{{slot_date}}\",\n  \"start_times\": [\n    \"18:00\",\n    \"19:00\"\n  ],\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ]\n}",
@@ -1012,7 +1012,7 @@
           },
           "response": [
             {
-              "name": "201 Created \u2014 two slots held",
+              "name": "201 Created — two slots held",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -1026,7 +1026,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/hold",
-                "description": "Atomically hold 1\u20134 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00\u201320:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1\u20134). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
+                "description": "Atomically hold 1–4 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00–20:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1–4). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"court_id\": \"{{court_id}}\",\n  \"date\": \"{{slot_date}}\",\n  \"start_times\": [\n    \"18:00\",\n    \"19:00\"\n  ],\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ]\n}",
@@ -1060,7 +1060,7 @@
               "body": "{\n  \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"status\": \"held\",\n  \"court\": {\n    \"id\": \"11111111-1111-4111-8111-111111111111\",\n    \"name\": \"Court 1\"\n  },\n  \"date\": \"2026-08-20\",\n  \"start_times\": [\n    \"18:00\",\n    \"19:00\"\n  ],\n  \"start_time\": \"18:00\",\n  \"end_time\": \"20:00\",\n  \"booker_name\": \"Ahmed Hassan\",\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ],\n  \"price_egp\": 700,\n  \"price_cents\": 70000,\n  \"hold_expires_at\": \"2026-08-15T16:32:00+03:00\",\n  \"booking_code\": null,\n  \"created_at\": \"2026-08-15T16:22:00+03:00\"\n}"
             },
             {
-              "name": "201 Created \u2014 one slot held",
+              "name": "201 Created — one slot held",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -1074,7 +1074,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/hold",
-                "description": "Atomically hold 1\u20134 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00\u201320:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1\u20134). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
+                "description": "Atomically hold 1–4 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00–20:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1–4). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"court_id\": \"{{court_id}}\",\n  \"date\": \"{{slot_date}}\",\n  \"start_times\": [\n    \"18:00\",\n    \"19:00\"\n  ],\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ]\n}",
@@ -1108,7 +1108,7 @@
               "body": "{\n  \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"status\": \"held\",\n  \"court\": {\n    \"id\": \"11111111-1111-4111-8111-111111111111\",\n    \"name\": \"Court 1\"\n  },\n  \"date\": \"2026-08-20\",\n  \"start_times\": [\n    \"18:00\"\n  ],\n  \"start_time\": \"18:00\",\n  \"end_time\": \"19:00\",\n  \"booker_name\": \"Ahmed Hassan\",\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ],\n  \"price_egp\": 350,\n  \"price_cents\": 35000,\n  \"hold_expires_at\": \"2026-08-15T16:32:00+03:00\",\n  \"booking_code\": null,\n  \"created_at\": \"2026-08-15T16:22:00+03:00\"\n}"
             },
             {
-              "name": "400 Bad Request \u2014 attendees",
+              "name": "400 Bad Request — attendees",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -1122,7 +1122,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/hold",
-                "description": "Atomically hold 1\u20134 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00\u201320:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1\u20134). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
+                "description": "Atomically hold 1–4 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00–20:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1–4). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"court_id\": \"{{court_id}}\",\n  \"date\": \"{{slot_date}}\",\n  \"start_times\": [\n    \"18:00\",\n    \"19:00\"\n  ],\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ]\n}",
@@ -1156,7 +1156,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid request body\",\n    \"details\": {\n      \"attendee_names\": [\n        \"Provide between 1 and 4 attendee names.\"\n      ]\n    }\n  }\n}"
             },
             {
-              "name": "400 Bad Request \u2014 slots not consecutive",
+              "name": "400 Bad Request — slots not consecutive",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -1170,7 +1170,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/hold",
-                "description": "Atomically hold 1\u20134 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00\u201320:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1\u20134). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
+                "description": "Atomically hold 1–4 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00–20:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1–4). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"court_id\": \"{{court_id}}\",\n  \"date\": \"{{slot_date}}\",\n  \"start_times\": [\n    \"18:00\",\n    \"19:00\"\n  ],\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ]\n}",
@@ -1204,7 +1204,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid request body\",\n    \"details\": {\n      \"start_times\": [\n        \"Provide 1\\u20134 consecutive hour starts (e.g. 18:00, 19:00).\"\n      ]\n    }\n  }\n}"
             },
             {
-              "name": "400 Bad Request \u2014 past slot",
+              "name": "400 Bad Request — past slot",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -1218,7 +1218,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/hold",
-                "description": "Atomically hold 1\u20134 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00\u201320:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1\u20134). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
+                "description": "Atomically hold 1–4 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00–20:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1–4). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"court_id\": \"{{court_id}}\",\n  \"date\": \"{{slot_date}}\",\n  \"start_times\": [\n    \"18:00\",\n    \"19:00\"\n  ],\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ]\n}",
@@ -1266,7 +1266,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/hold",
-                "description": "Atomically hold 1\u20134 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00\u201320:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1\u20134). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
+                "description": "Atomically hold 1–4 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00–20:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1–4). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"court_id\": \"{{court_id}}\",\n  \"date\": \"{{slot_date}}\",\n  \"start_times\": [\n    \"18:00\",\n    \"19:00\"\n  ],\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ]\n}",
@@ -1300,7 +1300,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"UNAUTHENTICATED\",\n    \"message\": \"Authentication credentials were not provided.\"\n  }\n}"
             },
             {
-              "name": "409 Conflict \u2014 slot taken",
+              "name": "409 Conflict — slot taken",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -1314,7 +1314,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/hold",
-                "description": "Atomically hold 1\u20134 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00\u201320:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1\u20134). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
+                "description": "Atomically hold 1–4 consecutive 60-minute slots for 10 minutes.\n\n`start_times` is the list of hour starts on one court and date (e.g. `[\"18:00\",\"19:00\"]` holds 18:00–20:00). Hours must be unique and consecutive. Price is the sum of each hour's band.\n\nCreates one `held` booking. Occupies every hour: unique on `court + date + start_time` per occupied hour (active statuses only).\n\n**Attendee names** are required (1–4). Booker name is copied from the JWT user.\n\nIf any hour is taken: **409 SLOT_TAKEN**.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"court_id\": \"{{court_id}}\",\n  \"date\": \"{{slot_date}}\",\n  \"start_times\": [\n    \"18:00\",\n    \"19:00\"\n  ],\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ]\n}",
@@ -1388,7 +1388,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 cancelled",
+              "name": "200 OK — cancelled",
               "originalRequest": {
                 "method": "DELETE",
                 "header": [
@@ -1458,7 +1458,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"UNAUTHENTICATED\",\n    \"message\": \"Authentication credentials were not provided.\"\n  }\n}"
             },
             {
-              "name": "403 Forbidden \u2014 not owner",
+              "name": "403 Forbidden — not owner",
               "originalRequest": {
                 "method": "DELETE",
                 "header": [
@@ -1528,7 +1528,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"Booking not found.\"\n  }\n}"
             },
             {
-              "name": "409 Conflict \u2014 already paid",
+              "name": "409 Conflict — already paid",
               "originalRequest": {
                 "method": "DELETE",
                 "header": [
@@ -1602,7 +1602,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 Paymob checkout URL",
+              "name": "200 OK — Paymob checkout URL",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -1746,7 +1746,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"Booking not found.\"\n  }\n}"
             },
             {
-              "name": "409 Conflict \u2014 hold expired",
+              "name": "409 Conflict — hold expired",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -1794,7 +1794,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"HOLD_EXPIRED\",\n    \"message\": \"Your hold expired. Please pick the slot again.\"\n  }\n}"
             },
             {
-              "name": "409 Conflict \u2014 already paid",
+              "name": "409 Conflict — already paid",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -1842,7 +1842,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"ALREADY_PAID\",\n    \"message\": \"This booking is already confirmed.\"\n  }\n}"
             },
             {
-              "name": "502 Bad Gateway \u2014 Paymob error",
+              "name": "502 Bad Gateway — Paymob error",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -1902,7 +1902,7 @@
               }
             ],
             "url": "{{base_url}}/bookings/{{booking_id}}/status",
-            "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook \u2014 never because the browser landed on Paymob's success redirect.",
+            "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook — never because the browser landed on Paymob's success redirect.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1916,7 +1916,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 still pending",
+              "name": "200 OK — still pending",
               "originalRequest": {
                 "method": "GET",
                 "header": [
@@ -1926,7 +1926,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/{{booking_id}}/status",
-                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook \u2014 never because the browser landed on Paymob's success redirect.",
+                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook — never because the browser landed on Paymob's success redirect.",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -1951,7 +1951,7 @@
               "body": "{\n  \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"status\": \"pending_payment\",\n  \"booking_code\": null,\n  \"hold_expires_at\": \"2026-08-15T16:32:00+03:00\"\n}"
             },
             {
-              "name": "200 OK \u2014 confirmed (after webhook)",
+              "name": "200 OK — confirmed (after webhook)",
               "originalRequest": {
                 "method": "GET",
                 "header": [
@@ -1961,7 +1961,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/{{booking_id}}/status",
-                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook \u2014 never because the browser landed on Paymob's success redirect.",
+                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook — never because the browser landed on Paymob's success redirect.",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -1986,7 +1986,7 @@
               "body": "{\n  \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"status\": \"confirmed\",\n  \"booking_code\": \"MGZ-7F42K\",\n  \"pass_url\": \"/pass/MGZ-7F42K\",\n  \"hold_expires_at\": null\n}"
             },
             {
-              "name": "200 OK \u2014 payment failed",
+              "name": "200 OK — payment failed",
               "originalRequest": {
                 "method": "GET",
                 "header": [
@@ -1996,7 +1996,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/{{booking_id}}/status",
-                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook \u2014 never because the browser landed on Paymob's success redirect.",
+                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook — never because the browser landed on Paymob's success redirect.",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -2021,7 +2021,7 @@
               "body": "{\n  \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"status\": \"failed\",\n  \"booking_code\": null,\n  \"hold_expires_at\": null\n}"
             },
             {
-              "name": "200 OK \u2014 hold expired",
+              "name": "200 OK — hold expired",
               "originalRequest": {
                 "method": "GET",
                 "header": [
@@ -2031,7 +2031,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/{{booking_id}}/status",
-                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook \u2014 never because the browser landed on Paymob's success redirect.",
+                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook — never because the browser landed on Paymob's success redirect.",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -2066,7 +2066,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/{{booking_id}}/status",
-                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook \u2014 never because the browser landed on Paymob's success redirect.",
+                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook — never because the browser landed on Paymob's success redirect.",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -2091,7 +2091,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"UNAUTHENTICATED\",\n    \"message\": \"Authentication credentials were not provided.\"\n  }\n}"
             },
             {
-              "name": "403 Forbidden \u2014 not owner",
+              "name": "403 Forbidden — not owner",
               "originalRequest": {
                 "method": "GET",
                 "header": [
@@ -2101,7 +2101,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/{{booking_id}}/status",
-                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook \u2014 never because the browser landed on Paymob's success redirect.",
+                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook — never because the browser landed on Paymob's success redirect.",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -2136,7 +2136,7 @@
                   }
                 ],
                 "url": "{{base_url}}/bookings/{{booking_id}}/status",
-                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook \u2014 never because the browser landed on Paymob's success redirect.",
+                "description": "Lightweight poll for `/book/pending`. Call every 2s for up to 60s.\n\n`confirmed` only after HMAC-verified webhook — never because the browser landed on Paymob's success redirect.",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -2201,7 +2201,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 upcoming and past",
+              "name": "200 OK — upcoming and past",
               "originalRequest": {
                 "method": "GET",
                 "header": [
@@ -2236,7 +2236,7 @@
               "body": "{\n  \"upcoming\": [\n    {\n      \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n      \"status\": \"confirmed\",\n      \"court_name\": \"Court 1\",\n      \"date\": \"2026-08-20\",\n      \"start_times\": [\n        \"18:00\"\n      ],\n      \"start_time\": \"18:00\",\n      \"end_time\": \"19:00\",\n      \"price_egp\": 350,\n      \"booking_code\": \"MGZ-7F42K\",\n      \"period\": \"evening\"\n    }\n  ],\n  \"past\": [\n    {\n      \"id\": \"aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee\",\n      \"status\": \"redeemed\",\n      \"court_name\": \"Court 2\",\n      \"date\": \"2026-08-11\",\n      \"start_times\": [\n        \"19:00\"\n      ],\n      \"start_time\": \"19:00\",\n      \"end_time\": \"20:00\",\n      \"price_egp\": 350,\n      \"booking_code\": \"MGZ-2K91P\",\n      \"period\": \"evening\"\n    }\n  ]\n}"
             },
             {
-              "name": "200 OK \u2014 empty",
+              "name": "200 OK — empty",
               "originalRequest": {
                 "method": "GET",
                 "header": [
@@ -2332,7 +2332,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 owner detail",
+              "name": "200 OK — owner detail",
               "originalRequest": {
                 "method": "GET",
                 "header": [
@@ -2367,7 +2367,7 @@
               "body": "{\n  \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"status\": \"confirmed\",\n  \"court\": {\n    \"id\": \"11111111-1111-4111-8111-111111111111\",\n    \"name\": \"Court 1\"\n  },\n  \"date\": \"2026-08-20\",\n  \"start_times\": [\n    \"18:00\"\n  ],\n  \"start_time\": \"18:00\",\n  \"end_time\": \"19:00\",\n  \"booker_name\": \"Ahmed Hassan\",\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ],\n  \"price_egp\": 350,\n  \"price_cents\": 35000,\n  \"booking_code\": \"MGZ-7F42K\",\n  \"qr_payload\": \"https://mahgooz.app/pass/MGZ-7F42K\",\n  \"redeemed_at\": null,\n  \"created_at\": \"2026-08-15T16:22:00+03:00\",\n  \"paid_at\": \"2026-08-15T16:24:11+03:00\"\n}"
             },
             {
-              "name": "200 OK \u2014 still held (no code yet)",
+              "name": "200 OK — still held (no code yet)",
               "originalRequest": {
                 "method": "GET",
                 "header": [
@@ -2437,7 +2437,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"UNAUTHENTICATED\",\n    \"message\": \"Authentication credentials were not provided.\"\n  }\n}"
             },
             {
-              "name": "403 Forbidden \u2014 not owner",
+              "name": "403 Forbidden — not owner",
               "originalRequest": {
                 "method": "GET",
                 "header": [
@@ -2511,14 +2511,14 @@
       ]
     },
     {
-      "name": "4. Staff (staff JWT)",
-      "description": "PIN login, today's list, lookup, redeem once.",
+      "name": "4. Staff",
+      "description": "Staff-role JWT from `/auth/login`. Today's list, lookup, redeem once.",
       "auth": {
         "type": "bearer",
         "bearer": [
           {
             "key": "token",
-            "value": "{{staff_token}}",
+            "value": "{{access_token}}",
             "type": "string"
           }
         ]
@@ -2534,11 +2534,11 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{base_url}}/staff/login",
-            "description": "Staff gate: 4-digit PIN from `STAFF_PIN` env. Returns a staff JWT (not a customer token). No staff user table in MVP.",
+            "url": "{{base_url}}/auth/login",
+            "description": "Same login as customers. A staff account (`is_staff`) returns `user.role: staff`.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"pin\": \"{{staff_pin}}\"\n}",
+              "raw": "{\n  \"phone\": \"{{staff_phone}}\",\n  \"password\": \"{{staff_password}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2551,7 +2551,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 staff token",
+              "name": "200 OK — staff tokens",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -2560,11 +2560,11 @@
                     "value": "application/json"
                   }
                 ],
-                "url": "{{base_url}}/staff/login",
-                "description": "Staff gate: 4-digit PIN from `STAFF_PIN` env. Returns a staff JWT (not a customer token). No staff user table in MVP.",
+                "url": "{{base_url}}/auth/login",
+                "description": "Same login as customers. A staff account (`is_staff`) returns `user.role: staff`.",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"pin\": \"{{staff_pin}}\"\n}",
+                  "raw": "{\n  \"phone\": \"{{staff_phone}}\",\n  \"password\": \"{{staff_password}}\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2585,10 +2585,10 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n  \"access\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.staff\",\n  \"token_type\": \"Bearer\",\n  \"role\": \"staff\",\n  \"expires_in\": 43200\n}"
+              "body": "{\n  \"access\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access\",\n  \"refresh\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh\",\n  \"token_type\": \"Bearer\",\n  \"expires_in\": 3600,\n  \"user\": {\n    \"id\": \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\n    \"name\": \"Mostafa\",\n    \"phone\": \"01000000000\",\n    \"role\": \"staff\"\n  }\n}"
             },
             {
-              "name": "400 Bad Request \u2014 missing pin",
+              "name": "401 Unauthorized — bad credentials",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -2597,48 +2597,11 @@
                     "value": "application/json"
                   }
                 ],
-                "url": "{{base_url}}/staff/login",
-                "description": "Staff gate: 4-digit PIN from `STAFF_PIN` env. Returns a staff JWT (not a customer token). No staff user table in MVP.",
+                "url": "{{base_url}}/auth/login",
+                "description": "Same login as customers. A staff account (`is_staff`) returns `user.role: staff`.",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"pin\": \"{{staff_pin}}\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "auth": {
-                  "type": "noauth"
-                }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json; charset=utf-8"
-                }
-              ],
-              "cookie": [],
-              "body": "{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid request body\",\n    \"details\": {\n      \"pin\": [\n        \"This field is required.\"\n      ]\n    }\n  }\n}"
-            },
-            {
-              "name": "401 Unauthorized \u2014 wrong pin",
-              "originalRequest": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "url": "{{base_url}}/staff/login",
-                "description": "Staff gate: 4-digit PIN from `STAFF_PIN` env. Returns a staff JWT (not a customer token). No staff user table in MVP.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"pin\": \"{{staff_pin}}\"\n}",
+                  "raw": "{\n  \"phone\": \"{{staff_phone}}\",\n  \"password\": \"{{staff_password}}\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2659,7 +2622,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n  \"error\": {\n    \"code\": \"INVALID_PIN\",\n    \"message\": \"Staff PIN is incorrect.\"\n  }\n}"
+              "body": "{\n  \"error\": {\n    \"code\": \"INVALID_CREDENTIALS\",\n    \"message\": \"Phone or password is incorrect.\"\n  }\n}"
             }
           ],
           "event": [
@@ -2668,9 +2631,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.response.code === 200) {",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "  const json = pm.response.json();",
-                  "  if (json.access) pm.collectionVariables.set('staff_token', json.access);",
+                  "  if (json.access) pm.collectionVariables.set('access_token', json.access);",
+                  "  if (json.refresh) pm.collectionVariables.set('refresh_token', json.refresh);",
                   "}"
                 ]
               }
@@ -2684,7 +2648,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{staff_token}}"
+                "value": "Bearer {{access_token}}"
               }
             ],
             "url": "{{base_url}}/staff/bookings?date={{slot_date}}",
@@ -2694,7 +2658,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{staff_token}}",
+                  "value": "{{access_token}}",
                   "type": "string"
                 }
               ]
@@ -2702,13 +2666,13 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 paid bookings",
+              "name": "200 OK — paid bookings",
               "originalRequest": {
                 "method": "GET",
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   }
                 ],
                 "url": "{{base_url}}/staff/bookings?date={{slot_date}}",
@@ -2718,7 +2682,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -2737,13 +2701,13 @@
               "body": "{\n  \"date\": \"2026-08-20\",\n  \"bookings\": [\n    {\n      \"booking_code\": \"MGZ-7F42K\",\n      \"status\": \"confirmed\",\n      \"court_name\": \"Court 1\",\n      \"start_times\": [\n        \"18:00\"\n      ],\n      \"start_time\": \"18:00\",\n      \"end_time\": \"19:00\",\n      \"booker_name\": \"Ahmed Hassan\",\n      \"redeemed_at\": null\n    }\n  ]\n}"
             },
             {
-              "name": "200 OK \u2014 none",
+              "name": "200 OK — none",
               "originalRequest": {
                 "method": "GET",
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   }
                 ],
                 "url": "{{base_url}}/staff/bookings?date={{slot_date}}",
@@ -2753,7 +2717,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -2772,13 +2736,13 @@
               "body": "{\n  \"date\": \"2026-08-20\",\n  \"bookings\": []\n}"
             },
             {
-              "name": "401 Unauthorized \u2014 missing staff JWT",
+              "name": "401 Unauthorized — missing JWT",
               "originalRequest": {
                 "method": "GET",
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   }
                 ],
                 "url": "{{base_url}}/staff/bookings?date={{slot_date}}",
@@ -2788,7 +2752,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -2807,13 +2771,13 @@
               "body": "{\n  \"error\": {\n    \"code\": \"UNAUTHENTICATED\",\n    \"message\": \"Authentication credentials were not provided.\"\n  }\n}"
             },
             {
-              "name": "403 Forbidden \u2014 customer JWT used",
+              "name": "403 Forbidden — customer JWT used",
               "originalRequest": {
                 "method": "GET",
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   }
                 ],
                 "url": "{{base_url}}/staff/bookings?date={{slot_date}}",
@@ -2823,7 +2787,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -2850,7 +2814,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{staff_token}}"
+                "value": "Bearer {{access_token}}"
               }
             ],
             "url": "{{base_url}}/staff/passes/{{booking_code}}",
@@ -2860,7 +2824,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{staff_token}}",
+                  "value": "{{access_token}}",
                   "type": "string"
                 }
               ]
@@ -2868,13 +2832,13 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 valid, not redeemed",
+              "name": "200 OK — valid, not redeemed",
               "originalRequest": {
                 "method": "GET",
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   }
                 ],
                 "url": "{{base_url}}/staff/passes/{{booking_code}}",
@@ -2884,7 +2848,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -2903,13 +2867,13 @@
               "body": "{\n  \"booking_code\": \"MGZ-7F42K\",\n  \"status\": \"confirmed\",\n  \"can_redeem\": true,\n  \"court\": {\n    \"id\": \"11111111-1111-4111-8111-111111111111\",\n    \"name\": \"Court 1\"\n  },\n  \"date\": \"2026-08-20\",\n  \"start_times\": [\n    \"18:00\"\n  ],\n  \"start_time\": \"18:00\",\n  \"end_time\": \"19:00\",\n  \"booker_name\": \"Ahmed Hassan\",\n  \"booker_phone\": \"01012345678\",\n  \"attendee_names\": [\n    \"Ahmed Hassan\",\n    \"Omar Ali\",\n    \"Youssef Nabil\",\n    \"Karim Fathy\"\n  ],\n  \"price_egp\": 350,\n  \"paymob_transaction_id\": 289187034,\n  \"redeemed_at\": null\n}"
             },
             {
-              "name": "200 OK \u2014 already redeemed",
+              "name": "200 OK — already redeemed",
               "originalRequest": {
                 "method": "GET",
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   }
                 ],
                 "url": "{{base_url}}/staff/passes/{{booking_code}}",
@@ -2919,7 +2883,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -2944,7 +2908,7 @@
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   }
                 ],
                 "url": "{{base_url}}/staff/passes/{{booking_code}}",
@@ -2954,7 +2918,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -2979,7 +2943,7 @@
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   }
                 ],
                 "url": "{{base_url}}/staff/passes/{{booking_code}}",
@@ -2989,7 +2953,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -3008,13 +2972,13 @@
               "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"No booking for this code.\"\n  }\n}"
             },
             {
-              "name": "409 Conflict \u2014 payment not confirmed",
+              "name": "409 Conflict — payment not confirmed",
               "originalRequest": {
                 "method": "GET",
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   }
                 ],
                 "url": "{{base_url}}/staff/passes/{{booking_code}}",
@@ -3024,7 +2988,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -3051,7 +3015,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{staff_token}}"
+                "value": "Bearer {{access_token}}"
               },
               {
                 "key": "Content-Type",
@@ -3059,7 +3023,7 @@
               }
             ],
             "url": "{{base_url}}/staff/passes/{{booking_code}}/redeem",
-            "description": "Atomic one-time redeem: `UPDATE \u2026 WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
+            "description": "Atomic one-time redeem: `UPDATE … WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
             "body": {
               "mode": "raw",
               "raw": "{}",
@@ -3074,7 +3038,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{staff_token}}",
+                  "value": "{{access_token}}",
                   "type": "string"
                 }
               ]
@@ -3082,13 +3046,13 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 redeemed once",
+              "name": "200 OK — redeemed once",
               "originalRequest": {
                 "method": "POST",
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   },
                   {
                     "key": "Content-Type",
@@ -3096,7 +3060,7 @@
                   }
                 ],
                 "url": "{{base_url}}/staff/passes/{{booking_code}}/redeem",
-                "description": "Atomic one-time redeem: `UPDATE \u2026 WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
+                "description": "Atomic one-time redeem: `UPDATE … WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
                 "body": {
                   "mode": "raw",
                   "raw": "{}",
@@ -3111,7 +3075,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -3136,7 +3100,7 @@
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   },
                   {
                     "key": "Content-Type",
@@ -3144,7 +3108,7 @@
                   }
                 ],
                 "url": "{{base_url}}/staff/passes/{{booking_code}}/redeem",
-                "description": "Atomic one-time redeem: `UPDATE \u2026 WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
+                "description": "Atomic one-time redeem: `UPDATE … WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
                 "body": {
                   "mode": "raw",
                   "raw": "{}",
@@ -3159,7 +3123,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -3178,13 +3142,13 @@
               "body": "{\n  \"error\": {\n    \"code\": \"UNAUTHENTICATED\",\n    \"message\": \"Authentication credentials were not provided.\"\n  }\n}"
             },
             {
-              "name": "403 Forbidden \u2014 customer JWT used",
+              "name": "403 Forbidden — customer JWT used",
               "originalRequest": {
                 "method": "POST",
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   },
                   {
                     "key": "Content-Type",
@@ -3192,7 +3156,7 @@
                   }
                 ],
                 "url": "{{base_url}}/staff/passes/{{booking_code}}/redeem",
-                "description": "Atomic one-time redeem: `UPDATE \u2026 WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
+                "description": "Atomic one-time redeem: `UPDATE … WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
                 "body": {
                   "mode": "raw",
                   "raw": "{}",
@@ -3207,7 +3171,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -3232,7 +3196,7 @@
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   },
                   {
                     "key": "Content-Type",
@@ -3240,7 +3204,7 @@
                   }
                 ],
                 "url": "{{base_url}}/staff/passes/{{booking_code}}/redeem",
-                "description": "Atomic one-time redeem: `UPDATE \u2026 WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
+                "description": "Atomic one-time redeem: `UPDATE … WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
                 "body": {
                   "mode": "raw",
                   "raw": "{}",
@@ -3255,7 +3219,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -3274,13 +3238,13 @@
               "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"No booking for this code.\"\n  }\n}"
             },
             {
-              "name": "409 Conflict \u2014 already redeemed",
+              "name": "409 Conflict — already redeemed",
               "originalRequest": {
                 "method": "POST",
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   },
                   {
                     "key": "Content-Type",
@@ -3288,7 +3252,7 @@
                   }
                 ],
                 "url": "{{base_url}}/staff/passes/{{booking_code}}/redeem",
-                "description": "Atomic one-time redeem: `UPDATE \u2026 WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
+                "description": "Atomic one-time redeem: `UPDATE … WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
                 "body": {
                   "mode": "raw",
                   "raw": "{}",
@@ -3303,7 +3267,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -3322,13 +3286,13 @@
               "body": "{\n  \"error\": {\n    \"code\": \"ALREADY_REDEEMED\",\n    \"message\": \"This pass was already redeemed at 17:58.\"\n  }\n}"
             },
             {
-              "name": "409 Conflict \u2014 payment not confirmed",
+              "name": "409 Conflict — payment not confirmed",
               "originalRequest": {
                 "method": "POST",
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   },
                   {
                     "key": "Content-Type",
@@ -3336,7 +3300,7 @@
                   }
                 ],
                 "url": "{{base_url}}/staff/passes/{{booking_code}}/redeem",
-                "description": "Atomic one-time redeem: `UPDATE \u2026 WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
+                "description": "Atomic one-time redeem: `UPDATE … WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
                 "body": {
                   "mode": "raw",
                   "raw": "{}",
@@ -3351,7 +3315,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -3370,13 +3334,13 @@
               "body": "{\n  \"error\": {\n    \"code\": \"PAYMENT_NOT_CONFIRMED\",\n    \"message\": \"Payment not confirmed yet.\"\n  }\n}"
             },
             {
-              "name": "409 Conflict \u2014 wrong day",
+              "name": "409 Conflict — wrong day",
               "originalRequest": {
                 "method": "POST",
                 "header": [
                   {
                     "key": "Authorization",
-                    "value": "Bearer {{staff_token}}"
+                    "value": "Bearer {{access_token}}"
                   },
                   {
                     "key": "Content-Type",
@@ -3384,7 +3348,7 @@
                   }
                 ],
                 "url": "{{base_url}}/staff/passes/{{booking_code}}/redeem",
-                "description": "Atomic one-time redeem: `UPDATE \u2026 WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
+                "description": "Atomic one-time redeem: `UPDATE … WHERE booking_code=%s AND status='confirmed'`.\n\nConcurrent staff taps: only one 200, the other 409 ALREADY_REDEEMED.",
                 "body": {
                   "mode": "raw",
                   "raw": "{}",
@@ -3399,7 +3363,7 @@
                   "bearer": [
                     {
                       "key": "token",
-                      "value": "{{staff_token}}",
+                      "value": "{{access_token}}",
                       "type": "string"
                     }
                   ]
@@ -3436,7 +3400,7 @@
               }
             ],
             "url": "{{base_url}}/webhooks/paymob",
-            "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** \u2014 do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
+            "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** — do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"type\": \"TRANSACTION\",\n  \"obj\": {\n    \"id\": 289187034,\n    \"pending\": false,\n    \"amount_cents\": 35000,\n    \"success\": true,\n    \"is_auth\": false,\n    \"is_capture\": false,\n    \"is_standalone_payment\": true,\n    \"is_voided\": false,\n    \"is_refunded\": false,\n    \"is_3d_secure\": true,\n    \"integration_id\": 123456,\n    \"profile_id\": 98765,\n    \"has_parent_transaction\": false,\n    \"order\": {\n      \"id\": 998877,\n      \"merchant_order_id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n    },\n    \"created_at\": \"2026-08-15T13:24:11.123456\",\n    \"currency\": \"EGP\",\n    \"error_occured\": false,\n    \"owner\": 111222,\n    \"source_data\": {\n      \"pan\": \"2346\",\n      \"type\": \"card\",\n      \"sub_type\": \"MasterCard\"\n    }\n  },\n  \"hmac\": \"REPLACE_WITH_COMPUTED_HMAC_SHA512\"\n}",
@@ -3452,7 +3416,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 booking confirmed",
+              "name": "200 OK — booking confirmed",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -3462,7 +3426,7 @@
                   }
                 ],
                 "url": "{{base_url}}/webhooks/paymob",
-                "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** \u2014 do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
+                "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** — do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"type\": \"TRANSACTION\",\n  \"obj\": {\n    \"id\": 289187034,\n    \"pending\": false,\n    \"amount_cents\": 35000,\n    \"success\": true,\n    \"is_auth\": false,\n    \"is_capture\": false,\n    \"is_standalone_payment\": true,\n    \"is_voided\": false,\n    \"is_refunded\": false,\n    \"is_3d_secure\": true,\n    \"integration_id\": 123456,\n    \"profile_id\": 98765,\n    \"has_parent_transaction\": false,\n    \"order\": {\n      \"id\": 998877,\n      \"merchant_order_id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n    },\n    \"created_at\": \"2026-08-15T13:24:11.123456\",\n    \"currency\": \"EGP\",\n    \"error_occured\": false,\n    \"owner\": 111222,\n    \"source_data\": {\n      \"pan\": \"2346\",\n      \"type\": \"card\",\n      \"sub_type\": \"MasterCard\"\n    }\n  },\n  \"hmac\": \"REPLACE_WITH_COMPUTED_HMAC_SHA512\"\n}",
@@ -3489,7 +3453,7 @@
               "body": "{\n  \"received\": true,\n  \"booking_id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"status\": \"confirmed\",\n  \"booking_code\": \"MGZ-7F42K\"\n}"
             },
             {
-              "name": "200 OK \u2014 duplicate callback (idempotent)",
+              "name": "200 OK — duplicate callback (idempotent)",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -3499,7 +3463,7 @@
                   }
                 ],
                 "url": "{{base_url}}/webhooks/paymob",
-                "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** \u2014 do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
+                "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** — do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"type\": \"TRANSACTION\",\n  \"obj\": {\n    \"id\": 289187034,\n    \"pending\": false,\n    \"amount_cents\": 35000,\n    \"success\": true,\n    \"is_auth\": false,\n    \"is_capture\": false,\n    \"is_standalone_payment\": true,\n    \"is_voided\": false,\n    \"is_refunded\": false,\n    \"is_3d_secure\": true,\n    \"integration_id\": 123456,\n    \"profile_id\": 98765,\n    \"has_parent_transaction\": false,\n    \"order\": {\n      \"id\": 998877,\n      \"merchant_order_id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n    },\n    \"created_at\": \"2026-08-15T13:24:11.123456\",\n    \"currency\": \"EGP\",\n    \"error_occured\": false,\n    \"owner\": 111222,\n    \"source_data\": {\n      \"pan\": \"2346\",\n      \"type\": \"card\",\n      \"sub_type\": \"MasterCard\"\n    }\n  },\n  \"hmac\": \"REPLACE_WITH_COMPUTED_HMAC_SHA512\"\n}",
@@ -3526,7 +3490,7 @@
               "body": "{\n  \"received\": true,\n  \"booking_id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"status\": \"confirmed\",\n  \"booking_code\": \"MGZ-7F42K\",\n  \"idempotent\": true\n}"
             },
             {
-              "name": "400 Bad Request \u2014 malformed payload",
+              "name": "400 Bad Request — malformed payload",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -3536,7 +3500,7 @@
                   }
                 ],
                 "url": "{{base_url}}/webhooks/paymob",
-                "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** \u2014 do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
+                "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** — do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"type\": \"TRANSACTION\",\n  \"obj\": {\n    \"id\": 289187034,\n    \"pending\": false,\n    \"amount_cents\": 35000,\n    \"success\": true,\n    \"is_auth\": false,\n    \"is_capture\": false,\n    \"is_standalone_payment\": true,\n    \"is_voided\": false,\n    \"is_refunded\": false,\n    \"is_3d_secure\": true,\n    \"integration_id\": 123456,\n    \"profile_id\": 98765,\n    \"has_parent_transaction\": false,\n    \"order\": {\n      \"id\": 998877,\n      \"merchant_order_id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n    },\n    \"created_at\": \"2026-08-15T13:24:11.123456\",\n    \"currency\": \"EGP\",\n    \"error_occured\": false,\n    \"owner\": 111222,\n    \"source_data\": {\n      \"pan\": \"2346\",\n      \"type\": \"card\",\n      \"sub_type\": \"MasterCard\"\n    }\n  },\n  \"hmac\": \"REPLACE_WITH_COMPUTED_HMAC_SHA512\"\n}",
@@ -3563,7 +3527,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Unrecognized Paymob callback payload.\"\n  }\n}"
             },
             {
-              "name": "401 Unauthorized \u2014 invalid HMAC",
+              "name": "401 Unauthorized — invalid HMAC",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -3573,7 +3537,7 @@
                   }
                 ],
                 "url": "{{base_url}}/webhooks/paymob",
-                "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** \u2014 do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
+                "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** — do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"type\": \"TRANSACTION\",\n  \"obj\": {\n    \"id\": 289187034,\n    \"pending\": false,\n    \"amount_cents\": 35000,\n    \"success\": true,\n    \"is_auth\": false,\n    \"is_capture\": false,\n    \"is_standalone_payment\": true,\n    \"is_voided\": false,\n    \"is_refunded\": false,\n    \"is_3d_secure\": true,\n    \"integration_id\": 123456,\n    \"profile_id\": 98765,\n    \"has_parent_transaction\": false,\n    \"order\": {\n      \"id\": 998877,\n      \"merchant_order_id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n    },\n    \"created_at\": \"2026-08-15T13:24:11.123456\",\n    \"currency\": \"EGP\",\n    \"error_occured\": false,\n    \"owner\": 111222,\n    \"source_data\": {\n      \"pan\": \"2346\",\n      \"type\": \"card\",\n      \"sub_type\": \"MasterCard\"\n    }\n  },\n  \"hmac\": \"REPLACE_WITH_COMPUTED_HMAC_SHA512\"\n}",
@@ -3600,7 +3564,7 @@
               "body": "{\n  \"error\": {\n    \"code\": \"INVALID_HMAC\",\n    \"message\": \"Callback HMAC verification failed.\"\n  }\n}"
             },
             {
-              "name": "404 Not Found \u2014 unknown booking reference",
+              "name": "404 Not Found — unknown booking reference",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -3610,7 +3574,7 @@
                   }
                 ],
                 "url": "{{base_url}}/webhooks/paymob",
-                "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** \u2014 do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
+                "description": "**Source of truth for payment.** Paymob POSTs here; the browser redirect is ignored.\n\n1. Verify HMAC-SHA512 with `PAYMOB_HMAC_SECRET` using Paymob's documented field order.\n2. Reject mismatch with **401 INVALID_HMAC** — do not update the booking.\n3. On `obj.success === true`: set status `confirmed`, issue `booking_code`, store unique `paymob_transaction_id` (idempotent on retries).\n4. On failure: set status `failed` and release the slot.\n\n`obj.order.merchant_order_id` / `special_reference` = booking UUID.\n\n**This saved success body uses a placeholder hmac.** A live 200 requires a signature computed against your `PAYMOB_HMAC_SECRET`. The invalid-hmac example is what you can send as-is to test rejection.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"type\": \"TRANSACTION\",\n  \"obj\": {\n    \"id\": 289187034,\n    \"pending\": false,\n    \"amount_cents\": 35000,\n    \"success\": true,\n    \"is_auth\": false,\n    \"is_capture\": false,\n    \"is_standalone_payment\": true,\n    \"is_voided\": false,\n    \"is_refunded\": false,\n    \"is_3d_secure\": true,\n    \"integration_id\": 123456,\n    \"profile_id\": 98765,\n    \"has_parent_transaction\": false,\n    \"order\": {\n      \"id\": 998877,\n      \"merchant_order_id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n    },\n    \"created_at\": \"2026-08-15T13:24:11.123456\",\n    \"currency\": \"EGP\",\n    \"error_occured\": false,\n    \"owner\": 111222,\n    \"source_data\": {\n      \"pan\": \"2346\",\n      \"type\": \"card\",\n      \"sub_type\": \"MasterCard\"\n    }\n  },\n  \"hmac\": \"REPLACE_WITH_COMPUTED_HMAC_SHA512\"\n}",
@@ -3665,7 +3629,7 @@
           },
           "response": [
             {
-              "name": "200 OK \u2014 slot released",
+              "name": "200 OK — slot released",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -3702,7 +3666,7 @@
               "body": "{\n  \"received\": true,\n  \"booking_id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"status\": \"failed\"\n}"
             },
             {
-              "name": "401 Unauthorized \u2014 invalid HMAC",
+              "name": "401 Unauthorized — invalid HMAC",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -3767,7 +3731,7 @@
           },
           "response": [
             {
-              "name": "401 Unauthorized \u2014 rejected, booking unchanged",
+              "name": "401 Unauthorized — rejected, booking unchanged",
               "originalRequest": {
                 "method": "POST",
                 "header": [

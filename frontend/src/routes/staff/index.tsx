@@ -8,15 +8,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { $api } from '@/lib/api/client'
-import { clearStaffSession } from '@/lib/api/auth'
+import { clearSession } from '@/lib/api/auth'
 import { parseSlotStart, todayKey } from '@/lib/format'
 import { requireStaff } from '@/lib/guards'
 import { MxIcon, ScanLinear } from '@/lib/icons'
 import { staffKind } from '@/lib/slot-states'
 
 export const Route = createFileRoute('/staff/')({
-  beforeLoad: () => {
-    requireStaff()
+  beforeLoad: ({ location }) => {
+    requireStaff(`${location.pathname}${location.searchStr}`)
   },
   component: StaffLookupPage,
 })
@@ -64,8 +64,8 @@ function StaffLookupPage() {
     <StaffShell
       current="lookup"
       onLogout={() => {
-        clearStaffSession()
-        void navigate({ to: '/staff/login' })
+        clearSession()
+        void navigate({ to: '/login' })
       }}
     >
       <div className="grid gap-8 md:grid-cols-[1fr_320px]">

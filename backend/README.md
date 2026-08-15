@@ -31,6 +31,12 @@ http://127.0.0.1:8000/api/v1/health
 
 `migrate` seeds **Court 1** and **Court 2**. Re-run with `python manage.py seed_courts` if needed.
 
+Staff use the same phone + password login as customers. Mark a user as staff in Django admin (`is_staff`), or seed the demo desk account from `.env`:
+
+```bash
+python manage.py seed_staff
+```
+
 Unpaid holds past the 10-minute TTL are released lazily on `GET /slots`. Run `python manage.py expire_holds` for demo/ops cleanup.
 
 ## Booking rules

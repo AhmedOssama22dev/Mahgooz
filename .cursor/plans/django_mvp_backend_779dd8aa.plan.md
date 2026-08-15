@@ -15,7 +15,7 @@ todos:
     content: Implement Intention checkout, HMAC webhook, confirmed code issuance, failed-payment release
     status: pending
   - id: staff-pass
-    content: Implement public pass, my bookings, staff PIN login, lookup, atomic one-time redeem
+    content: Implement public pass, my bookings, unified login RBAC, staff lookup, atomic one-time redeem
     status: pending
   - id: tests
     content: Add tests for double-book, forged HMAC, webhook success/fail, hold expiry, double redeem
@@ -34,7 +34,7 @@ The Core MVP in [backend/requirements.md](backend/requirements.md) is the right 
 
 **Keep in v1**
 
-- Phone + password JWT auth (your choice) so every paid booking has a `user_id`
+- Phone + password JWT auth (one login for everyone) so every paid booking has a `user_id`
 - Two seeded courts, 60-minute slots, 14-day book-ahead window, hours 08:00–22:00
 - **Hold TTL 10 minutes** so abandoned/failed payments release the slot
 - One booking can contain **one or more 60-minute slots**; the MVP accepts multiple distinct start times for the same court and date
@@ -42,7 +42,7 @@ The Core MVP in [backend/requirements.md](backend/requirements.md) is the right 
 - Real Paymob Intention API + Unified Checkout + HMAC webhook
 - Attendee **names** (from requirements.md), not just a player count
 - Morning / afternoon / evening price bands as **config**, not a pricing engine
-- Staff 4-digit PIN from env (not a full admin user system)
+- Unified login with RBAC: same phone + password for customers and staff; `role` is `customer` or `staff` (`is_staff` on the User). Public register always creates customers; staff is granted in Django admin or `python manage.py seed_staff`
 - Public pass by short code (`MGZ-7F42K`); frontend renders the QR from that code
 
 **Cut from v1** (explicitly out of scope)
@@ -78,7 +78,7 @@ sequenceDiagram
 | Piece | Choice |
 |-------|--------|
 | Runtime | Python 3.12, Django 5.x, DRF |
-| Auth | `djangorestframework-simplejwt` (customer) + staff PIN → staff JWT |
+| Auth | `djangorestframework-simplejwt` — one JWT; `user.role` is `customer` or `staff` |
 | DB | PostgreSQL (your choice) |
 | Payments | Paymob Intention API, Egypt, cards in test mode |
 | Config | `django-environ` / `.env` — never commit secrets |
@@ -90,7 +90,7 @@ Project layout under [backend/](backend/):
 backend/
   manage.py
   config/                 # settings, urls, wsgi
-  accounts/               # User (phone unique), register/login/me
+  accounts/               # User (phone unique), register/login/me, RBAC role
   bookings/               # Court, Booking, slots, hold, redeem
   payments/               # Paymob client, HMAC, webhook
   postman/                # collection + environment
@@ -107,6 +107,7 @@ backend/
 - `phone` unique, normalized `01xxxxxxxxx`
 - `name`, hashed password
 - `email` nullable, unused in v1
+- `is_staff` → API `role`: `customer` (default) or `staff`. Public register always creates customers.
 
 **Court** (seeded: Court 1, Court 2)
 
@@ -173,12 +174,12 @@ Prefix: `/api/v1`. JSON only. CORS enabled for the frontend origin.
 - `GET /slots?date=YYYY-MM-DD&court_id=` — generated 08:00–21:00 grid with `available | held | booked` (never expose another user’s hold as bookable)
 - `GET /passes/{code}` — public pass after paid (no phone, no Paymob ids)
 
-### Customer auth
+### Auth (one login)
 
-- `POST /auth/register` — name, phone, password
-- `POST /auth/login` — phone, password → access + refresh
+- `POST /auth/register` — name, phone, password → always `role: customer`
+- `POST /auth/login` — phone, password → access + refresh + `user.role` (`customer` or `staff`)
 - `POST /auth/refresh`
-- `GET /auth/me`
+- `GET /auth/me` — includes `role`
 
 ### Booking (JWT)
 
@@ -203,12 +204,13 @@ Multi-slot hold request:
 
 Success (`201`) returns the parent `booking_id`, normalized `slots`, `hold_expires_at`, and `total_price_cents`. A conflict returns `409 SLOT_TAKEN` with every currently conflicting requested slot; the response must make clear that **none** of the requested slots were held.
 
-### Staff (staff JWT from PIN)
+### Staff (same JWT, `role: staff`)
 
-- `POST /staff/login` `{ "pin": "...." }`
+- No `POST /staff/login` and no PIN. Staff use `POST /auth/login`.
 - `GET /staff/bookings?date=today` — next ~12 hours, paid only
 - `GET /staff/passes/{code}` — full detail for check-in
 - `POST /staff/passes/{code}/redeem` — once; second call **409 already redeemed**
+- Customer tokens on these routes → **403**
 
 ### System
 
@@ -232,7 +234,7 @@ Env (in `.env.example` only):
 - `PAYMOB_SECRET_KEY`, `PAYMOB_PUBLIC_KEY`, `PAYMOB_HMAC_SECRET`, `PAYMOB_INTEGRATION_ID_CARD`
 - `PAYMOB_BASE_URL=https://accept.paymob.com`
 - `FRONTEND_URL`, `PUBLIC_API_URL` (ngrok)
-- `STAFF_PIN`
+- `STAFF_PHONE`, `STAFF_PASSWORD`, `STAFF_NAME` — demo staff account for `python manage.py seed_staff`
 
 Implementation notes:
 
@@ -246,8 +248,9 @@ Implementation notes:
 
 ## Auth and permissions
 
-- Customer JWT on hold / checkout / my bookings
-- Staff JWT on lookup / redeem / today’s list
+- One JWT from phone + password. `user.role` is the only difference.
+- Any logged-in account (customer or staff) may hold / checkout / list own bookings
+- Staff-only (`is_staff`) on lookup / redeem / today’s list — customers get 403
 - Webhook unsigned by JWT, authenticated by HMAC
 - Pass GET is public (unlisted code)
 - Staff cannot redeem `pending_payment` or wrong-day passes (return clear error codes)
@@ -277,7 +280,7 @@ Files:
 - [backend/postman/Mahgooz_API.postman_collection.json](backend/postman/Mahgooz_API.postman_collection.json)
 - [backend/postman/Mahgooz_Local.postman_environment.json](backend/postman/Mahgooz_Local.postman_environment.json)
 
-Collection v2.1, folders matching the API groups above. Collection variables: `base_url`, `access_token`, `refresh_token`, `staff_token`, `court_id`, `booking_id`, `booking_code`.
+Collection v2.1, folders matching the API groups above. Collection variables: `base_url`, `access_token`, `refresh_token`, `court_id`, `booking_id`, `booking_code`, `staff_phone`, `staff_password`.
 
 **Every request includes saved examples:**
 
@@ -296,7 +299,7 @@ Webhook example includes a documented HMAC-invalid body (will 401) and a note th
 2. Court seed + Booking/BookingSlot models + partial unique index
 3. Slots + atomic multi-slot hold/cancel + lazy expiry
 4. Paymob client + checkout + HMAC webhook
-5. Pass + my bookings + staff PIN/login/lookup/redeem
+5. Pass + my bookings + staff lookup/redeem (same login, staff role)
 6. Tests for constraint / HMAC / redeem
 7. Postman collection + `.env.example` + short `backend/README.md` (run, migrate, ngrok, register webhook)
 

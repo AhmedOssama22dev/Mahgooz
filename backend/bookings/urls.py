@@ -10,7 +10,6 @@ from .views import (
     PublicPassView,
     SlotListView,
     StaffBookingListView,
-    StaffLoginView,
     StaffPassView,
     StaffRedeemView,
 )
@@ -32,7 +31,6 @@ urlpatterns = [
         BookingStatusView.as_view(),
         name="booking-status",
     ),
-    path("staff/login", StaffLoginView.as_view(), name="staff-login"),
     path("staff/bookings", StaffBookingListView.as_view(), name="staff-bookings"),
     path("staff/passes/<str:code>", StaffPassView.as_view(), name="staff-pass"),
     path(

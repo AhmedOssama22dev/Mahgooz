@@ -1,10 +1,11 @@
-from datetime import timedelta
-
 from django.conf import settings
-from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken
 
 ACCESS_EXPIRES_IN = int(settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"].total_seconds())
-STAFF_ACCESS_EXPIRES_IN = int(timedelta(hours=12).total_seconds())
+
+
+def role_for(user):
+    return "staff" if getattr(user, "is_staff", False) else "customer"
 
 
 def user_payload(user):
@@ -12,32 +13,22 @@ def user_payload(user):
         "id": str(user.id),
         "name": user.name,
         "phone": user.phone,
+        "role": role_for(user),
     }
 
 
-def issue_customer_tokens(user):
+def issue_tokens(user):
     refresh = RefreshToken.for_user(user)
-    refresh["role"] = "customer"
+    role = role_for(user)
+    refresh["role"] = role
     access = refresh.access_token
-    access["role"] = "customer"
+    access["role"] = role
     return {
         "access": str(access),
         "refresh": str(refresh),
         "token_type": "Bearer",
         "expires_in": ACCESS_EXPIRES_IN,
         "user": user_payload(user),
-    }
-
-
-def issue_staff_tokens():
-    access = AccessToken()
-    access.set_exp(lifetime=timedelta(seconds=STAFF_ACCESS_EXPIRES_IN))
-    access["role"] = "staff"
-    return {
-        "access": str(access),
-        "token_type": "Bearer",
-        "role": "staff",
-        "expires_in": STAFF_ACCESS_EXPIRES_IN,
     }
 
 
