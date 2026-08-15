@@ -5807,3 +5807,1027 @@ Error: fetch failed
 [2026-08-15T16:13:16+03:00] SKIP register-desktop-dark (already done)
 [2026-08-15T16:13:16+03:00] SKIP book-date-mobile-light (already done)
 [2026-08-15T16:13:16+03:00] START book-date-mobile-dark (MOBILE)
+{
+  "outputComponents": [
+    {
+      "design": {
+        "screens": [
+          {
+            "designSystem": {
+              "designSystem": {
+                "displayName": "CourtPass Midnight",
+                "styleGuidelines": "## Brand & Style\nThe design system transitions into a refined, high-performance **Refined Dark Mode** aesthetic. It moves away from the airy, daytime feel of the original system toward a \"Night Match\" atmosphere—evoking the prestige of professional evening padel tournaments under stadium lights.\n\nThe style is **Modern Minimalist** with a focus on **Tonal Depth**. By utilizing a deep obsidian-green foundation, the UI reduces eye strain and allows the vibrant primary and secondary accents to \"pop\" with functional energy. The brand personality remains professional, sporty, and premium, but adds a layer of exclusive, high-tech sophistication suitable for a top-tier athletic club.\n\n## Layout & Spacing\nThe layout adheres to a **Fixed-Fluid** model centered on a 390px mobile-first viewport. \n\nThe rhythm is governed by a 4px baseline grid. A consistent 20px edge margin creates a \"safe zone\" for interaction. Vertical density is managed through a \"Stack\" system: 16px for related content within a card, and 24px-32px to separate distinct sections (e.g., \"Available Courts\" from \"Your Bookings\"). Bottom-anchored actions ensure high ergonomic reachability for one-handed operation.\n\n## Elevation & Depth\nElevation in this system is conveyed through **Tonal Stepping** rather than heavy shadows.\n\n1.  **Level 0 (Base):** `#0F1A14` (The court floor).\n2.  **Level 1 (Surface):** `#1A2620` (Cards, list items).\n3.  **Level 2 (High Surface):** `#24322A` (Active items, modals, hovered states).\n\nFor floating elements like \"Book Now\" sticky buttons, use a **Glow-tinted Shadow**: a soft blur with a 15% opacity primary color (`#1B7A4E`) to simulate the way stadium lights reflect off the court surface.\n\n## Components\n- **Buttons:** Primary buttons are 56px height, solid `#1B7A4E` with `#F4F7F5` text. Secondary buttons are outlined with a 1.5px stroke of the primary color and no fill.\n- **Cards:** Surface-container `#1A2620` with a subtle 1px border of `#2C3D35`. Avoid solid black backgrounds; use the surface green-tint to maintain depth.\n- **Chips (Time Slots):** Unselected states are `#24322A` (surface-bright) with a thin border. Selected state uses the Secondary Orange `#E86A2A` to signify a \"locked-in\" choice.\n- **Input Fields:** 48px height with a `#0F1A14` (background) fill to create a \"recessed\" look against the card surface.\n- **Progress Indicators:** Use the Primary Green for linear trackers. For \"Low Availability,\" use the Secondary Orange to spark immediate action.\n- **Bottom Navigation:** Solid `#1A2620` with a subtle blur backdrop. Active icons are highlighted in Primary Green with a small 4px dot indicator.",
+                "theme": {
+                  "bodyFont": "INTER",
+                  "bodyFontFamily": "Inter",
+                  "colorMode": "DARK",
+                  "colorVariant": "FIDELITY",
+                  "customColor": "#1b7a4e",
+                  "designMd": "---\nname: CourtPass Midnight\ncolors:\n  surface: '#1A2620'\n  surface-dim: '#0b1610'\n  surface-bright: '#24322A'\n  surface-container-lowest: '#06100b'\n  surface-container-low: '#131e18'\n  surface-container: '#17221c'\n  surface-container-high: '#212c26'\n  surface-container-highest: '#2c3730'\n  on-surface: '#F4F7F5'\n  on-surface-variant: '#8B9991'\n  inverse-surface: '#d9e6dc'\n  inverse-on-surface: '#28332c'\n  outline: '#2C3D35'\n  outline-variant: '#3f4941'\n  surface-tint: '#80d9a4'\n  primary: '#80d9a4'\n  on-primary: '#003920'\n  primary-container: '#1b7a4e'\n  on-primary-container: '#acffcb'\n  inverse-primary: '#006d42'\n  secondary: '#ffb596'\n  on-secondary: '#581e00'\n  secondary-container: '#b74701'\n  on-secondary-container: '#ffe7de'\n  tertiary: '#ffb3b5'\n  on-tertiary: '#5d161f'\n  tertiary-container: '#a85056'\n  on-tertiary-container: '#ffe8e8'\n  error: '#ffb4ab'\n  on-error: '#690005'\n  error-container: '#93000a'\n  on-error-container: '#ffdad6'\n  primary-fixed: '#9cf5bf'\n  primary-fixed-dim: '#80d9a4'\n  on-primary-fixed: '#002111'\n  on-primary-fixed-variant: '#005231'\n  secondary-fixed: '#ffdbcd'\n  secondary-fixed-dim: '#ffb596'\n  on-secondary-fixed: '#360f00'\n  on-secondary-fixed-variant: '#7c2e00'\n  tertiary-fixed: '#ffdada'\n  tertiary-fixed-dim: '#ffb3b5'\n  on-tertiary-fixed: '#40010c'\n  on-tertiary-fixed-variant: '#7a2d34'\n  background: '#0b1610'\n  on-background: '#d9e6dc'\n  surface-variant: '#2c3730'\ntypography:\n  headline-xl:\n    fontFamily: DM Sans\n    fontSize: 32px\n    fontWeight: '700'\n    lineHeight: 40px\n    letterSpacing: -0.02em\n  headline-lg:\n    fontFamily: DM Sans\n    fontSize: 24px\n    fontWeight: '700'\n    lineHeight: 32px\n    letterSpacing: -0.01em\n  headline-md:\n    fontFamily: DM Sans\n    fontSize: 20px\n    fontWeight: '600'\n    lineHeight: 28px\n  body-lg:\n    fontFamily: Inter\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: 28px\n  body-md:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-sm:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n  label-md:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.02em\n  label-sm:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: 16px\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  container-max: 390px\n  margin-edge: 20px\n  gutter: 12px\n  stack-sm: 8px\n  stack-md: 16px\n  stack-lg: 24px\n  stack-xl: 32px\n---\n\n## Brand & Style\nThe design system transitions into a refined, high-performance **Refined Dark Mode** aesthetic. It moves away from the airy, daytime feel of the original system toward a \"Night Match\" atmosphere—evoking the prestige of professional evening padel tournaments under stadium lights.\n\nThe style is **Modern Minimalist** with a focus on **Tonal Depth**. By utilizing a deep obsidian-green foundation, the UI reduces eye strain and allows the vibrant primary and secondary accents to \"pop\" with functional energy. The brand personality remains professional, sporty, and premium, but adds a layer of exclusive, high-tech sophistication suitable for a top-tier athletic club.\n\n## Colors\nThe palette is optimized for high-contrast legibility in low-light environments, using a deep forest-black as the base.\n\n- **Primary (#1B7A4E):** The signature \"Padel Green.\" High-visibility against the dark background, used for primary calls to action and success states.\n- **Secondary (#E86A2A):** \"Clay Orange.\" Used for high-priority interactive elements, active highlights, and urgent notifications.\n- **Background (#0F1A14):** A deep, desaturated green-black that provides a sophisticated foundation.\n- **Surface (#1A2620):** A slightly lighter tier used for cards and containers to create a sense of physical layering.\n- **On-Surface (#F4F7F5):** An off-white tint that ensures maximum readability without the harsh glare of pure white.\n\n## Typography\nThe system maintains its dual-font strategy. **DM Sans** provides a geometric, athletic punch for headlines, while **Inter** delivers utilitarian precision for data-heavy booking flows. \n\nIn this dark mode iteration, font weights for body text are strictly maintained to ensure \"ink spread\" (the visual bleeding of light text on dark backgrounds) does not compromise legibility. Labels use uppercase styling and increased tracking where necessary to provide a technical, \"scorecard\" feel.\n\n## Layout & Spacing\nThe layout adheres to a **Fixed-Fluid** model centered on a 390px mobile-first viewport. \n\nThe rhythm is governed by a 4px baseline grid. A consistent 20px edge margin creates a \"safe zone\" for interaction. Vertical density is managed through a \"Stack\" system: 16px for related content within a card, and 24px-32px to separate distinct sections (e.g., \"Available Courts\" from \"Your Bookings\"). Bottom-anchored actions ensure high ergonomic reachability for one-handed operation.\n\n## Elevation & Depth\nElevation in this system is conveyed through **Tonal Stepping** rather than heavy shadows.\n\n1.  **Level 0 (Base):** `#0F1A14` (The court floor).\n2.  **Level 1 (Surface):** `#1A2620` (Cards, list items).\n3.  **Level 2 (High Surface):** `#24322A` (Active items, modals, hovered states).\n\nFor floating elements like \"Book Now\" sticky buttons, use a **Glow-tinted Shadow**: a soft blur with a 15% opacity primary color (`#1B7A4E`) to simulate the way stadium lights reflect off the court surface.\n\n## Shapes\nThe shape language uses a \"Rounded\" philosophy (8px/0.5rem base) to maintain the balance between professional precision and approachable sportiness. \n\n- **Large Cards/Modals:** 16px (`rounded-lg`) for a soft, premium feel.\n- **Interactive Buttons/Inputs:** 8px (`rounded-md`) for a crisp, functional appearance.\n- **Status Tags/Chips:** Full pill-shaped (`rounded-full`) to differentiate them from structural layout components.\n\n## Components\n- **Buttons:** Primary buttons are 56px height, solid `#1B7A4E` with `#F4F7F5` text. Secondary buttons are outlined with a 1.5px stroke of the primary color and no fill.\n- **Cards:** Surface-container `#1A2620` with a subtle 1px border of `#2C3D35`. Avoid solid black backgrounds; use the surface green-tint to maintain depth.\n- **Chips (Time Slots):** Unselected states are `#24322A` (surface-bright) with a thin border. Selected state uses the Secondary Orange `#E86A2A` to signify a \"locked-in\" choice.\n- **Input Fields:** 48px height with a `#0F1A14` (background) fill to create a \"recessed\" look against the card surface.\n- **Progress Indicators:** Use the Primary Green for linear trackers. For \"Low Availability,\" use the Secondary Orange to spark immediate action.\n- **Bottom Navigation:** Solid `#1A2620` with a subtle blur backdrop. Active icons are highlighted in Primary Green with a small 4px dot indicator.",
+                  "font": "DM_SANS",
+                  "headlineFont": "DM_SANS",
+                  "headlineFontFamily": "Dm Sans",
+                  "labelFont": "INTER",
+                  "labelFontFamily": "Inter",
+                  "namedColors": {
+                    "background": "#0b1610",
+                    "error": "#ffb4ab",
+                    "error_container": "#93000a",
+                    "inverse_on_surface": "#28332c",
+                    "inverse_primary": "#006d42",
+                    "inverse_surface": "#d9e6dc",
+                    "on-surface": "#F4F7F5",
+                    "on-surface-variant": "#8B9991",
+                    "on_background": "#d9e6dc",
+                    "on_error": "#690005",
+                    "on_error_container": "#ffdad6",
+                    "on_primary": "#003920",
+                    "on_primary_container": "#acffcb",
+                    "on_primary_fixed": "#002111",
+                    "on_primary_fixed_variant": "#005231",
+                    "on_secondary": "#581e00",
+                    "on_secondary_container": "#ffe7de",
+                    "on_secondary_fixed": "#360f00",
+                    "on_secondary_fixed_variant": "#7c2e00",
+                    "on_surface": "#d9e6dc",
+                    "on_surface_variant": "#bec9bf",
+                    "on_tertiary": "#5d161f",
+                    "on_tertiary_container": "#ffe8e8",
+                    "on_tertiary_fixed": "#40010c",
+                    "on_tertiary_fixed_variant": "#7a2d34",
+                    "outline": "#2C3D35",
+                    "outline_variant": "#3f4941",
+                    "primary": "#80d9a4",
+                    "primary_container": "#1b7a4e",
+                    "primary_fixed": "#9cf5bf",
+                    "primary_fixed_dim": "#80d9a4",
+                    "secondary": "#ffb596",
+                    "secondary_container": "#b74701",
+                    "secondary_fixed": "#ffdbcd",
+                    "secondary_fixed_dim": "#ffb596",
+                    "surface": "#1A2620",
+                    "surface-bright": "#24322A",
+                    "surface_bright": "#303c35",
+                    "surface_container": "#17221c",
+                    "surface_container_high": "#212c26",
+                    "surface_container_highest": "#2c3730",
+                    "surface_container_low": "#131e18",
+                    "surface_container_lowest": "#06100b",
+                    "surface_dim": "#0b1610",
+                    "surface_tint": "#80d9a4",
+                    "surface_variant": "#2c3730",
+                    "tertiary": "#ffb3b5",
+                    "tertiary_container": "#a85056",
+                    "tertiary_fixed": "#ffdada",
+                    "tertiary_fixed_dim": "#ffb3b5"
+                  },
+                  "overrideNeutralColor": "#0f1a14",
+                  "overridePrimaryColor": "#1b7a4e",
+                  "overrideSecondaryColor": "#e86a2a",
+                  "roundness": "ROUND_EIGHT",
+                  "spacing": {
+                    "container-max": "390px",
+                    "gutter": "12px",
+                    "margin-edge": "20px",
+                    "stack-lg": "24px",
+                    "stack-md": "16px",
+                    "stack-sm": "8px",
+                    "stack-xl": "32px"
+                  },
+                  "spacingScale": 2,
+                  "typography": {
+                    "body-lg": {
+                      "fontFamily": "Inter",
+                      "fontSize": "18px",
+                      "fontWeight": "400",
+                      "lineHeight": "28px"
+                    },
+                    "body-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "16px",
+                      "fontWeight": "400",
+                      "lineHeight": "24px"
+                    },
+                    "body-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "14px",
+                      "fontWeight": "400",
+                      "lineHeight": "20px"
+                    },
+                    "headline-lg": {
+                      "fontFamily": "DM Sans",
+                      "fontSize": "24px",
+                      "fontWeight": "700",
+                      "letterSpacing": "-0.01em",
+                      "lineHeight": "32px"
+                    },
+                    "headline-md": {
+                      "fontFamily": "DM Sans",
+                      "fontSize": "20px",
+                      "fontWeight": "600",
+                      "lineHeight": "28px"
+                    },
+                    "headline-xl": {
+                      "fontFamily": "DM Sans",
+                      "fontSize": "32px",
+                      "fontWeight": "700",
+                      "letterSpacing": "-0.02em",
+                      "lineHeight": "40px"
+                    },
+                    "label-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "14px",
+                      "fontWeight": "600",
+                      "letterSpacing": "0.02em",
+                      "lineHeight": "16px"
+                    },
+                    "label-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "12px",
+                      "fontWeight": "500",
+                      "lineHeight": "16px"
+                    }
+                  }
+                }
+              },
+              "name": "assets/3ff118bda2b04201983968951ff88075",
+              "version": "1"
+            },
+            "deviceType": "MOBILE",
+            "generatedBy": "figaro_agent",
+            "height": "1768",
+            "htmlCode": {
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzFhZDYzYTJkNjNmMjQwMDk5NzUxNTQ2NDI5YTgxYjAyEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+              "mimeType": "text/html",
+              "name": "projects/7191702240633724843/files/45aa6a409fdf4d4ca6323dc0cff0e0ee"
+            },
+            "id": "b7edc25375324dd987f94c3734354b43",
+            "name": "projects/7191702240633724843/screens/b7edc25375324dd987f94c3734354b43",
+            "prompt": "A mobile padel booking screen (Step 1 of 4) for 'CourtPass' in Sheikh Zayed. \n- Background: #0F1A14.\n- Cards: #1A2620.\n- Text: #F4F7F5.\n- Primary Accent: #1B7A4E.\n- Secondary Accent: #E86A2A (for subtle highlights or small alerts).\n- Typography: DM Sans for headlines, Inter for body text.\n- Header: Small center-aligned 'CourtPass' with a back arrow.\n- Content: 'Step 1 of 4' progress bar. Large headline 'When do you want to play?'. \n- Date Selection: A horizontal scrollable row of date cards. The 'Today' card (25) should be selected/highlighted with #1B7A4E. Cards show Day name and Date number.\n- Button: 'Open full calendar' outlined button.\n- Info Card: A card with a small alert icon and text 'Morning slots fill up fast on weekends. Book early to secure your preferred court.'\n- CTA: 'Next: Select Time' button at the bottom. This button must have a subtle green glow effect using #1B7A4E.\n- Visuals: Clean, high-fidelity dark mode interface. Use the existing padel court image {{DATA:IMAGE:IMAGE_37}} subtly if needed, or maintain a clean solid background.",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "screenType": "DESIGN",
+            "screenshot": {
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsvZx02ES0kS6c4Sboifn7pkBNcvEPFHu274eJPwqdFii6EMLNKbAXBor5ETJvgYbHtzE4anzLkMiq4aTvp_EpD7Quz59hbugBjbLfhlPwgENKxe4qhACVUYPbVl-T8KWo3u3tudGbiuIxezB14uLFmYU1O5wWRfHDIzIbCVV3F00nAD16MSg2aySsRLnGo_f8pGI9mz-w9NFLhG04AZ4CXUHKQ12XGC3PrXCjKlxvZJga1zkbTC0kCmFA",
+              "name": "projects/7191702240633724843/files/baf8e20906274ecc814a3f32c5a17b57"
+            },
+            "theme": {
+              "bodyFont": "INTER",
+              "bodyFontFamily": "Inter",
+              "colorMode": "DARK",
+              "colorVariant": "FIDELITY",
+              "customColor": "#1b7a4e",
+              "font": "DM_SANS",
+              "headlineFont": "DM_SANS",
+              "headlineFontFamily": "Dm Sans",
+              "labelFont": "INTER",
+              "labelFontFamily": "Inter",
+              "namedColors": {
+                "background": "#0b1610",
+                "error": "#ffb4ab",
+                "error_container": "#93000a",
+                "inverse_on_surface": "#28332c",
+                "inverse_primary": "#006d42",
+                "inverse_surface": "#d9e6dc",
+                "on-surface": "#F4F7F5",
+                "on-surface-variant": "#8B9991",
+                "on_background": "#d9e6dc",
+                "on_error": "#690005",
+                "on_error_container": "#ffdad6",
+                "on_primary": "#003920",
+                "on_primary_container": "#acffcb",
+                "on_primary_fixed": "#002111",
+                "on_primary_fixed_variant": "#005231",
+                "on_secondary": "#581e00",
+                "on_secondary_container": "#ffe7de",
+                "on_secondary_fixed": "#360f00",
+                "on_secondary_fixed_variant": "#7c2e00",
+                "on_surface": "#d9e6dc",
+                "on_surface_variant": "#bec9bf",
+                "on_tertiary": "#5d161f",
+                "on_tertiary_container": "#ffe8e8",
+                "on_tertiary_fixed": "#40010c",
+                "on_tertiary_fixed_variant": "#7a2d34",
+                "outline": "#2C3D35",
+                "outline_variant": "#3f4941",
+                "primary": "#80d9a4",
+                "primary_container": "#1b7a4e",
+                "primary_fixed": "#9cf5bf",
+                "primary_fixed_dim": "#80d9a4",
+                "secondary": "#ffb596",
+                "secondary_container": "#b74701",
+                "secondary_fixed": "#ffdbcd",
+                "secondary_fixed_dim": "#ffb596",
+                "surface": "#1A2620",
+                "surface-bright": "#24322A",
+                "surface_bright": "#303c35",
+                "surface_container": "#17221c",
+                "surface_container_high": "#212c26",
+                "surface_container_highest": "#2c3730",
+                "surface_container_low": "#131e18",
+                "surface_container_lowest": "#06100b",
+                "surface_dim": "#0b1610",
+                "surface_tint": "#80d9a4",
+                "surface_variant": "#2c3730",
+                "tertiary": "#ffb3b5",
+                "tertiary_container": "#a85056",
+                "tertiary_fixed": "#ffdada",
+                "tertiary_fixed_dim": "#ffb3b5"
+              },
+              "overrideNeutralColor": "#0f1a14",
+              "overridePrimaryColor": "#1b7a4e",
+              "overrideSecondaryColor": "#e86a2a",
+              "roundness": "ROUND_EIGHT",
+              "spacing": {
+                "container-max": "390px",
+                "gutter": "12px",
+                "margin-edge": "20px",
+                "stack-lg": "24px",
+                "stack-md": "16px",
+                "stack-sm": "8px",
+                "stack-xl": "32px"
+              },
+              "spacingScale": 2,
+              "typography": {
+                "body-lg": {
+                  "fontFamily": "Inter",
+                  "fontSize": "18px",
+                  "fontWeight": "400",
+                  "lineHeight": "28px"
+                },
+                "body-md": {
+                  "fontFamily": "Inter",
+                  "fontSize": "16px",
+                  "fontWeight": "400",
+                  "lineHeight": "24px"
+                },
+                "body-sm": {
+                  "fontFamily": "Inter",
+                  "fontSize": "14px",
+                  "fontWeight": "400",
+                  "lineHeight": "20px"
+                },
+                "headline-lg": {
+                  "fontFamily": "DM Sans",
+                  "fontSize": "24px",
+                  "fontWeight": "700",
+                  "letterSpacing": "-0.01em",
+                  "lineHeight": "32px"
+                },
+                "headline-md": {
+                  "fontFamily": "DM Sans",
+                  "fontSize": "20px",
+                  "fontWeight": "600",
+                  "lineHeight": "28px"
+                },
+                "headline-xl": {
+                  "fontFamily": "DM Sans",
+                  "fontSize": "32px",
+                  "fontWeight": "700",
+                  "letterSpacing": "-0.02em",
+                  "lineHeight": "40px"
+                },
+                "label-md": {
+                  "fontFamily": "Inter",
+                  "fontSize": "14px",
+                  "fontWeight": "600",
+                  "letterSpacing": "0.02em",
+                  "lineHeight": "16px"
+                },
+                "label-sm": {
+                  "fontFamily": "Inter",
+                  "fontSize": "12px",
+                  "fontWeight": "500",
+                  "lineHeight": "16px"
+                }
+              }
+            },
+            "title": "CourtPass book-date mobile dark",
+            "width": "780"
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "I've generated the dark mode version of the **CourtPass book-date** screen.\n\n### Design Decisions\n- **Color Palette:** Applied your exact specifications with a deep `#0F1A14` background and `#1A2620` card surfaces to create depth and hierarchy.\n- **Accents:** Used `#1B7A4E` for active states and the primary action, with `#E86A2A` integrated for the informational alert icon to provide a clear but subtle contrast.\n- **CTA Glow:** Implemented a refined green outer glow on the \"Next: Select Time\" button to make it the clear focal point of the screen.\n- **Typography:** Used DM Sans for the bold headers to maintain the brand's sporty identity, paired with Inter for the functional text elements for maximum legibility in dark mode.\n\nHow does the layout feel for the first step of the booking flow?"
+    },
+    {
+      "suggestion": "Create the next step: select time slot"
+    },
+    {
+      "suggestion": "Adjust the green glow intensity"
+    },
+    {
+      "suggestion": "See the light mode version for comparison"
+    }
+  ],
+  "projectId": "7191702240633724843",
+  "sessionId": "2032054057787509590"
+}
+[2026-08-15T16:14:19+03:00] OK book-date-mobile-dark
+[2026-08-15T16:14:19+03:00] START book-date-desktop-light (DESKTOP)
+{
+  "outputComponents": [
+    {
+      "design": {
+        "screens": [
+          {
+            "designSystem": {
+              "designSystem": {
+                "displayName": "CourtPass",
+                "styleGuidelines": "## Brand & Style\nThe design system is anchored in a high-performance, athletic aesthetic tailored for the premium padel scene in Sheikh Zayed. It utilizes a **Modern Minimalist** style with **Tactile Athletic** influences, mirroring the physical environment of the sport—specifically the contrast between lush green courts and clay surfaces. \n\nThe UI prioritizes speed and clarity, evoking a sense of professional coordination and energy. By balancing generous whitespace with high-contrast functional elements, the design system ensures that the booking experience feels as precise and fluid as the game itself.\n\n## Layout & Spacing\nThe layout follows a **Fixed-Fluid** hybrid model optimized for a 390px mobile viewport. \n\nThe structure relies on a consistent 20px horizontal safe-area margin. Internal components use a modular 4px base grid. Content is organized in vertical stacks with 16px (Medium) or 24px (Large) spacing between logical sections. A sticky header provides constant access to navigation, while primary actions are strictly anchored to the bottom of the viewport or span the full width of the content area for ease of thumb-reach.\n\n## Elevation & Depth\nThe design system employs **Tonal Layering** with minimal shadow usage to maintain a clean, modern look. \n\nDepth is primarily communicated through color shifts: the `#F4F7F5` background acts as the lowest layer, while `#FFFFFF` white cards sit on top. When elevation is necessary for interactive elements (like a floating booking button), use an **Ambient Shadow**: a very soft, highly diffused 10% opacity shadow with a slight green tint (`#0F1A14`) to prevent the shadow from appearing muddy.\n\n## Components\n- **Buttons:** Primary buttons are full-width, 56px height, using `#1B7A4E` background and white text. Secondary buttons use a transparent background with a 1.5px border of the primary color.\n- **Cards:** White background with 12px padding. Use a subtle 1px border (`#E0E5E2`) instead of shadows to define court listings.\n- **Chips:** Used for time slots. Default state is white with a grey border; active state is Primary Green with white text.\n- **Input Fields:** 48px height, 12px radius, with a subtle `#F4F7F5` fill to distinguish from the card surface.\n- **Promo Banners:** Utilize the `#FDE8DC` peach background with `#E86A2A` orange accents to draw attention to special offers or new club openings.\n- **Status Indicators:** Use `#E86A2A` for \"Available Soon\" and `#1B7A4E` for \"Instant Book.\"",
+                "theme": {
+                  "bodyFont": "INTER",
+                  "bodyFontFamily": "Inter",
+                  "colorMode": "LIGHT",
+                  "colorVariant": "FIDELITY",
+                  "customColor": "#1b7a4e",
+                  "designMd": "---\nname: CourtPass\ncolors:\n  surface: '#f0fdf2'\n  surface-dim: '#d0ddd3'\n  surface-bright: '#f0fdf2'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#eaf7ec'\n  surface-container: '#e4f1e7'\n  surface-container-high: '#deebe1'\n  surface-container-highest: '#d9e6dc'\n  on-surface: '#131e18'\n  on-surface-variant: '#3f4941'\n  inverse-surface: '#28332c'\n  inverse-on-surface: '#e7f4ea'\n  outline: '#6f7a71'\n  outline-variant: '#bec9bf'\n  surface-tint: '#006d42'\n  primary: '#00603a'\n  on-primary: '#ffffff'\n  primary-container: '#1b7a4e'\n  on-primary-container: '#acffcb'\n  inverse-primary: '#80d9a4'\n  secondary: '#a33e00'\n  on-secondary: '#ffffff'\n  secondary-container: '#fe7a39'\n  on-secondary-container: '#632300'\n  tertiary: '#5e5047'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#78685f'\n  on-tertiary-container: '#fee9dd'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#9cf5bf'\n  primary-fixed-dim: '#80d9a4'\n  on-primary-fixed: '#002111'\n  on-primary-fixed-variant: '#005231'\n  secondary-fixed: '#ffdbcd'\n  secondary-fixed-dim: '#ffb596'\n  on-secondary-fixed: '#360f00'\n  on-secondary-fixed-variant: '#7c2e00'\n  tertiary-fixed: '#f3dfd3'\n  tertiary-fixed-dim: '#d6c3b7'\n  on-tertiary-fixed: '#241912'\n  on-tertiary-fixed-variant: '#52443c'\n  background: '#f0fdf2'\n  on-background: '#131e18'\n  surface-variant: '#d9e6dc'\ntypography:\n  headline-xl:\n    fontFamily: DM Sans\n    fontSize: 32px\n    fontWeight: '700'\n    lineHeight: 40px\n    letterSpacing: -0.02em\n  headline-lg:\n    fontFamily: DM Sans\n    fontSize: 24px\n    fontWeight: '700'\n    lineHeight: 32px\n    letterSpacing: -0.01em\n  headline-md:\n    fontFamily: DM Sans\n    fontSize: 20px\n    fontWeight: '600'\n    lineHeight: 28px\n  body-lg:\n    fontFamily: Inter\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: 28px\n  body-md:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-sm:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n  label-md:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.02em\n  label-sm:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: 16px\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  container-width: 390px\n  edge-margin: 20px\n  gutter: 12px\n  stack-sm: 8px\n  stack-md: 16px\n  stack-lg: 24px\n---\n\n## Brand & Style\nThe design system is anchored in a high-performance, athletic aesthetic tailored for the premium padel scene in Sheikh Zayed. It utilizes a **Modern Minimalist** style with **Tactile Athletic** influences, mirroring the physical environment of the sport—specifically the contrast between lush green courts and clay surfaces. \n\nThe UI prioritizes speed and clarity, evoking a sense of professional coordination and energy. By balancing generous whitespace with high-contrast functional elements, the design system ensures that the booking experience feels as precise and fluid as the game itself.\n\n## Colors\nThe palette is inspired by the landscape of modern padel clubs. \n\n- **Primary (Deep Green):** Represents the court surface and professional authority. Used for main actions and success states.\n- **Secondary (Clay Orange):** A high-energy accent used sparingly for highlights, active states, or urgency.\n- **Tertiary (Peach):** A soft, low-contrast background used for promotional banners and cards to differentiate them from functional UI.\n- **Neutrals:** The background is a cool, desaturated grey-green to reduce eye strain, while the text remains near-black for maximum accessibility.\n\n## Typography\nThis design system uses a dual-font strategy to balance character with utility. \n\n**DM Sans** is reserved for headlines to provide a bold, geometric, and modern sporting feel. Its tight tracking and heavy weights command attention. **Inter** is utilized for all body copy, inputs, and labels to ensure maximum legibility at small sizes during high-speed interactions. All labels should use slightly increased letter spacing for clarity in compact UI areas.\n\n## Layout & Spacing\nThe layout follows a **Fixed-Fluid** hybrid model optimized for a 390px mobile viewport. \n\nThe structure relies on a consistent 20px horizontal safe-area margin. Internal components use a modular 4px base grid. Content is organized in vertical stacks with 16px (Medium) or 24px (Large) spacing between logical sections. A sticky header provides constant access to navigation, while primary actions are strictly anchored to the bottom of the viewport or span the full width of the content area for ease of thumb-reach.\n\n## Elevation & Depth\nThe design system employs **Tonal Layering** with minimal shadow usage to maintain a clean, modern look. \n\nDepth is primarily communicated through color shifts: the `#F4F7F5` background acts as the lowest layer, while `#FFFFFF` white cards sit on top. When elevation is necessary for interactive elements (like a floating booking button), use an **Ambient Shadow**: a very soft, highly diffused 10% opacity shadow with a slight green tint (`#0F1A14`) to prevent the shadow from appearing muddy.\n\n## Shapes\nThe shape language is defined by a consistent 12px radius (`rounded-lg` in this design system) for all major components including cards, input fields, and buttons. This radius provides a professional and friendly appearance without feeling overly \"bubbly.\" Small interactive elements like chips or badges may use a full pill-shape to distinguish them from structural components.\n\n## Components\n- **Buttons:** Primary buttons are full-width, 56px height, using `#1B7A4E` background and white text. Secondary buttons use a transparent background with a 1.5px border of the primary color.\n- **Cards:** White background with 12px padding. Use a subtle 1px border (`#E0E5E2`) instead of shadows to define court listings.\n- **Chips:** Used for time slots. Default state is white with a grey border; active state is Primary Green with white text.\n- **Input Fields:** 48px height, 12px radius, with a subtle `#F4F7F5` fill to distinguish from the card surface.\n- **Promo Banners:** Utilize the `#FDE8DC` peach background with `#E86A2A` orange accents to draw attention to special offers or new club openings.\n- **Status Indicators:** Use `#E86A2A` for \"Available Soon\" and `#1B7A4E` for \"Instant Book.\"",
+                  "font": "DM_SANS",
+                  "headlineFont": "DM_SANS",
+                  "headlineFontFamily": "Dm Sans",
+                  "labelFont": "INTER",
+                  "labelFontFamily": "Inter",
+                  "namedColors": {
+                    "background": "#f0fdf2",
+                    "error": "#ba1a1a",
+                    "error_container": "#ffdad6",
+                    "inverse_on_surface": "#e7f4ea",
+                    "inverse_primary": "#80d9a4",
+                    "inverse_surface": "#28332c",
+                    "on_background": "#131e18",
+                    "on_error": "#ffffff",
+                    "on_error_container": "#93000a",
+                    "on_primary": "#ffffff",
+                    "on_primary_container": "#acffcb",
+                    "on_primary_fixed": "#002111",
+                    "on_primary_fixed_variant": "#005231",
+                    "on_secondary": "#ffffff",
+                    "on_secondary_container": "#632300",
+                    "on_secondary_fixed": "#360f00",
+                    "on_secondary_fixed_variant": "#7c2e00",
+                    "on_surface": "#131e18",
+                    "on_surface_variant": "#3f4941",
+                    "on_tertiary": "#ffffff",
+                    "on_tertiary_container": "#fee9dd",
+                    "on_tertiary_fixed": "#241912",
+                    "on_tertiary_fixed_variant": "#52443c",
+                    "outline": "#6f7a71",
+                    "outline_variant": "#bec9bf",
+                    "primary": "#00603a",
+                    "primary_container": "#1b7a4e",
+                    "primary_fixed": "#9cf5bf",
+                    "primary_fixed_dim": "#80d9a4",
+                    "secondary": "#a33e00",
+                    "secondary_container": "#fe7a39",
+                    "secondary_fixed": "#ffdbcd",
+                    "secondary_fixed_dim": "#ffb596",
+                    "surface": "#f0fdf2",
+                    "surface_bright": "#f0fdf2",
+                    "surface_container": "#e4f1e7",
+                    "surface_container_high": "#deebe1",
+                    "surface_container_highest": "#d9e6dc",
+                    "surface_container_low": "#eaf7ec",
+                    "surface_container_lowest": "#ffffff",
+                    "surface_dim": "#d0ddd3",
+                    "surface_tint": "#006d42",
+                    "surface_variant": "#d9e6dc",
+                    "tertiary": "#5e5047",
+                    "tertiary_container": "#78685f",
+                    "tertiary_fixed": "#f3dfd3",
+                    "tertiary_fixed_dim": "#d6c3b7"
+                  },
+                  "overrideNeutralColor": "#0f1a14",
+                  "overridePrimaryColor": "#1b7a4e",
+                  "overrideSecondaryColor": "#e86a2a",
+                  "overrideTertiaryColor": "#fde8dc",
+                  "roundness": "ROUND_EIGHT",
+                  "spacing": {
+                    "container-width": "390px",
+                    "edge-margin": "20px",
+                    "gutter": "12px",
+                    "stack-lg": "24px",
+                    "stack-md": "16px",
+                    "stack-sm": "8px"
+                  },
+                  "spacingScale": 2,
+                  "typography": {
+                    "body-lg": {
+                      "fontFamily": "Inter",
+                      "fontSize": "18px",
+                      "fontWeight": "400",
+                      "lineHeight": "28px"
+                    },
+                    "body-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "16px",
+                      "fontWeight": "400",
+                      "lineHeight": "24px"
+                    },
+                    "body-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "14px",
+                      "fontWeight": "400",
+                      "lineHeight": "20px"
+                    },
+                    "headline-lg": {
+                      "fontFamily": "DM Sans",
+                      "fontSize": "24px",
+                      "fontWeight": "700",
+                      "letterSpacing": "-0.01em",
+                      "lineHeight": "32px"
+                    },
+                    "headline-md": {
+                      "fontFamily": "DM Sans",
+                      "fontSize": "20px",
+                      "fontWeight": "600",
+                      "lineHeight": "28px"
+                    },
+                    "headline-xl": {
+                      "fontFamily": "DM Sans",
+                      "fontSize": "32px",
+                      "fontWeight": "700",
+                      "letterSpacing": "-0.02em",
+                      "lineHeight": "40px"
+                    },
+                    "label-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "14px",
+                      "fontWeight": "600",
+                      "letterSpacing": "0.02em",
+                      "lineHeight": "16px"
+                    },
+                    "label-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "12px",
+                      "fontWeight": "500",
+                      "lineHeight": "16px"
+                    }
+                  }
+                }
+              },
+              "name": "assets/e03cc309c60b436bbc38e48fd719a96f",
+              "version": "1"
+            },
+            "deviceType": "DESKTOP",
+            "generatedBy": "figaro_agent",
+            "height": "2242",
+            "htmlCode": {
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2RkYTEyM2ZjZGM3MzQ2OWRhMTk2MTRhZTUyZTdhZjE3EgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+              "mimeType": "text/html",
+              "name": "projects/7191702240633724843/files/dfd56d979e0d4b2c8b3ec3f052b51d5f"
+            },
+            "id": "2e377c52cb704b72abff412c9c1033b5",
+            "name": "projects/7191702240633724843/screens/2e377c52cb704b72abff412c9c1033b5",
+            "prompt": "Create a desktop booking screen (Step 1 of 4) for CourtPass Sheikh Zayed.\nTitle: CourtPass book-date desktop light.\nLayout: 1440px wide desktop view with a 1200px max-width container. \nStyle: Light mode, bg #F4F7F5, primary #1B7A4E. Professional and clean.\nComponents:\n- Progress indicator: Step 1 of 4 at the top.\n- Left Sidebar: A date-selection strip or calendar summary for quick navigation.\n- Main Content Area: A large, interactive month-view calendar. Current date is highlighted. Slots availability indicators on specific dates.\n- Interaction: A \"Next: Select Time\" primary button in the bottom right, using #1B7A4E.\n- Header: Use the TopNavBar component.\n- Footer: Use the Footer component.\nInclude the CourtPass logo {{DATA:IMAGE:IMAGE_39}} and ensure the design feels premium and athletic.\n## Available Images\nYou MUST include the following images in this design. You must reference them\nby putting their exact placeholder IDs in `src` attributes or CSS\n`background-image` rules. Do NOT use external URLs or generate new\nplaceholders. Preserve these IDs exactly as written. Read each image's\nDescription to understand its subject, intended section, and visual role.\n\n- {{DATA:IMAGE:IMAGE_39}}\n  Description: CourtPass logo: A minimal padel racket icon followed by the wordmark 'CourtPass' in DM Sans. Professional, sporty, and clean. Colors: #1B7A4E and #0F1A14.\n  Dimensions: 1024x1024\n  Aspect Ratio: 1.00\n",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "screenType": "DESIGN",
+            "screenshot": {
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLvQRlpAGQhOYUEYWonuYKTmaK4RVqKyhYvth-zPXqCF1nJzA6JgY0Pc_iFlzVt2WdcLaQJFhrTqarCPgrTJAunATVqW-ELWxITF-H3KqhVTddcQQOXtRb3bCza-cdNbc1DbMyRx2Q5s3OS4GFEoSSldzg4N7VwLYpA-rhbYoZ2k52MPx4AUzAD5V9b9CMCoeJ0VCyLqq4AYrlA79f-V8GYb5smTrXshao92aon69OHIYtFzSC9GeIdtCyk",
+              "name": "projects/7191702240633724843/files/451ea45b45684adea7ff5745b581696d"
+            },
+            "theme": {
+              "bodyFont": "INTER",
+              "bodyFontFamily": "Inter",
+              "colorMode": "LIGHT",
+              "colorVariant": "FIDELITY",
+              "customColor": "#1b7a4e",
+              "font": "DM_SANS",
+              "headlineFont": "DM_SANS",
+              "headlineFontFamily": "Dm Sans",
+              "labelFont": "INTER",
+              "labelFontFamily": "Inter",
+              "namedColors": {
+                "background": "#f0fdf2",
+                "error": "#ba1a1a",
+                "error_container": "#ffdad6",
+                "inverse_on_surface": "#e7f4ea",
+                "inverse_primary": "#80d9a4",
+                "inverse_surface": "#28332c",
+                "on_background": "#131e18",
+                "on_error": "#ffffff",
+                "on_error_container": "#93000a",
+                "on_primary": "#ffffff",
+                "on_primary_container": "#acffcb",
+                "on_primary_fixed": "#002111",
+                "on_primary_fixed_variant": "#005231",
+                "on_secondary": "#ffffff",
+                "on_secondary_container": "#632300",
+                "on_secondary_fixed": "#360f00",
+                "on_secondary_fixed_variant": "#7c2e00",
+                "on_surface": "#131e18",
+                "on_surface_variant": "#3f4941",
+                "on_tertiary": "#ffffff",
+                "on_tertiary_container": "#fee9dd",
+                "on_tertiary_fixed": "#241912",
+                "on_tertiary_fixed_variant": "#52443c",
+                "outline": "#6f7a71",
+                "outline_variant": "#bec9bf",
+                "primary": "#00603a",
+                "primary_container": "#1b7a4e",
+                "primary_fixed": "#9cf5bf",
+                "primary_fixed_dim": "#80d9a4",
+                "secondary": "#a33e00",
+                "secondary_container": "#fe7a39",
+                "secondary_fixed": "#ffdbcd",
+                "secondary_fixed_dim": "#ffb596",
+                "surface": "#f0fdf2",
+                "surface_bright": "#f0fdf2",
+                "surface_container": "#e4f1e7",
+                "surface_container_high": "#deebe1",
+                "surface_container_highest": "#d9e6dc",
+                "surface_container_low": "#eaf7ec",
+                "surface_container_lowest": "#ffffff",
+                "surface_dim": "#d0ddd3",
+                "surface_tint": "#006d42",
+                "surface_variant": "#d9e6dc",
+                "tertiary": "#5e5047",
+                "tertiary_container": "#78685f",
+                "tertiary_fixed": "#f3dfd3",
+                "tertiary_fixed_dim": "#d6c3b7"
+              },
+              "overrideNeutralColor": "#0f1a14",
+              "overridePrimaryColor": "#1b7a4e",
+              "overrideSecondaryColor": "#e86a2a",
+              "overrideTertiaryColor": "#fde8dc",
+              "roundness": "ROUND_EIGHT",
+              "spacing": {
+                "container-width": "390px",
+                "edge-margin": "20px",
+                "gutter": "12px",
+                "stack-lg": "24px",
+                "stack-md": "16px",
+                "stack-sm": "8px"
+              },
+              "spacingScale": 2,
+              "typography": {
+                "body-lg": {
+                  "fontFamily": "Inter",
+                  "fontSize": "18px",
+                  "fontWeight": "400",
+                  "lineHeight": "28px"
+                },
+                "body-md": {
+                  "fontFamily": "Inter",
+                  "fontSize": "16px",
+                  "fontWeight": "400",
+                  "lineHeight": "24px"
+                },
+                "body-sm": {
+                  "fontFamily": "Inter",
+                  "fontSize": "14px",
+                  "fontWeight": "400",
+                  "lineHeight": "20px"
+                },
+                "headline-lg": {
+                  "fontFamily": "DM Sans",
+                  "fontSize": "24px",
+                  "fontWeight": "700",
+                  "letterSpacing": "-0.01em",
+                  "lineHeight": "32px"
+                },
+                "headline-md": {
+                  "fontFamily": "DM Sans",
+                  "fontSize": "20px",
+                  "fontWeight": "600",
+                  "lineHeight": "28px"
+                },
+                "headline-xl": {
+                  "fontFamily": "DM Sans",
+                  "fontSize": "32px",
+                  "fontWeight": "700",
+                  "letterSpacing": "-0.02em",
+                  "lineHeight": "40px"
+                },
+                "label-md": {
+                  "fontFamily": "Inter",
+                  "fontSize": "14px",
+                  "fontWeight": "600",
+                  "letterSpacing": "0.02em",
+                  "lineHeight": "16px"
+                },
+                "label-sm": {
+                  "fontFamily": "Inter",
+                  "fontSize": "12px",
+                  "fontWeight": "500",
+                  "lineHeight": "16px"
+                }
+              }
+            },
+            "title": "CourtPass book-date desktop light",
+            "width": "2560"
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "I've designed the desktop date selection screen for the CourtPass booking flow.\n\n### Design Decisions\n- **Layout & Structure**: Implemented a professional 1440px desktop layout with a centered 1200px container for optimal readability. \n- **Calendar & Sidebar**: Combined a comprehensive month-view calendar with a \"Quick Select\" date strip in the sidebar, allowing staff or players to navigate dates with high efficiency.\n- **Visual Language**: Applied the light mode palette (bg: `#F4F7F5`, cards: `#FFFFFF`) with the `#1B7A4E` brand green for primary actions and status indicators, ensuring high professional contrast.\n- **Information Hierarchy**: Placed the progress indicator clearly at the top, followed by a logical left-to-right flow for date selection, culminating in a prominent \"Next: Select Time\" call-to-action.\n\nThe screen is now published to your canvas as **CourtPass book-date desktop light**. How would you like to proceed with the \"Select Time\" step?"
+    },
+    {
+      "suggestion": "Create the 'Select Time' desktop screen (Step 2)"
+    },
+    {
+      "suggestion": "Add a 'Weather Forecast' widget to the calendar sidebar"
+    },
+    {
+      "suggestion": "Show how a date with 'Low Availability' looks in the calendar"
+    }
+  ],
+  "projectId": "7191702240633724843",
+  "sessionId": "3223783897086669785"
+}
+[2026-08-15T16:15:42+03:00] OK book-date-desktop-light
+[2026-08-15T16:15:42+03:00] START book-date-desktop-dark (DESKTOP)
+Error: Tool Call Failed [generate_screen_from_text]: Request contains an invalid argument.
+[2026-08-15T16:15:45+03:00] RETRY poll book-date-desktop-dark
+{
+  "screens": [
+    {
+      "height": "848",
+      "htmlCode": {},
+      "name": "projects/7191702240633724843/screens/b78c1dc834f74e26a8d89c1cfa7bfd6d",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLufQedZhKNBydnQKW9OJX13FC9M2ww_noaX6LrdhG3U-todYcxARIUsV5UnpyACLxmOWZnzEyqamYZNDd0YHC825bk1xYpUtOCXT076DMOijIp0VDqGRuW21L97t21BAJWSmAmYzvqmnhd3DaLUosivoz33rW-JavMLeA8XQyNs0rq7sX_PvS2obhiL2SnCT_h6FYvJHUqrpgWqLkzir3GHdmRy909_hUns4YGXFXpgdoch-sTkw34yOyM",
+        "name": "projects/7191702240633724843/files/6c37c105036241e1afef849bb0763c5c"
+      },
+      "title": "Professional, high-quality photograph of a modern outdoor padel court with blue turf and glass walls, located in a clean architectural setting in Sheikh Zayed, Egypt. Bright daylight, luxury sports club feel. Used as a background image with a light green overlay.",
+      "width": "1264"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "1768",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzhlODQzZDExODI2ODQ2NTE4ZGU2YjI5ZTIxMTE3M2JhEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/7c269ce3e0814f0a8247a5a4f65ce4f4"
+      },
+      "name": "projects/7191702240633724843/screens/8b765753fda64cdb9885a67a10fc9def",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLvHWleVE6BObR6avkzYj3FHoQATjNo2XHI6WrHCxW84b2ZrphDukjfK8i0XNGU4ysbiHS4Duj-BydPxLxHRljqf4aAZvZ4c52aRb40eaaXoy57d3Dn3X7AC1PXo73GGHoN0LYN2GwBVRse4hkkZhTSjbyqFUAWiXHVCL1fsk6TfmFLMRhzZFIRO1sOorWvE8QLfNCu2U7I7uvo_vtoALxfjFZmCg_WxcP0dZBkek3uT7ixYaZEjjJn7g_o",
+        "name": "projects/7191702240633724843/files/320507ea88b9405b89bad89290b72495"
+      },
+      "title": "CourtPass login mobile dark",
+      "width": "780"
+    },
+    {
+      "deviceType": "DESKTOP",
+      "height": "2048",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzZiN2Y0Mzc0MmY1MjRkYzJiNDU2MGI5ZWJkM2Q2NjQxEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/97ad4204df264e4695dde31857182014"
+      },
+      "name": "projects/7191702240633724843/screens/555949d085e645fd82a8d604bc3bd6dc",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLtY08oJPQhdXGAF6SflcEyer3gZhKO_RPl63dHJfZ3Elwr88HJpYdAloOkfbEWEoRRy_pbzvxtgVqRO2z1SvzoVZDrdylWMrIAJGQer252fX0imcSS2WXssYkIELJ262cfdDudny9Pvmag_7qJpG14DuPa82hIdpaRaz23jnxFy-bN4iYF1MkFI-oY53weatnsTgaeU3D-tVkvjGV95fXGf9UjdRApwpP-xbaT5b4_uY6cd3yoJ477_rQE",
+        "name": "projects/7191702240633724843/files/645108bb3a534629bc64c998849fc36e"
+      },
+      "title": "CourtPass register desktop dark",
+      "width": "2560"
+    },
+    {
+      "deviceType": "DESKTOP",
+      "height": "2048",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzU2YmJiZThlZDBjODQ3Y2NhNjNmM2E5MTYzNGU0ZjVjEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/10578746a5b9428a91621ce4564df45d"
+      },
+      "name": "projects/7191702240633724843/screens/1e225b506fb647a89e44bb490d8d5951",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLu4c4sYoy7_R_lu7h9J1hP7o4vBPZQmW-4dxWMtzTpLIJC3Zb3tQ32LHZ9wRcyDnuBpbxRFh745fek2jdU_1DWxz6s95pHDEPufmmnh77nJJvxTo6i87MVIYMarIGFaBaU_Sj1-gI2dM32nZiw9r9QPVx6qd4QYF1GgxXPZW-n7guvJMa28DLEO-2h4t3mf2AirfqlhnqAycA6T_o58zc7PbjV595AYeEPj9UKaBHuvo_ABM4Yqsje7HxE",
+        "name": "projects/7191702240633724843/files/b4e6e9c5d08447fba44c32ba71c71f89"
+      },
+      "title": "CourtPass login desktop light",
+      "width": "2560"
+    },
+    {
+      "deviceType": "DESKTOP",
+      "height": "2190",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2IwOGNkYTJlODk4ODQzNDBhM2MwOWRmNThiYmY4MDc4EgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/93bf953e86eb4e7285e9a5f659b1a489"
+      },
+      "name": "projects/7191702240633724843/screens/e1d6cc35308c42d789d154e0ece44ea6",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLvkUTMWO6T5Xzuo89Yz40hz6kDKEx-S8Fyp2zvea5zsBZfv9XGyd6l6whH6TrpC3XOthMo6-jNZl1daSG1Fz5RcNl6Q0DKYwxX2VL-5iT-9W45xZj4k2VgaFoLHY9ZY1ZjAOYazvR2f20vUDDEkog9_cj9UOcw7h8tu5I-xdYYuDgzUiTcQt5PanqilGJgPJ8QInrip8YSRoxa_-FKS1gDK38xfGfYLSVp0aP5Ov8KAXjEgFActRyj0mA",
+        "name": "projects/7191702240633724843/files/416da4fdcb3845149980f34151d129e9"
+      },
+      "title": "CourtPass landing desktop dark",
+      "width": "2560"
+    },
+    {
+      "height": "1024",
+      "htmlCode": {},
+      "name": "projects/7191702240633724843/screens/d8e774d1ae8d4b5f985f6379ac83096d",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsn96XeTAcojWdGu6ZlCq4jwtimb_zX1ulqGN1w2rrwlj78eUolGvo06JcXgbkqEpabHuk3C1uMOQQxz0kOuKFyo0dQqRaTR-woBreTD2MQmaCwnXS1zals9RmrZRJms-MwOoiuTD2XhAveAxoyxFauP5_LF6tyShK5vOg6HbRl3_IH9AQMXMP_cS163Xz0We-Ppg-we6dK_dVBD1uzaTMShBrOEEzJ9vC7gBi4tfEtIN7KD7jFF5aG8zI",
+        "name": "projects/7191702240633724843/files/125d62b8346943c4a398e94f9f9a84cf"
+      },
+      "title": "CourtPass Logo",
+      "width": "1024"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "1768",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzA5YjY0ZWNmYzQ0NjRhMTdiMzAzNTJlNmE1ZjYyMGQ5EgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/135246a2baa445129d54edfffd1e2dae"
+      },
+      "name": "projects/7191702240633724843/screens/cc3336539a484aff836e5da6a34591d7",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLupFkMmIx6kM13HjsKI_UtqREPng-mwAqyaw6MxZa8WI691sapacBgnsSbUTSmrt8MnFxI-IZE9Rrn75FPWocKZD6OLbtebVTd_rbdFjK6D64KaP3ZKX1BhkqVxI-qigOYWIrIVCdYDQ256fwQDq6kousDkeAQEGI1AVJj-yswo_c81NHsKwGHXMF_HLfdglSz-Ur-I2eiwHp8GTaLYUqXHUoDVkU9fFCzLPVKiFCw99zzclwqiX23mnFw",
+        "name": "projects/7191702240633724843/files/cfcd6c6359df43f19c80b27572682bc5"
+      },
+      "title": "CourtPass register mobile dark",
+      "width": "780"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "1768",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2M3ZTJlNzNmMDRlZTRmM2FhMTk5ZDFhZjZmOGFlMTdlEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/646b7d22ff2f4973b90338ccbcc72b9a"
+      },
+      "name": "projects/7191702240633724843/screens/59fd2049afab43ffbf9d9842b6234342",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLtDNO8sG4jjWJdNlUbKa4b9sJtcUOayzGqkZT5RZsAp6YGF7deHoYYOjw2Ch70ctezBPQ6elIBdLrN5x3YjZQU1KceIt12pE6u3qHnFReV-9-KjGH1dLxPUVhsK6Ca4gNocx-jhddVfdIMi-LF_EgA2yhqVJHQ8r3AvoS81LONKEPFVAvOIpuEQQgmcLP28ZbiqvmgzPrHzdPIUlrnz1tPonymH1mHUmSZjYEyNeo5AbTi4Iaho0qC5fOI",
+        "name": "projects/7191702240633724843/files/39944933c16f462a82f192dd32b8f172"
+      },
+      "title": "CourtPass book-date mobile light",
+      "width": "780"
+    },
+    {
+      "deviceType": "DESKTOP",
+      "height": "3018",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzBmZGI0M2E0MThiNTQ2YTRiMjMwYzZhYzVlNTg4NGViEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/e062a3beef2245c38baaf36ae2a1a7c6"
+      },
+      "name": "projects/7191702240633724843/screens/4e00568f754240a582dff781aaee623e",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLtIbsGX9arXK2kAPVUVqOPj-Jht1RNnLVKXvQba6uWXznwKA7PJV-aiZMH4XktAJ6-R0J1TflDKwFt8pxg69dgk-wZJ02_l0I-YwU_byYdyNuG7Iehkvi4N3IIptZNbHjIRFQ-kx97zMmp-SGbvDumRlX3lCw_eMMcOVdJBbplA5bVzctxmwxx0PQ0XZzxQUaGe_fK8ZXw-reNcmndtRENk6LDZC5A4AcdIUU_ufawuVF7l9aKGuIdmUQ",
+        "name": "projects/7191702240633724843/files/371612d71dbc4dd2b217911886f35201"
+      },
+      "title": "CourtPass landing desktop light",
+      "width": "2560"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "1768",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2I1MDc1NGU1MmVhNjRiMWQ4ZWU4ZjBiMWMwZmRlOTlkEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/3a79714f1c7140e8bc0d073e13c22c3b"
+      },
+      "name": "projects/7191702240633724843/screens/2f0fd464694846b69a5952a8c4789f15",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLvi5mvi97MzkmJqF3Jsmmc_faaYOb75qjHqQ1KCmsv_zojpFv7JAMrG5mj53gPaiJFUqQljtUHjmIoDcFTHsHa7Nd4U8S6K4GTDY4ZMAh-Tnisd9KfJxY0l0P8P0utFV2XMRAEH-AB3HHrttFMhPmNDx-125BC8mZJNqRSOATVgRSNkbMm3s-IM2f5rdoca6D8uGj9_MJ77AqNMBygFxmANpHJ73Ml213ZFZvoV1d3HmbPMxb_ck_LV7xU",
+        "name": "projects/7191702240633724843/files/97db13a17cc648c4a0d556ed18b5f354"
+      },
+      "title": "CourtPass book-date mobile light",
+      "width": "780"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "1768",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2ExNmEzYTg4YjU4MDRkYmY5ZjA1ZDVlNTI5Y2E3N2E1EgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/52166ae2669e476999b8a9be60483059"
+      },
+      "name": "projects/7191702240633724843/screens/24d4e208d757435fb29f761603728933",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsjTNpuMwOt-AfO4HFxDmrCmdQ8Z7tf8FAKttL-F3dB0MuMJFIA463CBXddZeG4C0HcZEpT9bDB2ppX5SqHF7B-9-LlxnDlmAP7CaaXpXFRZIe3JXjhf-SekTRPTEbO8XgQGY7l5eKVxaFNNYv1J58R5IBQPzqkT4A-QvESSW6BxpJyByFs0AICkbjWvg8QYgQbQAJKZA0v5z1bmDQKSMiwGgzuLfUcH6ETz3hs2_gBHuZWEuPsFltYtUg",
+        "name": "projects/7191702240633724843/files/23a40665946c45d9a815713a1378e12a"
+      },
+      "title": "CourtPass My Bookings mobile light",
+      "width": "780"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "1768",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2MyMzFjMGRmODI5NTQ4YmVhZTNjYzEzN2IwNDU1NDdjEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/19dcab67fb044807a963c6e9e5bcecb6"
+      },
+      "name": "projects/7191702240633724843/screens/1b802a36dae1458db91d6ad2f43f9421",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsRmOLFafYPlq-_4IzCLiwBztWNkKUzJmdYAaNHQqTng-zov0OKsBtTypVg5uuOGH62QOPoyTnrIEjC9_AtLmNiOprZlXUCei4XaRVyE1RgDP3va7SeBZ5iNBeltsO7AxKJQtL4P10DYTzoqc9Zl9fIS9Vzax7SD34tri9MgPP6e78m2oaj1q59hms9vP-M-KbcoV1OejyrWelM4rfJ8jpgFMdyp4uFv5PptHKDQGeQM6huyrQXA6528VI",
+        "name": "projects/7191702240633724843/files/d051b6818ab040a9ae6611ae79c4c391"
+      },
+      "title": "CourtPass My Bookings mobile dark",
+      "width": "780"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "1768",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2YxMzJjOGJkMzgwOTQ4N2E4MWNkOTJjNzI1YTEyMDIzEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/1cb6297fc27f40adafdf5ed07310bf52"
+      },
+      "name": "projects/7191702240633724843/screens/17f511d7a2ea4353b02e8b580206ae11",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLtU-A7z60jawf3e6tQLl8CERFB2mvYmzIzMdk18UZXLkFqj8z5S3oxtJ72YwKx1JXdgNc_I1hB_P2A2wzDu_u1pFntiTbJ1y78O902-_1dz0HFcxF5NU5SgQe-pTnR3uZlxWvALecFVuVJfcSBNPPt3iHOsE0xmCJX6w-XQwbq3m6kjntp2qaQMH9y_jY7volMxu79sXhdEef3qTk4WxTciKe3Hm9Zj4NAfGaD00BL99hf8EzX3jpcJA1s",
+        "name": "projects/7191702240633724843/files/1a3a511a4cef4fb59b15b311bfbf4cd6"
+      },
+      "title": "CourtPass Registration",
+      "width": "780"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "2368",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzg4NjUxZmQxMGI2ZjQxMGY5NTFhMzEwMTRiYTE3NGM2EgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/d8e475a0d8294e118970c94d9ee353a6"
+      },
+      "name": "projects/7191702240633724843/screens/abc6ec6d5f7c41069b11a938fe92940e",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLv6vEAlF2sjeqysRYmzMvm9Ki_45413_PCJ8LD7vVFChzLG6Jh-jZuH_jvkQCsIayEP2aEdcR4biHfvTeRCHoBd1dl9NAGtlIQkcSbvLrzrhkLSpAhi0SRV1YOryJiavNdTv65WXApYryTj5PEi4jpLr0k1pTRCfDVbpDGR54O99vkQ8rKz0V1fVAVBUgPosVMUyZTOHfWaCdJe1N8x3QsZLB_Nakmok0u84hWIvkS-hQbw8ZkYj48SOMQ",
+        "name": "projects/7191702240633724843/files/f80f070800a34a6187d9997278f8a017"
+      },
+      "title": "CourtPass landing mobile dark",
+      "width": "780"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "2720",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzZjN2Y0ZThkNzNmNTQyODk4MzNkMTY0NWQxNWE0NTQ5EgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/53b599e03c66416fbe7353dfff60645d"
+      },
+      "name": "projects/7191702240633724843/screens/ca84034ac35148a7883710d83a760767",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLsaE447qKwDTWCi2OwKMeT9spY5AJmSjA8w3BkwV2MaA9dXXysFfTnMMrkdIsKJ6vLn1vpaSXnuSj0haV7O7ME5Fm5BOMkbEt1QQWlOBbrKHLYReHyeRQXWdZGmIbXi7qLGDvCQonAVUEqppHwykGqGMmXCFWn1cuXF8CNe3ChNewoJ62fCDClWlpRJGMMcA-kO5nj6Tm5ZOcJzbO78KpIq5Mr6XsrgYzFG9JvL-OHe9beU-g3GclIR9I0",
+        "name": "projects/7191702240633724843/files/66e801af168042d0889d8d565aeba8e1"
+      },
+      "title": "CourtPass Mobile Landing Page",
+      "width": "780"
+    },
+    {
+      "deviceType": "DESKTOP",
+      "height": "2048",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2JjNjU5OGE4ZDMzMTQ0YjhiNzNlM2UyMTc3MGExMWFjEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/592018c054324a72a3ecdef692d57f81"
+      },
+      "name": "projects/7191702240633724843/screens/cc7dbbae51734c70974ae208f32b2a7e",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLvMqZ-dQ6Kw9HlLdIISMjQFDvLvqG1DS836oy1QevowQPaFvq3DR1bpAs9zVWlrDnqMqRqsa0T-EfLO2F6lOaTNw18GzxK50Km7F8rAjgfOB4g-_rIMZqkdSkmDM52oR6FKvPVy2HTjjCxZrEhROOxV3meMRJ-qZxKP9Iwz5Jnxmdtgej8fsEfC8QJ6VGSm8RVHNEjeLIpc8478Xa5Nq9cK10amahZ-yNZ5pUCwVRexzmTSda_O5WuQvw",
+        "name": "projects/7191702240633724843/files/9e0fd4e8179747849297406805c5478e"
+      },
+      "title": "CourtPass register desktop dark",
+      "width": "2560"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "1768",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2QzOTBhYzkxYjcwZDQwOWQ5ODVkNGI1NTU2NWU5MWM1EgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/3c6b6a76a7434216b475ff242f6294a8"
+      },
+      "name": "projects/7191702240633724843/screens/3a9c23c75d9449d18944370f972e2adb",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLul50ipj-kswNKRcecrqnoeC3dqJh1VzF7fICpsEghCAr8_ti0jAsIwSEG7QJB-jO7BUiTc0_MZ81f2dppRxK1qoDiRRcjR06smIjk42GrtBDubQuPqTm2ms8VL0EcopNRz1dwPpIXWi1-dgmUYmTp_Ie0Us3_f3jmCXCGmAvv-siOpl-Qk2hnul883amfqjs0U-8XwUlbUnT8WTOn1aem3bj4OtNygwpGS28IJCem4k7lUklauE6WfbVg",
+        "name": "projects/7191702240633724843/files/4ee7725428ba4370bf79c7f3b6813eda"
+      },
+      "title": "CourtPass book-date mobile dark",
+      "width": "780"
+    },
+    {
+      "deviceType": "DESKTOP",
+      "height": "2048",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzI2NzRmYzdiYzI2ODRhOTQ4NTc0NzhlYTZhZWQ4MmJiEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/d12fade512b94778bc4ed2dbf2540bfb"
+      },
+      "name": "projects/7191702240633724843/screens/ffb5afa6c7cf4af6b3511039ab5b5efa",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLvmD0u0oczh0mSrAnPENcqQ-nyhXm-IiND6bUt7GoEHKnzbTAlJ9ESMBxRqngH3_OfcE4QCcuXBU96S2ReKK_Aa5eYN3CvsuaLeRTnsdHU44bkU-S0UVgpIM15jcdeADVhHeQ6liju1KHo7LtFlUSZSTkESh3xHZnWAEaRD3ebE-xxLAINuThWN1TL5UddlX0FjbiwaS75vMtK-4IpjX8qsJWHfj63iQzP7kmRESQwpvFkVFqrNPrkuVOY",
+        "name": "projects/7191702240633724843/files/795370bf4f8f4b319bb83ac9219a729f"
+      },
+      "title": "CourtPass register desktop light",
+      "width": "2560"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "2884",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzgzZTExODZlOTQ2YjQ1NjE4NjYyODYyOWI0MGY5ZDAxEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/b06142f46aef44beaef8d8eb1a3a3fa1"
+      },
+      "name": "projects/7191702240633724843/screens/a8c5c6ea6b6046d3b95c7790a4283304",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLt2f9XbESYxRwcMm5PWq7Dv_fo00RKB9IEw2pYN3eJxGWe6NM69ozU6f113kvIMvvFVbUbZBE5CNljWw59b0S98UO1g9XK9Qg3xcv64pNVRNbquk0ciUqk5zR26DbRpxW8xq_0NtE9zJy_iVmR9snjdKxUWiFXjA5iyERpiq210F_ngVnec5tUurpAneYphBlyMK3IpwQJLpgbFP_slUo78zpNqlheg3HXOGlQMu13-h9BC84de9d16O8M",
+        "name": "projects/7191702240633724843/files/4e7c788673cf4bd591d361cd72c04cdc"
+      },
+      "title": "CourtPass Mobile Landing Page",
+      "width": "780"
+    },
+    {
+      "deviceType": "DESKTOP",
+      "height": "2048",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzhjY2ZmNGI3NjkzZTRkZjc5YjY3ODgwN2RkMDEyZGExEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/1acb46f05dc5429384cd83166bafcfe4"
+      },
+      "name": "projects/7191702240633724843/screens/7754b730dfdb422784917d8f4c2d4731",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLvwDJuw6LRbBYQC78VIa05ECQKA9u6yB4AN0c_CV7QfboP-QgCSDSLnFwFLVSMjqN78l658NhtHSEAsN81qit2ht26hmoxcqpQqSo24nURmcyFERD4NnMQPbtIkLqzQszMi9jDMAtyisJdeLkUfRWP927StgFrXbVOwwhUWwn7TTg7axVNuAi2dokDGYQJfDMAynEwJRs3qjDKnhRwy-9uKl3AfJs21-5nHPZ_iTNBKIrMCcM2cSHwMbw",
+        "name": "projects/7191702240633724843/files/c3ac9e557fc6477ab58eaa0247e84a81"
+      },
+      "title": "CourtPass login desktop dark",
+      "width": "2560"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "1768",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzg0NWVhNTRjNzhjYTQyOGQ5MWVhYjBkYmViODJiYmJhEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/9f37faefc05f4511bb86fe8c458f5a38"
+      },
+      "name": "projects/7191702240633724843/screens/a4210e571789419da44f179c4acc30f8",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLvlvKKm35vwzjF6Mjv4vVaFM5w0kXEGDCB8xmRnLvE-DguUOz7pH2899bCgL18RaLAk5UQ5d4SBS3n0IstxzV44gKgoxVrE-smsDbEEwNX0oT6_liAE-Hqz89XxTdJZsmhOG_Bery_eOiWHB1mRDkFtgSQ82Gzv2yic1oQ3t-QL6_MqRg6l23j9aWyyseSIzYjJlct3Cp5Z7H6XNLB5vuCTumGDfVmSlXMRexeKEYpwSsA1hqUvGrWsOw",
+        "name": "projects/7191702240633724843/files/3d36683016c44dfaa4244f9e4d3032b7"
+      },
+      "title": "CourtPass register mobile light",
+      "width": "780"
+    },
+    {
+      "deviceType": "DESKTOP",
+      "height": "2048",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2QzNTg4YzZiNDRiMzRhYWZiY2MzNTVhZjZiOTc0YWRlEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/82ab391c45834cf2991a0d648674fa8f"
+      },
+      "name": "projects/7191702240633724843/screens/91bc85dc14f241ce94deda74754e513e",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLt-Stmk8_OrZOonkELWIc2S5bRi2yl0-wKGXUPLhmIzSLpRE9lSHnk7-h2x24Dtx9GztzfvxCk27TGVuHYt1wdQ-pRyTZoEnwHqiuEO5uFhoZ16o2dwAM6tflohs6fDm-6xjWSq6QUfm7CbTv51XgHv9ttZJcJHa8-xTvx5_-qkry7kTzOn89WKZlpGsX0LSo-6YSAlgtMJJ04sjPnZiXtmjU6PHtimuLd0c9wdMFkHUB_tLOJMFSr64JQ",
+        "name": "projects/7191702240633724843/files/e39ffe5109af4faca6bce64b99d0f543"
+      },
+      "title": "CourtPass register desktop light",
+      "width": "2560"
+    },
+    {
+      "deviceType": "MOBILE",
+      "height": "1768",
+      "htmlCode": {
+        "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzBhN2JhOGIwMGM3NjRkOGE4YTM3Y2VjYjg1ZmYzMWVjEgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+        "mimeType": "text/html",
+        "name": "projects/7191702240633724843/files/7685386e30194d85b0aa8f7820d5aba0"
+      },
+      "name": "projects/7191702240633724843/screens/830a9550d8e94ab3bd6293978e6d2cb9",
+      "screenshot": {
+        "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLtZ9S5VQifeM_uopjBprqs9ZxpWvC0zga4PtRTxbbWjs9VENbDuPDA5q2RHiloYIEjr6_Wl_gvf9Ww-IuYC26JUVeqA3vluxZ3qyO_dGFqBnBCKMxj6MCF9msqwGKC16OnfrlomzafX7RBhgVg75XbOlZcGGydoOZBJrjFz4L_Witu6VDzseLo9OU31yCEPPDTrHzwhrhmP8Ou2lModmZFQq7BVZtwjzJkxq7BuwKGFgP0OQK80aSdwi8w",
+        "name": "projects/7191702240633724843/files/6acd1f4dc1fd4a9187c4ba19418e5b06"
+      },
+      "title": "CourtPass Login",
+      "width": "780"
+    }
+  ]
+}
+[2026-08-15T16:16:50+03:00] OK book-date-desktop-dark (poll)
+[2026-08-15T16:16:50+03:00] START book-court-mobile-light (MOBILE)
+Error: Tool Call Failed [generate_screen_from_text]: Request contains an invalid argument.
+[2026-08-15T16:16:54+03:00] RETRY poll book-court-mobile-light
+[2026-08-15T16:23:30+03:00] MATRIX START — 15 pages × 4 variants
+[2026-08-15T16:23:30+03:00] SKIP landing-mobile-light (already done)
+[2026-08-15T16:23:30+03:00] SKIP landing-mobile-dark (already done)
+[2026-08-15T16:23:30+03:00] SKIP landing-desktop-light (already done)
+[2026-08-15T16:23:30+03:00] SKIP landing-desktop-dark (already done)
+[2026-08-15T16:23:30+03:00] SKIP login-mobile-light (already done)
+[2026-08-15T16:23:30+03:00] SKIP login-mobile-dark (already done)
+[2026-08-15T16:23:30+03:00] SKIP login-desktop-light (already done)
+[2026-08-15T16:23:30+03:00] SKIP login-desktop-dark (already done)
+[2026-08-15T16:23:30+03:00] SKIP register-mobile-light (already done)
+[2026-08-15T16:23:30+03:00] SKIP register-mobile-dark (already done)
+[2026-08-15T16:23:30+03:00] SKIP register-desktop-light (already done)
+[2026-08-15T16:23:30+03:00] SKIP register-desktop-dark (already done)
+[2026-08-15T16:23:30+03:00] SKIP book-date-mobile-light (already done)
+[2026-08-15T16:23:30+03:00] SKIP book-date-mobile-dark (already done)
+[2026-08-15T16:23:30+03:00] SKIP book-date-desktop-light (already done)
+[2026-08-15T16:23:30+03:00] SKIP book-date-desktop-dark (already done)
+[2026-08-15T16:23:30+03:00] START book-court-mobile-light (MOBILE)
