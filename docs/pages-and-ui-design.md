@@ -35,25 +35,41 @@
 
 ## 2. Brand & visual system
 
+> **Full spec:** [branding.md](./branding.md) — colors, components, mockups, Tailwind tokens.  
+> **Rule:** Light and dark share the same brand green `#1B7A4E` and clay orange `#E86A2A`. Only surfaces and text invert.
+
 Padel = fast, social, outdoor energy. Keep it clean and sporty — not a generic gym app.
 
-### Color palette
+### Color palette (semantic)
 
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `--court-green` | `#1B7A4E` | Primary buttons, active slot, success |
-| `--court-green-dark` | `#145C3A` | Hover, header on scroll |
-| `--clay-orange` | `#E86A2A` | Accent, morning deals, badges |
-| `--line-white` | `#F4F7F5` | Page background |
-| `--surface` | `#FFFFFF` | Cards, modals |
-| `--text-primary` | `#0F1A14` | Headlines, prices |
-| `--text-muted` | `#5C6B62` | Secondary copy |
-| `--slot-available` | `#D4EDDF` | Open slot chip bg |
-| `--slot-held` | `#FFF3CD` | Someone paying (shown as unavailable) |
-| `--slot-booked` | `#E8EAEC` | Taken |
-| `--slot-selected` | `#1B7A4E` | User's pick |
-| `--error` | `#C0392B` | Failed payment, expired pass |
-| `--redeemed` | `#6B7280` | Already used pass |
+| Token | Light | Dark |
+|-------|-------|------|
+| `--bg` | `#F4F7F5` | `#0F1A14` |
+| `--surface` | `#FFFFFF` | `#1A2620` |
+| `--border` | `#E2E8E4` | `#2D4035` |
+| `--text-primary` | `#0F1A14` | `#F4F7F5` |
+| `--text-muted` | `#5C6B62` | `#8FA396` |
+| `--court-green` | `#1B7A4E` | `#1B7A4E` ← same |
+| `--court-green-dark` | `#145C3A` | `#145C3A` ← same |
+| `--clay-orange` | `#E86A2A` | `#E86A2A` ← same |
+| `--slot-available` | `#D4EDDF` | `rgba(27,122,78,0.18)` |
+| `--slot-held` | `#FFF3CD` | `rgba(133,100,4,0.22)` |
+| `--slot-booked` | `#E8EAEC` | `#1E2A24` |
+| `--slot-selected` | `#1B7A4E` | `#1B7A4E` |
+| `--error` | `#C0392B` | `#C0392B` |
+| `--redeemed` | `#6B7280` | `#6B7280` |
+
+**Dark-only enhancement:** optional subtle glow on primary CTA — `0 0 24px rgba(27,122,78,0.15)`. No other glow/neon effects.
+
+### Theme behavior
+
+| Item | Spec |
+|------|------|
+| Default | Follow `prefers-color-scheme` |
+| Override | Header toggle adds `dark` class on `<html>` |
+| Hero image | Same photo both modes; dark uses stronger scrim |
+| Staff UI | Light mode only for MVP (optional later) |
+| Implementation | Tailwind `dark:` variants — see [branding.md § Theme](./branding.md#11-theme-implementation) |
 
 ### Typography
 
@@ -67,7 +83,7 @@ Use Google Fonts — both are free and fast to add.
 
 ### Iconography & imagery
 
-- Hero: padel court photo (real or Unsplash), slight green overlay gradient
+- Hero: padel court photo (real or Unsplash), green scrim gradient — stronger in dark mode
 - Icons: **Lucide React** (already common with shadcn)
 - Court labels: **Court 1** / **Court 2** — never "A/B" alone
 
@@ -76,6 +92,15 @@ Use Google Fonts — both are free and fast to add.
 - Short, direct, Egyptian-friendly English (Arabic later if time)
 - Example CTA: **"Book a court"** not "Initiate reservation workflow"
 - Morning promo: **"Quiet mornings, lower price"**
+
+### Landing mockups
+
+| Mode | Reference |
+|------|-----------|
+| Light | [courtpass-landing-mockup.png](./assets/courtpass-landing-mockup.png) |
+| Dark | [courtpass-landing-mockup-dark.png](./assets/courtpass-landing-mockup-dark.png) |
+
+Both share identical layout and copy; dark inverts surfaces and may show subtle CTA glow.
 
 ---
 
@@ -210,6 +235,21 @@ System (no UI)
 
 Same content, max-width `480px` centered card on wider screens (mobile-first shell).
 
+#### Dark mode (same layout)
+
+| Section | Light | Dark |
+|---------|-------|------|
+| Page bg | `#F4F7F5` | `#0F1A14` |
+| Header | white/transparent | `#0F1A14`, wordmark `#F4F7F5` |
+| Hero scrim | light gradient | stronger gradient (same photo) |
+| CTA button | `#1B7A4E` | `#1B7A4E` + optional subtle glow |
+| Step cards | white | `#1A2620` + `#2D4035` border |
+| Morning banner | `#FDE8DC` bg | `rgba(232,106,42,0.12)` on surface |
+| Morning text | `#E86A2A` | `#E86A2A` (unchanged) |
+| Availability card | white | `#1A2620` |
+
+No layout or copy changes between modes — only token swap.
+
 ---
 
 ### 5.2 Login — `/login`
@@ -330,12 +370,12 @@ This is the **critical anti-double-booking screen**.
 └─────────────────────────────┘
 ```
 
-| Slot state | Visual | Customer can tap? |
-|------------|--------|-------------------|
-| `available` | Green outline | Yes |
-| `held` (payment in progress) | Yellow, disabled | No — "Someone is checking out" |
-| `booked` (paid) | Grey, disabled | No |
-| `selected` | Solid green | Yes (toggle off) |
+| Slot state | Light visual | Dark visual | Customer can tap? |
+|------------|--------------|-------------|-------------------|
+| `available` | Green outline on `#D4EDDF` | Green outline on green tint | Yes |
+| `held` | Yellow `#FFF3CD` | Amber tint, disabled | No — "Someone is checking out" |
+| `booked` | Grey `#E8EAEC` | Dark grey `#1E2A24` | No |
+| `selected` | Solid `#1B7A4E` | Solid `#1B7A4E` | Yes (toggle off) |
 
 **On slot tap:**
 
@@ -750,7 +790,7 @@ Static Google Maps embed or plain text address in footer — no SDK required.
 
 ---
 
-## 8. Responsive & accessibility rules
+## 8. Responsive, accessibility & theme rules
 
 | Rule | Implementation |
 |------|----------------|
@@ -760,6 +800,9 @@ Static Google Maps embed or plain text address in footer — no SDK required.
 | Color | Don't rely on color alone — slot states also use text labels |
 | Focus | Visible focus rings on keyboard nav (staff desktop) |
 | Pass code | `font-mono text-2xl tracking-widest` for readability |
+| Dark mode | Same layout/components; swap semantic tokens per [§2](#2-brand--visual-system) |
+| Theme toggle | Sun/moon icon in header; persist choice in `localStorage` |
+| Consistency | Never use a different green/orange in dark — only surfaces invert |
 
 ---
 
@@ -885,6 +928,7 @@ resources/js/
 │   └── layout/
 │       ├── AppShell.tsx
 │       ├── CustomerBottomNav.tsx
+│       ├── ThemeToggle.tsx
 │       └── StickyFooterCTA.tsx
 └── lib/
     ├── slotStates.ts      # available | held | booked | selected
@@ -896,6 +940,8 @@ resources/js/
 ## 15. Acceptance checklist (maps to challenge rules)
 
 - [ ] Customer can register and log in (phone + password)  
+- [ ] Light and dark mode share same brand green/orange accents  
+- [ ] Theme toggle or system preference respected  
 - [ ] Customer can pick court + time from calendar UI  
 - [ ] Logged-in customer sees all their bookings at `/bookings`  
 - [ ] Slot shows unavailable while another user pays (`held`)  
@@ -909,4 +955,4 @@ resources/js/
 
 ---
 
-*Last updated: buildathon planning — CourtPass / Mahgooz (auth + /bookings added)*
+*Last updated: buildathon planning — CourtPass / Mahgooz (unified light/dark)*
