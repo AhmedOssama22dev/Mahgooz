@@ -1,0 +1,140 @@
+{
+  "date": "2026-08-20",
+  "court": {
+    "id": "11111111-1111-4111-8111-111111111111",
+    "name": "Court 1"
+  },
+  "operating_hours": {
+    "open": "08:00",
+    "close": "22:00"
+  },
+  "slot_minutes": 60,
+  "slots": [
+    {
+      "start_time": "08:00",
+      "end_time": "09:00",
+      "state": "available",
+      "period": "morning",
+      "price_egp": 200,
+      "price_cents": 20000,
+      "label": "Morning available"
+    },
+    {
+      "start_time": "09:00",
+      "end_time": "10:00",
+      "state": "held",
+      "period": "morning",
+      "price_egp": 200,
+      "price_cents": 20000,
+      "label": "Morning available"
+    },
+    {
+      "start_time": "10:00",
+      "end_time": "11:00",
+      "state": "available",
+      "period": "morning",
+      "price_egp": 200,
+      "price_cents": 20000,
+      "label": "Morning available"
+    },
+    {
+      "start_time": "11:00",
+      "end_time": "12:00",
+      "state": "available",
+      "period": "morning",
+      "price_egp": 200,
+      "price_cents": 20000,
+      "label": "Morning available"
+    },
+    {
+      "start_time": "12:00",
+      "end_time": "13:00",
+      "state": "booked",
+      "period": "afternoon",
+      "price_egp": 280,
+      "price_cents": 28000,
+      "label": null
+    },
+    {
+      "start_time": "13:00",
+      "end_time": "14:00",
+      "state": "available",
+      "period": "afternoon",
+      "price_egp": 280,
+      "price_cents": 28000,
+      "label": null
+    },
+    {
+      "start_time": "14:00",
+      "end_time": "15:00",
+      "state": "available",
+      "period": "afternoon",
+      "price_egp": 280,
+      "price_cents": 28000,
+      "label": null
+    },
+    {
+      "start_time": "15:00",
+      "end_time": "16:00",
+      "state": "available",
+      "period": "afternoon",
+      "price_egp": 280,
+      "price_cents": 28000,
+      "label": null
+    },
+    {
+      "start_time": "16:00",
+      "end_time": "17:00",
+      "state": "held",
+      "period": "afternoon",
+      "price_egp": 280,
+      "price_cents": 28000,
+      "label": null
+    },
+    {
+      "start_time": "17:00",
+      "end_time": "18:00",
+      "state": "booked",
+      "period": "evening",
+      "price_egp": 350,
+      "price_cents": 35000,
+      "label": null
+    },
+    {
+      "start_time": "18:00",
+      "end_time": "19:00",
+      "state": "available",
+      "period": "evening",
+      "price_egp": 350,
+      "price_cents": 35000,
+      "label": null
+    },
+    {
+      "start_time": "19:00",
+      "end_time": "20:00",
+      "state": "booked",
+      "period": "evening",
+      "price_egp": 350,
+      "price_cents": 35000,
+      "label": null
+    },
+    {
+      "start_time": "20:00",
+      "end_time": "21:00",
+      "state": "available",
+      "period": "evening",
+      "price_egp": 350,
+      "price_cents": 35000,
+      "label": null
+    },
+    {
+      "start_time": "21:00",
+      "end_time": "22:00",
+      "state": "available",
+      "period": "evening",
+      "price_egp": 350,
+      "price_cents": 35000,
+      "label": null
+    }
+  ]
+}

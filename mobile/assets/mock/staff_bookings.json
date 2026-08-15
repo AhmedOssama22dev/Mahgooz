@@ -1,0 +1,45 @@
+{
+  "date": "2026-08-20",
+  "bookings": [
+    {
+      "booking_code": "MGZ-2K91P",
+      "status": "redeemed",
+      "court_name": "Court 2",
+      "start_time": "17:00",
+      "end_time": "18:00",
+      "booker_name": "Sara Ali",
+      "booker_phone": "01123456789",
+      "redeemed_at": "2026-08-20T17:02:00+03:00"
+    },
+    {
+      "booking_code": "MGZ-7F42K",
+      "status": "confirmed",
+      "court_name": "Court 1",
+      "start_time": "18:00",
+      "end_time": "19:00",
+      "booker_name": "Ahmed Hassan",
+      "booker_phone": "01012345678",
+      "redeemed_at": null
+    },
+    {
+      "booking_code": "MGZ-9Q1LM",
+      "status": "confirmed",
+      "court_name": "Court 2",
+      "start_time": "19:00",
+      "end_time": "20:00",
+      "booker_name": "Omar K.",
+      "booker_phone": "01234567890",
+      "redeemed_at": null
+    },
+    {
+      "booking_code": "MGZ-NXT20",
+      "status": "confirmed",
+      "court_name": "Court 1",
+      "start_time": "20:00",
+      "end_time": "21:00",
+      "booker_name": "Nour Adel",
+      "booker_phone": "01098765432",
+      "redeemed_at": null
+    }
+  ]
+}
