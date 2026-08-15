@@ -1,0 +1,314 @@
+{
+  "outputComponents": [
+    {
+      "design": {
+        "screens": [
+          {
+            "designSystem": {
+              "designSystem": {
+                "displayName": "CourtPass",
+                "styleGuidelines": "## Brand & Style\nThe design system is anchored in a high-performance, athletic aesthetic tailored for the premium padel scene in Sheikh Zayed. It utilizes a **Modern Minimalist** style with **Tactile Athletic** influences, mirroring the physical environment of the sport—specifically the contrast between lush green courts and clay surfaces. \n\nThe UI prioritizes speed and clarity, evoking a sense of professional coordination and energy. By balancing generous whitespace with high-contrast functional elements, the design system ensures that the booking experience feels as precise and fluid as the game itself.\n\n## Layout & Spacing\nThe layout follows a **Fixed-Fluid** hybrid model optimized for a 390px mobile viewport. \n\nThe structure relies on a consistent 20px horizontal safe-area margin. Internal components use a modular 4px base grid. Content is organized in vertical stacks with 16px (Medium) or 24px (Large) spacing between logical sections. A sticky header provides constant access to navigation, while primary actions are strictly anchored to the bottom of the viewport or span the full width of the content area for ease of thumb-reach.\n\n## Elevation & Depth\nThe design system employs **Tonal Layering** with minimal shadow usage to maintain a clean, modern look. \n\nDepth is primarily communicated through color shifts: the `#F4F7F5` background acts as the lowest layer, while `#FFFFFF` white cards sit on top. When elevation is necessary for interactive elements (like a floating booking button), use an **Ambient Shadow**: a very soft, highly diffused 10% opacity shadow with a slight green tint (`#0F1A14`) to prevent the shadow from appearing muddy.\n\n## Components\n- **Buttons:** Primary buttons are full-width, 56px height, using `#1B7A4E` background and white text. Secondary buttons use a transparent background with a 1.5px border of the primary color.\n- **Cards:** White background with 12px padding. Use a subtle 1px border (`#E0E5E2`) instead of shadows to define court listings.\n- **Chips:** Used for time slots. Default state is white with a grey border; active state is Primary Green with white text.\n- **Input Fields:** 48px height, 12px radius, with a subtle `#F4F7F5` fill to distinguish from the card surface.\n- **Promo Banners:** Utilize the `#FDE8DC` peach background with `#E86A2A` orange accents to draw attention to special offers or new club openings.\n- **Status Indicators:** Use `#E86A2A` for \"Available Soon\" and `#1B7A4E` for \"Instant Book.\"",
+                "theme": {
+                  "bodyFont": "INTER",
+                  "bodyFontFamily": "Inter",
+                  "colorMode": "LIGHT",
+                  "colorVariant": "FIDELITY",
+                  "customColor": "#1b7a4e",
+                  "designMd": "---\nname: CourtPass\ncolors:\n  surface: '#f0fdf2'\n  surface-dim: '#d0ddd3'\n  surface-bright: '#f0fdf2'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#eaf7ec'\n  surface-container: '#e4f1e7'\n  surface-container-high: '#deebe1'\n  surface-container-highest: '#d9e6dc'\n  on-surface: '#131e18'\n  on-surface-variant: '#3f4941'\n  inverse-surface: '#28332c'\n  inverse-on-surface: '#e7f4ea'\n  outline: '#6f7a71'\n  outline-variant: '#bec9bf'\n  surface-tint: '#006d42'\n  primary: '#00603a'\n  on-primary: '#ffffff'\n  primary-container: '#1b7a4e'\n  on-primary-container: '#acffcb'\n  inverse-primary: '#80d9a4'\n  secondary: '#a33e00'\n  on-secondary: '#ffffff'\n  secondary-container: '#fe7a39'\n  on-secondary-container: '#632300'\n  tertiary: '#5e5047'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#78685f'\n  on-tertiary-container: '#fee9dd'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#9cf5bf'\n  primary-fixed-dim: '#80d9a4'\n  on-primary-fixed: '#002111'\n  on-primary-fixed-variant: '#005231'\n  secondary-fixed: '#ffdbcd'\n  secondary-fixed-dim: '#ffb596'\n  on-secondary-fixed: '#360f00'\n  on-secondary-fixed-variant: '#7c2e00'\n  tertiary-fixed: '#f3dfd3'\n  tertiary-fixed-dim: '#d6c3b7'\n  on-tertiary-fixed: '#241912'\n  on-tertiary-fixed-variant: '#52443c'\n  background: '#f0fdf2'\n  on-background: '#131e18'\n  surface-variant: '#d9e6dc'\ntypography:\n  headline-xl:\n    fontFamily: DM Sans\n    fontSize: 32px\n    fontWeight: '700'\n    lineHeight: 40px\n    letterSpacing: -0.02em\n  headline-lg:\n    fontFamily: DM Sans\n    fontSize: 24px\n    fontWeight: '700'\n    lineHeight: 32px\n    letterSpacing: -0.01em\n  headline-md:\n    fontFamily: DM Sans\n    fontSize: 20px\n    fontWeight: '600'\n    lineHeight: 28px\n  body-lg:\n    fontFamily: Inter\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: 28px\n  body-md:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-sm:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n  label-md:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.02em\n  label-sm:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: 16px\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  container-width: 390px\n  edge-margin: 20px\n  gutter: 12px\n  stack-sm: 8px\n  stack-md: 16px\n  stack-lg: 24px\n---\n\n## Brand & Style\nThe design system is anchored in a high-performance, athletic aesthetic tailored for the premium padel scene in Sheikh Zayed. It utilizes a **Modern Minimalist** style with **Tactile Athletic** influences, mirroring the physical environment of the sport—specifically the contrast between lush green courts and clay surfaces. \n\nThe UI prioritizes speed and clarity, evoking a sense of professional coordination and energy. By balancing generous whitespace with high-contrast functional elements, the design system ensures that the booking experience feels as precise and fluid as the game itself.\n\n## Colors\nThe palette is inspired by the landscape of modern padel clubs. \n\n- **Primary (Deep Green):** Represents the court surface and professional authority. Used for main actions and success states.\n- **Secondary (Clay Orange):** A high-energy accent used sparingly for highlights, active states, or urgency.\n- **Tertiary (Peach):** A soft, low-contrast background used for promotional banners and cards to differentiate them from functional UI.\n- **Neutrals:** The background is a cool, desaturated grey-green to reduce eye strain, while the text remains near-black for maximum accessibility.\n\n## Typography\nThis design system uses a dual-font strategy to balance character with utility. \n\n**DM Sans** is reserved for headlines to provide a bold, geometric, and modern sporting feel. Its tight tracking and heavy weights command attention. **Inter** is utilized for all body copy, inputs, and labels to ensure maximum legibility at small sizes during high-speed interactions. All labels should use slightly increased letter spacing for clarity in compact UI areas.\n\n## Layout & Spacing\nThe layout follows a **Fixed-Fluid** hybrid model optimized for a 390px mobile viewport. \n\nThe structure relies on a consistent 20px horizontal safe-area margin. Internal components use a modular 4px base grid. Content is organized in vertical stacks with 16px (Medium) or 24px (Large) spacing between logical sections. A sticky header provides constant access to navigation, while primary actions are strictly anchored to the bottom of the viewport or span the full width of the content area for ease of thumb-reach.\n\n## Elevation & Depth\nThe design system employs **Tonal Layering** with minimal shadow usage to maintain a clean, modern look. \n\nDepth is primarily communicated through color shifts: the `#F4F7F5` background acts as the lowest layer, while `#FFFFFF` white cards sit on top. When elevation is necessary for interactive elements (like a floating booking button), use an **Ambient Shadow**: a very soft, highly diffused 10% opacity shadow with a slight green tint (`#0F1A14`) to prevent the shadow from appearing muddy.\n\n## Shapes\nThe shape language is defined by a consistent 12px radius (`rounded-lg` in this design system) for all major components including cards, input fields, and buttons. This radius provides a professional and friendly appearance without feeling overly \"bubbly.\" Small interactive elements like chips or badges may use a full pill-shape to distinguish them from structural components.\n\n## Components\n- **Buttons:** Primary buttons are full-width, 56px height, using `#1B7A4E` background and white text. Secondary buttons use a transparent background with a 1.5px border of the primary color.\n- **Cards:** White background with 12px padding. Use a subtle 1px border (`#E0E5E2`) instead of shadows to define court listings.\n- **Chips:** Used for time slots. Default state is white with a grey border; active state is Primary Green with white text.\n- **Input Fields:** 48px height, 12px radius, with a subtle `#F4F7F5` fill to distinguish from the card surface.\n- **Promo Banners:** Utilize the `#FDE8DC` peach background with `#E86A2A` orange accents to draw attention to special offers or new club openings.\n- **Status Indicators:** Use `#E86A2A` for \"Available Soon\" and `#1B7A4E` for \"Instant Book.\"",
+                  "font": "DM_SANS",
+                  "headlineFont": "DM_SANS",
+                  "headlineFontFamily": "Dm Sans",
+                  "labelFont": "INTER",
+                  "labelFontFamily": "Inter",
+                  "namedColors": {
+                    "background": "#f0fdf2",
+                    "error": "#ba1a1a",
+                    "error_container": "#ffdad6",
+                    "inverse_on_surface": "#e7f4ea",
+                    "inverse_primary": "#80d9a4",
+                    "inverse_surface": "#28332c",
+                    "on_background": "#131e18",
+                    "on_error": "#ffffff",
+                    "on_error_container": "#93000a",
+                    "on_primary": "#ffffff",
+                    "on_primary_container": "#acffcb",
+                    "on_primary_fixed": "#002111",
+                    "on_primary_fixed_variant": "#005231",
+                    "on_secondary": "#ffffff",
+                    "on_secondary_container": "#632300",
+                    "on_secondary_fixed": "#360f00",
+                    "on_secondary_fixed_variant": "#7c2e00",
+                    "on_surface": "#131e18",
+                    "on_surface_variant": "#3f4941",
+                    "on_tertiary": "#ffffff",
+                    "on_tertiary_container": "#fee9dd",
+                    "on_tertiary_fixed": "#241912",
+                    "on_tertiary_fixed_variant": "#52443c",
+                    "outline": "#6f7a71",
+                    "outline_variant": "#bec9bf",
+                    "primary": "#00603a",
+                    "primary_container": "#1b7a4e",
+                    "primary_fixed": "#9cf5bf",
+                    "primary_fixed_dim": "#80d9a4",
+                    "secondary": "#a33e00",
+                    "secondary_container": "#fe7a39",
+                    "secondary_fixed": "#ffdbcd",
+                    "secondary_fixed_dim": "#ffb596",
+                    "surface": "#f0fdf2",
+                    "surface_bright": "#f0fdf2",
+                    "surface_container": "#e4f1e7",
+                    "surface_container_high": "#deebe1",
+                    "surface_container_highest": "#d9e6dc",
+                    "surface_container_low": "#eaf7ec",
+                    "surface_container_lowest": "#ffffff",
+                    "surface_dim": "#d0ddd3",
+                    "surface_tint": "#006d42",
+                    "surface_variant": "#d9e6dc",
+                    "tertiary": "#5e5047",
+                    "tertiary_container": "#78685f",
+                    "tertiary_fixed": "#f3dfd3",
+                    "tertiary_fixed_dim": "#d6c3b7"
+                  },
+                  "overrideNeutralColor": "#0f1a14",
+                  "overridePrimaryColor": "#1b7a4e",
+                  "overrideSecondaryColor": "#e86a2a",
+                  "overrideTertiaryColor": "#fde8dc",
+                  "roundness": "ROUND_EIGHT",
+                  "spacing": {
+                    "container-width": "390px",
+                    "edge-margin": "20px",
+                    "gutter": "12px",
+                    "stack-lg": "24px",
+                    "stack-md": "16px",
+                    "stack-sm": "8px"
+                  },
+                  "spacingScale": 2,
+                  "typography": {
+                    "body-lg": {
+                      "fontFamily": "Inter",
+                      "fontSize": "18px",
+                      "fontWeight": "400",
+                      "lineHeight": "28px"
+                    },
+                    "body-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "16px",
+                      "fontWeight": "400",
+                      "lineHeight": "24px"
+                    },
+                    "body-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "14px",
+                      "fontWeight": "400",
+                      "lineHeight": "20px"
+                    },
+                    "headline-lg": {
+                      "fontFamily": "DM Sans",
+                      "fontSize": "24px",
+                      "fontWeight": "700",
+                      "letterSpacing": "-0.01em",
+                      "lineHeight": "32px"
+                    },
+                    "headline-md": {
+                      "fontFamily": "DM Sans",
+                      "fontSize": "20px",
+                      "fontWeight": "600",
+                      "lineHeight": "28px"
+                    },
+                    "headline-xl": {
+                      "fontFamily": "DM Sans",
+                      "fontSize": "32px",
+                      "fontWeight": "700",
+                      "letterSpacing": "-0.02em",
+                      "lineHeight": "40px"
+                    },
+                    "label-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "14px",
+                      "fontWeight": "600",
+                      "letterSpacing": "0.02em",
+                      "lineHeight": "16px"
+                    },
+                    "label-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "12px",
+                      "fontWeight": "500",
+                      "lineHeight": "16px"
+                    }
+                  }
+                }
+              },
+              "name": "assets/e03cc309c60b436bbc38e48fd719a96f",
+              "version": "1"
+            },
+            "deviceType": "DESKTOP",
+            "generatedBy": "figaro_agent",
+            "height": "2048",
+            "htmlCode": {
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2E5NzdlMTA1YzUxMDRmYWU5MDY2ODlhZGE4MjVjNzE1EgsSBxC5lNPIlREYAZIBIwoKcHJvamVjdF9pZBIVQhM3MTkxNzAyMjQwNjMzNzI0ODQz&filename=&opi=96797242",
+              "mimeType": "text/html",
+              "name": "projects/7191702240633724843/files/a3b6d32be82d48a69457f4015f211205"
+            },
+            "id": "8e42b53c176642129cbf482a21f3e2bc",
+            "name": "projects/7191702240633724843/screens/8e42b53c176642129cbf482a21f3e2bc",
+            "prompt": "Step 1 of 4: Select Date. Desktop layout for CourtPass Sheikh Zayed. Top navigation bar. Main content area with a 1200px max-width. Left side features a full monthly calendar view with green highlights for the selected date. Right sidebar shows a vertical date strip for quick navigation of the current week. Progress indicator at the top showing 'Step 1 of 4'. Headline: 'When do you want to play?'. A prominent 'Next: Select Time' button at the bottom right. Background #F4F7F5, white cards, primary green #1B7A4E, orange accents for special offers or alerts. Clean, professional typography using DM Sans.",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "screenType": "DESIGN",
+            "screenshot": {
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLtvJSN2MsqZ81p3DZJu-CvRdDrO2C3rKVU_HFtP_qht0XaJ9dXkOuJArgWGRFHs3aE4Y861FOsfNVBwZHanrGSKC_i46kQ-cwu0IvUXk15tGD_7qv-uoNHvG3AZc79_Hp2c-Dloz8W7jbdWIVCzh7BfBGCfejJD9FzXz1UcGuM3diHiE3gcMpbNFjSKMY_osNQFWaiuyBDiWR8wtbhSjkk8fgAjWuebh15o2ZSpsevPgfVtLWgDO-O_FLw",
+              "name": "projects/7191702240633724843/files/b36ca90f66524e6488f04e313cbe95a5"
+            },
+            "theme": {
+              "bodyFont": "INTER",
+              "bodyFontFamily": "Inter",
+              "colorMode": "LIGHT",
+              "colorVariant": "FIDELITY",
+              "customColor": "#1b7a4e",
+              "font": "DM_SANS",
+              "headlineFont": "DM_SANS",
+              "headlineFontFamily": "Dm Sans",
+              "labelFont": "INTER",
+              "labelFontFamily": "Inter",
+              "namedColors": {
+                "background": "#f0fdf2",
+                "error": "#ba1a1a",
+                "error_container": "#ffdad6",
+                "inverse_on_surface": "#e7f4ea",
+                "inverse_primary": "#80d9a4",
+                "inverse_surface": "#28332c",
+                "on_background": "#131e18",
+                "on_error": "#ffffff",
+                "on_error_container": "#93000a",
+                "on_primary": "#ffffff",
+                "on_primary_container": "#acffcb",
+                "on_primary_fixed": "#002111",
+                "on_primary_fixed_variant": "#005231",
+                "on_secondary": "#ffffff",
+                "on_secondary_container": "#632300",
+                "on_secondary_fixed": "#360f00",
+                "on_secondary_fixed_variant": "#7c2e00",
+                "on_surface": "#131e18",
+                "on_surface_variant": "#3f4941",
+                "on_tertiary": "#ffffff",
+                "on_tertiary_container": "#fee9dd",
+                "on_tertiary_fixed": "#241912",
+                "on_tertiary_fixed_variant": "#52443c",
+                "outline": "#6f7a71",
+                "outline_variant": "#bec9bf",
+                "primary": "#00603a",
+                "primary_container": "#1b7a4e",
+                "primary_fixed": "#9cf5bf",
+                "primary_fixed_dim": "#80d9a4",
+                "secondary": "#a33e00",
+                "secondary_container": "#fe7a39",
+                "secondary_fixed": "#ffdbcd",
+                "secondary_fixed_dim": "#ffb596",
+                "surface": "#f0fdf2",
+                "surface_bright": "#f0fdf2",
+                "surface_container": "#e4f1e7",
+                "surface_container_high": "#deebe1",
+                "surface_container_highest": "#d9e6dc",
+                "surface_container_low": "#eaf7ec",
+                "surface_container_lowest": "#ffffff",
+                "surface_dim": "#d0ddd3",
+                "surface_tint": "#006d42",
+                "surface_variant": "#d9e6dc",
+                "tertiary": "#5e5047",
+                "tertiary_container": "#78685f",
+                "tertiary_fixed": "#f3dfd3",
+                "tertiary_fixed_dim": "#d6c3b7"
+              },
+              "overrideNeutralColor": "#0f1a14",
+              "overridePrimaryColor": "#1b7a4e",
+              "overrideSecondaryColor": "#e86a2a",
+              "overrideTertiaryColor": "#fde8dc",
+              "roundness": "ROUND_EIGHT",
+              "spacing": {
+                "container-width": "390px",
+                "edge-margin": "20px",
+                "gutter": "12px",
+                "stack-lg": "24px",
+                "stack-md": "16px",
+                "stack-sm": "8px"
+              },
+              "spacingScale": 2,
+              "typography": {
+                "body-lg": {
+                  "fontFamily": "Inter",
+                  "fontSize": "18px",
+                  "fontWeight": "400",
+                  "lineHeight": "28px"
+                },
+                "body-md": {
+                  "fontFamily": "Inter",
+                  "fontSize": "16px",
+                  "fontWeight": "400",
+                  "lineHeight": "24px"
+                },
+                "body-sm": {
+                  "fontFamily": "Inter",
+                  "fontSize": "14px",
+                  "fontWeight": "400",
+                  "lineHeight": "20px"
+                },
+                "headline-lg": {
+                  "fontFamily": "DM Sans",
+                  "fontSize": "24px",
+                  "fontWeight": "700",
+                  "letterSpacing": "-0.01em",
+                  "lineHeight": "32px"
+                },
+                "headline-md": {
+                  "fontFamily": "DM Sans",
+                  "fontSize": "20px",
+                  "fontWeight": "600",
+                  "lineHeight": "28px"
+                },
+                "headline-xl": {
+                  "fontFamily": "DM Sans",
+                  "fontSize": "32px",
+                  "fontWeight": "700",
+                  "letterSpacing": "-0.02em",
+                  "lineHeight": "40px"
+                },
+                "label-md": {
+                  "fontFamily": "Inter",
+                  "fontSize": "14px",
+                  "fontWeight": "600",
+                  "letterSpacing": "0.02em",
+                  "lineHeight": "16px"
+                },
+                "label-sm": {
+                  "fontFamily": "Inter",
+                  "fontSize": "12px",
+                  "fontWeight": "500",
+                  "lineHeight": "16px"
+                }
+              }
+            },
+            "title": "CourtPass book-date desktop light",
+            "width": "2560"
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "I've designed the first step of the desktop booking flow for **CourtPass Sheikh Zayed**.\n\n### Design Highlights:\n*   **Progressive Booking:** Included a clear step-indicator (1 of 4) to guide users through the multi-step process.\n*   **Dual Calendar View:** Combined a full monthly calendar for long-range planning with a \"This Week\" sidebar for quick, common selections.\n*   **Brand Identity:** Applied the CourtPass Light theme, utilizing the primary forest green for active states and the signature orange for highlighting available offers.\n*   **Desktop Optimization:** Utilized a 1440px wide layout with centered content to ensure high readability and a premium, spacious feel.\n\nWould you like to continue with **Step 2: Time Selection**, or should we refine the calendar layout first?"
+    },
+    {
+      "suggestion": "Design Step 2: Time Selection"
+    },
+    {
+      "suggestion": "Change calendar to a weekly view"
+    },
+    {
+      "suggestion": "Add a 'Special Offers' section to this page"
+    }
+  ],
+  "projectId": "7191702240633724843",
+  "sessionId": "9659279114174382739"
+}
