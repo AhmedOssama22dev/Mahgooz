@@ -42,14 +42,20 @@ check(
 )
 check(call('GET', '/auth/me', authed).status === 200, 'me with jwt')
 
+function holdBody(courtId: string, date: string, times: string[], attendees?: string[]) {
+  return {
+    slots: times.map((start_time) => ({
+      court_id: courtId,
+      date,
+      start_time,
+    })),
+    ...(attendees ? { attendee_names: attendees } : {}),
+  }
+}
+
 const hold = call('POST', '/bookings/hold', {
   ...authed,
-  body: {
-    court_id: courts[0]!.id,
-    date: '2026-08-21',
-    start_times: ['18:00'],
-    attendee_names: ['Ahmed Hassan'],
-  },
+  body: holdBody(courts[0]!.id, '2026-08-21', ['18:00'], ['Ahmed Hassan']),
 })
 check(hold.status === 201, 'hold created')
 const held = hold.body as {
@@ -65,18 +71,15 @@ check(held.end_time === '19:00', 'one-hour end')
 
 const taken = call('POST', '/bookings/hold', {
   ...authed,
-  body: { court_id: courts[0]!.id, date: '2026-08-21', start_times: ['18:00'] },
+  body: holdBody(courts[0]!.id, '2026-08-21', ['18:00']),
 })
 check(taken.status === 409, 'second hold is slot taken')
 
 const two = call('POST', '/bookings/hold', {
   ...authed,
-  body: {
-    court_id: courts[0]!.id,
-    date: '2026-08-21',
-    start_times: ['20:00', '21:00'],
-    attendee_names: ['Ahmed Hassan'],
-  },
+  body: holdBody(courts[0]!.id, '2026-08-21', ['20:00', '21:00'], [
+    'Ahmed Hassan',
+  ]),
 })
 check(two.status === 201, 'two-slot hold')
 const heldTwo = two.body as {
@@ -90,21 +93,13 @@ check(heldTwo.price_egp === 700, 'sum evening prices')
 
 const gap = call('POST', '/bookings/hold', {
   ...authed,
-  body: {
-    court_id: courts[0]!.id,
-    date: '2026-08-21',
-    start_times: ['08:00', '10:00'],
-  },
+  body: holdBody(courts[0]!.id, '2026-08-21', ['08:00', '10:00']),
 })
 check(gap.status === 400, 'gap is rejected')
 
 const overlap = call('POST', '/bookings/hold', {
   ...authed,
-  body: {
-    court_id: courts[0]!.id,
-    date: '2026-08-21',
-    start_times: ['21:00'],
-  },
+  body: holdBody(courts[0]!.id, '2026-08-21', ['21:00']),
 })
 check(overlap.status === 409, 'overlap on second hour of two-slot hold')
 
