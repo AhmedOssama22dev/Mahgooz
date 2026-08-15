@@ -163,7 +163,11 @@ PAYMOB_SECRET_KEY = os.environ.get("PAYMOB_SECRET_KEY", "")
 PAYMOB_PUBLIC_KEY = os.environ.get("PAYMOB_PUBLIC_KEY", "")
 PAYMOB_HMAC_SECRET = os.environ.get("PAYMOB_HMAC_SECRET", "")
 PAYMOB_INTEGRATION_ID_CARD = os.environ.get("PAYMOB_INTEGRATION_ID_CARD", "")
-PAYMOB_BASE_URL = os.environ.get("PAYMOB_BASE_URL", "https://accept.paymob.com")
+PAYMOB_BASE_URL = os.environ.get("PAYMOB_BASE_URL", "https://accept.paymob.com").rstrip("/")
+PAYMOB_CHECKOUT_BASE_URL = os.environ.get(
+    "PAYMOB_CHECKOUT_BASE_URL",
+    "https://eg.checkout.paymob.com",
+).rstrip("/")
 
 CORS_ALLOWED_ORIGINS = [
     FRONTEND_URL,
@@ -208,6 +212,9 @@ def _int_env(name, default):
     if raw is None or raw.strip() == "":
         return default
     return int(raw)
+
+
+PAYMOB_TIMEOUT_SECONDS = _int_env("PAYMOB_TIMEOUT_SECONDS", 15)
 
 
 # Booking rules: hours 08:00–22:00, last bookable start 21:00 (60-minute slots).

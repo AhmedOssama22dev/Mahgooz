@@ -18,6 +18,7 @@ from bookings.serializers import (
     SlotQuerySerializer,
 )
 from config.exceptions import _as_details
+from payments.checkout import start_checkout
 
 
 class CourtListView(APIView):
@@ -100,8 +101,8 @@ class BookingDetailView(APIView):
 class CheckoutView(APIView):
     permission_classes = [IsAuthenticated, IsCustomer]
 
-    def post(self, _request, booking_id):
-        errors.not_implemented()
+    def post(self, request, booking_id):
+        return Response(start_checkout(user=request.user, booking_id=booking_id))
 
 
 class BookingStatusView(APIView):

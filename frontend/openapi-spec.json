@@ -1855,7 +1855,7 @@
                   "amount_egp": 350,
                   "amount_cents": 35000,
                   "currency": "EGP",
-                  "checkout_url": "https://accept.paymob.com/unifiedcheckout/?publicKey=egy_pk_test_xxxxxxxx&clientSecret=egy_csk_test_xxxxxxxx",
+                  "checkout_url": "https://eg.checkout.paymob.com/?publicKey=egy_pk_test_xxxxxxxx&clientSecret=egy_csk_test_xxxxxxxx",
                   "paymob_intention_id": "pi_test_8f3a1c2e"
                 }
               }

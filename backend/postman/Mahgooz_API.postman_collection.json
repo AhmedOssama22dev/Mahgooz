@@ -1647,7 +1647,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n  \"booking_id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"status\": \"pending_payment\",\n  \"amount_egp\": 350,\n  \"amount_cents\": 35000,\n  \"currency\": \"EGP\",\n  \"checkout_url\": \"https://accept.paymob.com/unifiedcheckout/?publicKey=egy_pk_test_xxxxxxxx&clientSecret=egy_csk_test_xxxxxxxx\",\n  \"paymob_intention_id\": \"pi_test_8f3a1c2e\"\n}"
+              "body": "{\n  \"booking_id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"status\": \"pending_payment\",\n  \"amount_egp\": 350,\n  \"amount_cents\": 35000,\n  \"currency\": \"EGP\",\n  \"checkout_url\": \"https://eg.checkout.paymob.com/?publicKey=egy_pk_test_xxxxxxxx&clientSecret=egy_csk_test_xxxxxxxx\",\n  \"paymob_intention_id\": \"pi_test_8f3a1c2e\"\n}"
             },
             {
               "name": "401 Unauthorized",
